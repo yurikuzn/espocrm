@@ -468,12 +468,15 @@ define('views/modals/related-list', ['views/modal', 'search-manager'], function 
         },
 
         actionCreateRelated: function () {
+            let actionName = this.defs.createAction || 'createRelated';
+            let methodName = 'action' + Espo.Utils.upperCaseFirst(actionName);
+
             var p = this.getParentView();
 
             var view = null;
 
             while (p) {
-                if (p.actionCreateRelated) {
+                if (p[methodName]) {
                     view = p;
 
                     break;
@@ -482,19 +485,22 @@ define('views/modals/related-list', ['views/modal', 'search-manager'], function 
                 p = p.getParentView();
             }
 
-            p.actionCreateRelated({
+            p[methodName]({
                 link: this.link,
                 scope: this.scope,
             });
         },
 
         actionSelectRelated: function () {
+            let actionName = this.defs.selectAction || 'selectRelated';
+            let methodName = 'action' + Espo.Utils.upperCaseFirst(actionName);
+
             var p = this.getParentView();
 
             var view = null;
 
             while (p) {
-                if (p.actionSelectRelated) {
+                if (p[methodName]) {
                     view = p;
 
                     break;
@@ -503,7 +509,7 @@ define('views/modals/related-list', ['views/modal', 'search-manager'], function 
                 p = p.getParentView();
             }
 
-            p.actionSelectRelated({
+            p[methodName]({
                 link: this.link,
                 primaryFilterName: this.defs.selectPrimaryFilterName,
                 boolFilterList: this.defs.selectBoolFilterList,
