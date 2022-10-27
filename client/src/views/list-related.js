@@ -124,6 +124,11 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
         MODE_LIST: 'list',
 
         /**
+         * @private
+         */
+        rowActionsView: 'views/record/row-actions/relationship',
+
+        /**
          * @inheritDoc
          */
         shortcutKeys: {
@@ -483,6 +488,9 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
             if (this.panelDefs.layout && typeof this.panelDefs.layout === 'string') {
                 o.layoutName = this.panelDefs.layout;
             }
+
+            o.rowActionsView = this.panelDefs.readOnly ? false :
+                (this.panelDefs.rowActionsView || this.rowActionsView);
 
             if (
                 this.getConfig().get('listPagination') ||
