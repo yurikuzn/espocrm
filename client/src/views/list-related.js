@@ -159,6 +159,8 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
                 throw new Error("Collection not passed.");
             }
 
+            this.panelDefs = this.getMetadata().get(['clientDefs', this.scope, 'relationshipPanels', this.link]) || {};
+
             this.collection.maxSize = this.getConfig().get('recordsPerPage') || this.collection.maxSize;
             this.collectionUrl = this.collection.url;
             this.collectionMaxSize = this.collection.maxSize;
@@ -194,8 +196,12 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
 
             this.setupHeader();
 
-            this.defaultOrderBy = this.defaultOrderBy || this.collection.orderBy;
-            this.defaultOrder = this.defaultOrder || this.collection.order;
+            this.defaultOrderBy = this.panelDefs.orderBy || this.collection.orderBy;
+            this.defaultOrder = this.panelDefs.orderDirection || this.collection.order;
+
+            if (this.panelDefs.orderBy && !this.panelDefs.orderDirection) {
+                this.defaultOrder = 'asc';
+            }
 
             this.collection.setOrder(this.defaultOrderBy, this.defaultOrder, true);
 
@@ -398,8 +404,9 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
          */
         getRecordViewName: function () {
             if (this.viewMode === this.MODE_LIST) {
-                return this.getMetadata().get(['clientDefs', this.foreignScope, 'recordViews', this.MODE_LIST]) ||
-                    this.recordView;
+                return this.panelDefs.recordListView ||
+                    this.getMetadata().get(['clientDefs', this.foreignScope, 'recordViews', this.MODE_LIST]) ||
+                        this.recordView;
             }
 
             let propertyName = 'record' + Espo.Utils.upperCaseFirst(this.viewMode) + 'View';
@@ -471,6 +478,10 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
 
             if (this.keepCurrentRootUrl) {
                 o.keepCurrentRootUrl = true;
+            }
+
+            if (this.panelDefs.layout && typeof this.panelDefs.layout === 'string') {
+                o.layoutName = this.panelDefs.layout;
             }
 
             if (
@@ -580,20 +591,6 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
          * @return {Object}
          */
         getCreateAttributes: function () {},
-
-        /**
-         * Prepare return dispatch parameters to pass to a view when creating a record.
-         * To pass some data to restore when returning to the list view.
-         *
-         * Example:
-         * ```
-         * params.options.categoryId = this.currentCategoryId;
-         * params.options.categoryName = this.currentCategoryName;
-         * ```
-         *
-         * @param {Object} params Parameters to be modified.
-         */
-        prepareCreateReturnDispatchParams: function (params) {},
 
         /**
          * @protected
