@@ -420,7 +420,7 @@ define('controllers/record', ['controller'], function (Dep) {
                     model = m;
                     model.id = id;
 
-                    return model.fetch();
+                    return model.fetch({main: true});
                 })
                 .then(() => {
                     let foreignEntityType = model.getLinkParam(link, 'entity');

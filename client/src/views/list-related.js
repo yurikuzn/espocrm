@@ -635,7 +635,7 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
          * @inheritDoc
          */
         updatePageTitle: function () {
-            this.setPageTitle(this.getLanguage().translate(this.scope, 'scopeNamesPlural'));
+            this.setPageTitle(this.getLanguage().translate(this.link, 'links', this.scope));
         },
 
         /**
