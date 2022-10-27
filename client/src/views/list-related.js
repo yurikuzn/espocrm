@@ -465,10 +465,8 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
 
         /**
          * Create a record list view.
-         *
-         * @param {boolean} [fetch=false] To fetch after creation.
          */
-        createListRecordView: function (fetch) {
+        createListRecordView: function () {
             let o = {
                 collection: this.collection,
                 el: this.options.el + ' .list-container',
@@ -497,6 +495,18 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
                 this.getMetadata().get(['clientDefs', this.foreignScope, 'listPagination'])
             ) {
                 o.pagination = true;
+            }
+
+            let massUnlinkDisabled = this.panelDefs.massUnlinkDisabled || this.panelDefs.unlinkDisabled;
+
+            o = {
+                unlinkMassAction: !massUnlinkDisabled,
+                skipBuildRows: true,
+                buttonsDisabled: true,
+                rowActionsOptions:  {
+                    unlinkDisabled: this.panelDefs.unlinkDisabled,
+                },
+                ...o
             }
 
             this.prepareRecordViewOptions(o);
