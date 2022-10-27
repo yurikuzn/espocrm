@@ -172,17 +172,17 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
             this.setupModes();
             this.setViewMode(this.viewMode);
 
-            if (this.getMetadata().get(['clientDefs', this.scope, 'searchPanelDisabled'])) {
+            if (this.getMetadata().get(['clientDefs', this.foreignScope, 'searchPanelDisabled'])) {
                 this.searchPanel = false;
             }
 
             if (this.getUser().isPortal()) {
-                if (this.getMetadata().get(['clientDefs', this.scope, 'searchPanelInPortalDisabled'])) {
+                if (this.getMetadata().get(['clientDefs', this.foreignScope, 'searchPanelInPortalDisabled'])) {
                     this.searchPanel = false;
                 }
             }
 
-            if (this.getMetadata().get(['clientDefs', this.scope, 'createDisabled'])) {
+            if (this.getMetadata().get(['clientDefs', this.foreignScope, 'createDisabled'])) {
                 this.createButton = false;
             }
 
