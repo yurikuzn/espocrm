@@ -42,7 +42,7 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
         /**
          * @inheritDoc
          */
-        template: 'list-related',
+        template: 'list',
 
         /**
          * @inheritDoc
@@ -524,27 +524,47 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
          * @inheritDoc
          */
         getHeader: function () {
-            if (this.options.params && this.options.params.fromAdmin) {
-                let $root = $('<a>')
-                    .attr('href', '#Admin')
-                    .text(this.translate('Administration', 'labels', 'Admin'));
+            let name = this.model.get('name') || this.model.id;
 
-                let $scope = $('<span>')
-                    .text(this.getLanguage().translate(this.scope, 'scopeNamesPlural'));
+            let recordUrl = '#' + this.scope  + '/view/' + this.model.id;
 
-                return this.buildHeaderHtml([$root, $scope]);
+            let $name =
+                $('<a>')
+                    .attr('href', recordUrl)
+                    .addClass('font-size-flexible title')
+                    .text(name);
+
+            if (this.model.get('deleted')) {
+                $name.css('text-decoration', 'line-through');
             }
 
-            let $root = $('<span>')
-                .text(this.getLanguage().translate(this.scope, 'scopeNamesPlural'));
+            let headerIconHtml = this.getHelper().getScopeColorIconHtml(this.foreignScope);
+            let scopeLabel = this.getLanguage().translate(this.scope, 'scopeNamesPlural');
 
-            let headerIconHtml = this.getHeaderIconHtml();
+            let $root = $('<span>').text(scopeLabel);
+
+            if (!this.rootLinkDisabled) {
+                $root = $('<span>')
+                    .append(
+                        $('<a>')
+                            .attr('href', '#' + this.scope)
+                            .addClass('action')
+                            .attr('data-action', 'navigateToRoot')
+                            .text(scopeLabel)
+                    );
+            }
 
             if (headerIconHtml) {
                 $root.prepend(headerIconHtml);
             }
 
-            return this.buildHeaderHtml([$root]);
+            let $link = $('<span>').text(this.translate(this.link, 'links', this.scope));
+
+            return this.buildHeaderHtml([
+                $root,
+                $name,
+                $link
+            ]);
         },
 
         /**
