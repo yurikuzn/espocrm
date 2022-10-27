@@ -86,6 +86,10 @@ define('router', [], function () {
                 resolution: "create"
             },
             {
+                route: ":controller/related/:id/:link",
+                resolution: "related"
+            },
+            {
                 route: ":controller/:action/:options",
                 resolution: "action",
                 order: 100
@@ -458,6 +462,18 @@ define('router', [], function () {
          */
         edit: function (controller, id, options) {
             this.record(controller, 'edit', id, options);
+        },
+
+        /**
+         * @private
+         */
+        related: function (controller, id, link, options) {
+            options = this._parseOptionsParams(options);
+
+            options.id = id;
+            options.link = link;
+
+            this.dispatch(controller, 'related', options);
         },
 
         /**

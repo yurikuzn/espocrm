@@ -407,6 +407,21 @@ define('controllers/record', ['controller'], function (Dep) {
             });
         },
 
+        actionRelated: function (options) {
+            let id = options.id;
+            let link = options.link;
+
+            let viewName = this.getViewName('listRelated');
+
+            // Create model and collection.
+
+            this.main(viewName, {
+                scope: this.name,
+                id: id,
+                link: link,
+            });
+        },
+
         /**
          * Get a collection for the current controller.
          *
