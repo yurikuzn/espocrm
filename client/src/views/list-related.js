@@ -153,18 +153,26 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
             this.link = this.options.link;
 
             if (!this.link) {
-                throw new Error(`Link not passed.`);
+                console.error(`Link not passed.`);
+                throw new Error();
             }
 
             if (!this.model) {
-                throw new Error("Model not passed.");
+                console.error(`Model not passed.`);
+                throw new Error();
             }
 
             if (!this.collection) {
-                throw new Error("Collection not passed.");
+                console.error(`Collection not passed.`);
+                throw new Error();
             }
 
             this.panelDefs = this.getMetadata().get(['clientDefs', this.scope, 'relationshipPanels', this.link]) || {};
+
+            if (this.panelDefs.fullFormDisabled) {
+                console.error(`Full-form disabled.`);
+                throw new Error();
+            }
 
             this.collection.maxSize = this.getConfig().get('recordsPerPage') || this.collection.maxSize;
             this.collectionUrl = this.collection.url;
@@ -299,6 +307,32 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
          * Set up a search panel.
          */
         setupSearchPanel: function () {
+            let filterList = Espo.Utils
+                .clone(this.getMetadata().get(['clientDefs', this.foreignScope, 'filterList']) || []);
+
+            if (this.panelDefs.filterList) {
+                this.panelDefs.filterList.forEach(item1 => {
+                    let isFound = false;
+                    let name1 = item1.name || item1;
+
+                    if (!name1 || name1 === 'all') {
+                        return;
+                    }
+
+                    filterList.forEach(item2 => {
+                        let name2 = item2.name || item2;
+
+                        if (name1 === name2) {
+                            isFound = true;
+                        }
+                    });
+
+                    if (!isFound) {
+                        filterList.push(item1);
+                    }
+                });
+            }
+
             this.createView('search', this.searchView, {
                 collection: this.collection,
                 el: '#main > .search-container',
@@ -307,6 +341,7 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
                 viewMode: this.viewMode,
                 viewModeList: this.viewModeList,
                 isWide: true,
+                filterList: filterList,
             }, view => {
                 if (this.viewModeList.length > 1) {
                     this.listenTo(view, 'change-view-mode', this.switchViewMode, this);
