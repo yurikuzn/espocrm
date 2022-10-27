@@ -507,7 +507,7 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
                     unlinkDisabled: this.panelDefs.unlinkDisabled,
                 },
                 ...o
-            }
+            };
 
             this.prepareRecordViewOptions(o);
 
