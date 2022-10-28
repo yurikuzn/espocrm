@@ -426,7 +426,9 @@ define('controllers/record', ['controller'], function (Dep) {
                     let foreignEntityType = model.getLinkParam(link, 'entity');
 
                     if (!foreignEntityType) {
-                        throw new Error("Bad link.");
+                        this.baseController.error404();
+
+                        throw new Error(`Bad link '${link}'.`);
                     }
 
                     return this.collectionFactory.create(foreignEntityType);
