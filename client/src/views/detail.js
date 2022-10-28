@@ -369,17 +369,7 @@ define('views/detail', ['views/main'], function (Dep) {
         },
 
         /**
-         * When a related record created, attributes will be copied from a current entity.
-         *
-         * Example:
-         * ```
-         * {
-         *     'linkName': {
-         *         'attributeNameOfCurrentEntity': 'attributeNameOfCreatedRelatedEntity',
-         *     }
-         * }
-         * ```
-         *
+         * @deprecated Use metadata clientDefs > {EntityType} > relationshipPanels > {link} > createAttributeMap.
          * @type {Object}
          */
         relatedAttributeMap: {},
@@ -481,9 +471,13 @@ define('views/detail', ['views/main'], function (Dep) {
                 attributes = _.extend(this.relatedAttributeFunctions[link].call(this), attributes);
             }
 
-            Object.keys(this.relatedAttributeMap[link] || {})
+            let attributeMap = this.getMetadata()
+                .get(['clientDefs', this.scope, 'relationshipPanels', link, 'createAttributeMap']) ||
+                this.relatedAttributeMap[link] || {};
+
+            Object.keys(attributeMap)
                 .forEach(attr => {
-                    attributes[this.relatedAttributeMap[link][attr]] = this.model.get(attr);
+                    attributes[attributeMap[attr]] = this.model.get(attr);
                 });
 
             this.notify('Loading...');
