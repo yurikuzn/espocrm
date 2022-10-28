@@ -593,9 +593,6 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
                         .then(() => Espo.Ui.notify(false));
 
                 });
-
-
-                view.render();
             });
         },
 
