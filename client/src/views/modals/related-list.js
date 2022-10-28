@@ -259,19 +259,22 @@ define('views/modals/related-list', ['views/modal', 'search-manager'], function 
 
             if (
                 !this.options.listViewUrl &&
-                (!this.defs.fullFormDisabled || this.options.fullFormLink)
+                (
+                    !this.defs.fullFormDisabled && this.link && this.model.hasLink(this.link) ||
+                    this.options.fullFormUrl
+                )
             ) {
-                let link = this.options.fullFormLink ||
+                let url = this.options.fullFormUrl ||
                     '#' + this.model.entityType + '/related/' + this.model.id + '/' + this.link;
 
                 this.buttonList.unshift({
                     name: 'fullForm',
                     label: 'Full Form',
-                    onClick: () => this.getRouter().navigate(link, {trigger: true}),
+                    onClick: () => this.getRouter().navigate(url, {trigger: true}),
                 });
 
                 this.$header = $('<a>')
-                    .attr('href', link)
+                    .attr('href', url)
                     .append(this.$header);
             }
 
