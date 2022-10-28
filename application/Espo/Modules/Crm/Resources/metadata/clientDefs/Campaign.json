@@ -65,7 +65,8 @@
                 "targetListsNames": "targetListsNames",
                 "excludingTargetListsIds": "excludingTargetListsIds",
                 "excludingTargetListsNames": "excludingTargetListsNames"
-            }
+            },
+            "createHandler": "crm:handlers/campaign/mass-emails-create"
         }
     },
     "filterList": [

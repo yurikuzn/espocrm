@@ -26,8 +26,20 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('crm:views/campaign/detail', ['views/detail'], function (Dep) {
+define('crm:handlers/opportunity/contacts-create', ['handlers/create-related-handler'], Dep => {
 
-    /** Left for bc. */
-    return Dep.extend({});
+    return class extends Dep {
+        /**
+         * @param {module:model.Class} model
+         */
+        getAttributes(model) {
+            let attributes = {};
+
+            if (model.get('accountId')) {
+                attributes['accountsIds'] = [model.get('accountId')]
+            }
+
+            return attributes;
+        }
+    }
 });

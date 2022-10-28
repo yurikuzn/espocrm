@@ -78,7 +78,8 @@
             "createAttributeMap": {
                 "accountId": "accountId",
                 "accountName": "accountName"
-            }
+            },
+            "createHandler": "crm:handlers/opportunity/contacts-create"
         }
     },
    "dynamicLogic": {

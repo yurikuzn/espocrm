@@ -30,16 +30,6 @@ define('crm:views/opportunity/detail', ['views/detail'], function (Dep) {
 
     return Dep.extend({
 
-        relatedAttributeFunctions: {
-            'documents': function () {
-                var data = {};
-                if (this.model.get('accountId')) {
-                    data['accountsIds'] = [this.model.get('accountId')]
-                }
-                return data;
-            }
-        },
-
         selectRelatedFilters: {
             'contacts': {
                 'account': function () {
