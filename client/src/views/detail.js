@@ -487,7 +487,7 @@ define('views/detail', ['views/main'], function (Dep) {
                     attributes = {...attributes, ...additionalAttributes};
 
                     let viewName = this.getMetadata()
-                        .get('clientDefs.' + scope + '.modalViews.edit') || 'views/modals/edit';
+                        .get(['clientDefs', scope, 'modalViews', 'edit']) || 'views/modals/edit';
 
                     this.createView('quickCreate', viewName, {
                         scope: scope,

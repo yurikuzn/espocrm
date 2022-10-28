@@ -228,8 +228,6 @@ define('views/modals/related-list', ['views/modal', 'search-manager'], function 
 
             this.$header = $('<span>');
 
-            let iconHtml = this.getHelper().getScopeColorIconHtml(this.scope);
-
             if (this.model) {
                 if (this.model.get('name')) {
                     this.$header.append(
@@ -259,7 +257,31 @@ define('views/modals/related-list', ['views/modal', 'search-manager'], function 
                     .append(this.$header);
             }
 
-            this.$header.prepend(iconHtml);
+            if (
+                !this.options.listViewUrl &&
+                (!this.defs.fullFormDisabled || this.options.fullFormLink)
+            ) {
+                let link = this.options.fullFormLink ||
+                    '#' + this.model.entityType + '/related/' + this.model.id + '/' + this.link;
+
+                this.buttonList.unshift({
+                    name: 'fullForm',
+                    label: 'Full Form',
+                    onClick: () => this.getRouter().navigate(link, {trigger: true}),
+                });
+
+                this.$header = $('<a>')
+                    .attr('href', link)
+                    .append(this.$header);
+            }
+
+            let iconHtml = this.getHelper().getScopeColorIconHtml(this.scope);
+
+            if (iconHtml) {
+                this.$header = $('<span>')
+                    .append(iconHtml)
+                    .append(this.$header);
+            }
 
             this.waitForView('list');
 

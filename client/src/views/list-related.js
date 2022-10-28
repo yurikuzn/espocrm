@@ -129,6 +129,13 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
         rowActionsView: 'views/record/row-actions/relationship',
 
         /**
+         * A create button.
+         *
+         * @protected
+         */
+        createButton: true,
+
+        /**
          * @inheritDoc
          */
         shortcutKeys: {
@@ -198,6 +205,14 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
             }
 
             if (this.getMetadata().get(['clientDefs', this.foreignScope, 'createDisabled'])) {
+                this.createButton = false;
+            }
+
+            if (
+                this.panelDefs.create === false ||
+                this.panelDefs.createDisabled ||
+                this.panelDefs.createAction
+            ) {
                 this.createButton = false;
             }
 
@@ -295,7 +310,7 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
             this.menu.buttons.unshift({
                 action: 'quickCreate',
                 iconHtml: '<span class="fas fa-plus fa-sm"></span>',
-                text: this.translate('Create'),
+                text: this.translate('Create ' + this.foreignScope, 'labels', this.foreignScope),
                 style: 'default',
                 acl: 'create',
                 aclScope: this.foreignScope,
@@ -585,6 +600,96 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
         },
 
         /**
+         * A quick-create action.
+         *
+         * @protected
+         */
+        actionQuickCreate: function () {
+            let link = this.link;
+            let foreignScope = this.foreignScope;
+            let foreignLink = this.model.getLinkParam(link, 'foreign');
+
+            let attributes = {};
+
+            let attributeMap = this.getMetadata()
+                    .get(['clientDefs', this.scope, 'relationshipPanels', link, 'createAttributeMap']) || {};
+
+            Object.keys(attributeMap)
+                .forEach(attr => {
+                    attributes[attributeMap[attr]] = this.model.get(attr);
+                });
+
+            Espo.Ui.notify(' ... ');
+
+            let handler = this.getMetadata()
+                .get(['clientDefs', this.scope, 'relationshipPanels', link, 'createHandler']);
+
+            (new Promise(resolve => {
+                if (!handler) {
+                    resolve({});
+
+                    return;
+                }
+
+                Espo.loader.requirePromise(handler)
+                    .then(Handler => new Handler(this.getHelper()))
+                    .then(handler => resolve(handler.getAttributes(this.model)));
+            }))
+                .then(additionalAttributes => {
+                    attributes = {...attributes, ...additionalAttributes};
+
+                    let viewName = this.getMetadata()
+                        .get(['clientDefs', foreignScope, 'modalViews', 'edit']) || 'views/modals/edit';
+
+                    this.createView('quickCreate', viewName, {
+                        scope: foreignScope,
+                        relate: {
+                            model: this.model,
+                            link: foreignLink,
+                        },
+                        attributes: attributes,
+                    }, view => {
+                        view.render();
+                        view.notify(false);
+
+                        this.listenToOnce(view, 'after:save', () => {
+                            this.collection.fetch();
+
+                            this.model.trigger('after:relate');
+                            this.model.trigger('after:relate:' + link);
+                        });
+                    });
+                });
+        },
+
+        /**
+         * An `unlink-related` action.
+         *
+         * @protected
+         */
+        actionUnlinkRelated: function (data) {
+            let id = data.id;
+
+            this.confirm({
+                message: this.translate('unlinkRecordConfirmation', 'messages'),
+                confirmText: this.translate('Unlink'),
+            }, () => {
+                Espo.Ui.notify(' ... ');
+
+                Espo.Ajax
+                    .deleteRequest(this.collection.url, {id: id})
+                    .then(() => {
+                        this.notify('Unlinked', 'success');
+
+                        this.collection.fetch();
+
+                        this.model.trigger('after:unrelate');
+                        this.model.trigger('after:unrelate:' + this.link);
+                    });
+            });
+        },
+
+        /**
          * @inheritDoc
          */
         getHeader: function () {
@@ -661,13 +766,8 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
             e.preventDefault();
             e.stopPropagation();
 
-            if (this.quickCreate) {
-                this.actionQuickCreate({focusForCreate: true});
 
-                return;
-            }
-
-            this.actionCreate({focusForCreate: true});
+            this.actionQuickCreate({focusForCreate: true});
         },
 
         /**
