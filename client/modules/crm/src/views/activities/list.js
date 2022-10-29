@@ -34,6 +34,8 @@
 
         unlinkDisabled: true,
 
+        filtersDisabled: true,
+
         setup: function () {
             this.rowActionsView = 'views/record/row-actions/default';
 

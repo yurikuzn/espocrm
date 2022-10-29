@@ -141,6 +141,11 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
         unlinkDisabled: false,
 
         /**
+         * @protected
+         */
+        filtersDisabled: false,
+
+        /**
          * @inheritDoc
          */
         shortcutKeys: {
@@ -347,6 +352,10 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
                         filterList.push(item1);
                     }
                 });
+            }
+
+            if (this.filtersDisabled) {
+                filterList = [];
             }
 
             this.createView('search', this.searchView, {
