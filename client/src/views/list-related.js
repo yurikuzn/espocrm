@@ -136,6 +136,11 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
         createButton: true,
 
         /**
+         * @protected
+         */
+        unlinkDisabled: false,
+
+        /**
          * @inheritDoc
          */
         shortcutKeys: {
@@ -185,11 +190,7 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
             this.collectionUrl = this.collection.url;
             this.collectionMaxSize = this.collection.maxSize;
 
-            this.foreignScope = this.model.getLinkParam(this.link, 'entity');
-
-            if (!this.foreignScope) {
-                throw new Error(`Not supported link '${this.link}'.`);
-            }
+            this.foreignScope = this.collection.entityType;
 
             this.setupModes();
             this.setViewMode(this.viewMode);
@@ -547,14 +548,15 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
                 o.pagination = true;
             }
 
-            let massUnlinkDisabled = this.panelDefs.massUnlinkDisabled || this.panelDefs.unlinkDisabled;
+            let massUnlinkDisabled = this.panelDefs.massUnlinkDisabled ||
+                this.panelDefs.unlinkDisabled || this.unlinkDisabled;
 
             o = {
                 unlinkMassAction: !massUnlinkDisabled,
                 skipBuildRows: true,
                 buttonsDisabled: true,
                 rowActionsOptions:  {
-                    unlinkDisabled: this.panelDefs.unlinkDisabled,
+                    unlinkDisabled: this.panelDefs.unlinkDisabled || this.unlinkDisabled,
                 },
                 ...o
             };
@@ -591,7 +593,6 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager) {
 
                     this.collection.fetch()
                         .then(() => Espo.Ui.notify(false));
-
                 });
             });
         },

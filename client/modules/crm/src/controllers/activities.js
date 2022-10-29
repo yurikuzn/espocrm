@@ -74,13 +74,15 @@ define('crm:controllers/activities', ['controller'], function (Dep) {
                     return this.collectionFactory.create(targetEntityType);
                 })
                 .then(collection => {
-                    collection.url = model.entityType + '/' + id + '/' + type + '/list/' + targetEntityType;
+                    collection.url = 'Activities/' + model.entityType + '/' + id + '/' +
+                        type + '/list/' + targetEntityType;
 
                     this.main(viewName, {
                         scope: entityType,
                         model: model,
                         collection: collection,
                         link:  type + '_' + targetEntityType,
+                        type: type,
                     });
                 });
         },
