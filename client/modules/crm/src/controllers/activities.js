@@ -45,11 +45,11 @@ define('crm:controllers/activities', ['controller'], function (Dep) {
         },
 
         actionActivities: function (options) {
-            this.activities('activities', options.entityType, options.id, options.targetEntityType);
+            this.processList('activities', options.entityType, options.id, options.targetEntityType);
         },
 
         actionHistory: function (options) {
-            this.activities('history', options.entityType, options.id, options.targetEntityType);
+            this.processList('history', options.entityType, options.id, options.targetEntityType);
         },
 
         /**
@@ -58,7 +58,7 @@ define('crm:controllers/activities', ['controller'], function (Dep) {
          * @param {string} id
          * @param {string} targetEntityType
          */
-        activities: function (type, entityType, id, targetEntityType) {
+        processList: function (type, entityType, id, targetEntityType) {
             let viewName = 'crm:views/activities/list'
 
             let model;
@@ -74,7 +74,7 @@ define('crm:controllers/activities', ['controller'], function (Dep) {
                     return this.collectionFactory.create(targetEntityType);
                 })
                 .then(collection => {
-                    collection.url = model.entityType + '/' + id + '/' + link;
+                    collection.url = model.entityType + '/' + id + '/' + type + '/list/' + targetEntityType;
 
                     this.main(viewName, {
                         scope: entityType,
