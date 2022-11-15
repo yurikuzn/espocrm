@@ -158,10 +158,6 @@ function (Dep, /** module:ui/select*/Select) {
 
             this.$container.append($item);
 
-            $type.on('change', () => {
-                console.log('change');
-            });
-
             Select.init($type, {});
             Select.init($seconds, {});
         },

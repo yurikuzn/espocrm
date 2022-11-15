@@ -49,12 +49,16 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
 
             let plugins = [];
 
+            Select.loadCloseOnClickPlugin();
             Select.loadBypassCtrlEnterPlugin();
             plugins.push('bypass_ctrl_enter');
+            plugins.push('close_on_click');
 
             let allowedValues = $el.children().toArray().map(item => {
                 return item.getAttributeNode('value').value;
             });
+
+            let removedValue = null;
 
             let selectizeOptions = {
                 plugins: plugins,
@@ -63,13 +67,39 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                 copyClassesToDropdown: false,
                 allowEmptyOption: false,
                 showEmptyOptionInDropdown: true,
-                onDelete: function ()  {
-                    //console.log(this);
+                onDelete: function (values)  {
+                    if (values.length) {
+                        removedValue = values[0];
+                    }
 
-                    //return false;
+                    while (values.length) {
+                        this.removeItem(values.pop(), true);
+                    }
+
+                    this.showInput();
+                    this.positionDropdown();
+                    this.refreshOptions(true);
                 },
-                onFocus: function () {
-                    this.clear(true);
+                onBlur: function ()  {
+                    let value = $el.val();
+
+                    if (allowedValues.includes(value)) {
+                        if (removedValue !== null) {
+                            this.trigger('change');
+                        }
+
+                        return;
+                    }
+
+                    if (removedValue !== null) {
+                        this.setValue(removedValue, true);
+                    }
+
+                    if (removedValue === null && allowedValues.length) {
+                        this.setValue(allowedValues[0], true);
+                    }
+
+                    removedValue = null;
                 },
             };
 
@@ -149,6 +179,33 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
             }
 
             return options;
+        },
+
+        /**
+         * @private
+         */
+        loadCloseOnClickPlugin: function () {
+            if ('close_on_click' in Selectize.plugins) {
+                return;
+            }
+
+            Selectize.define('close_on_click', function () {
+                let self = this;
+
+                this.onFocus = (function() {
+                    let original = self.onFocus;
+
+                    return function (e) {
+                        let wasFocused = self.isFocused;
+
+                        if (wasFocused) {
+                            return;
+                        }
+
+                        return original.apply(this, arguments);
+                    };
+                })();
+            });
         },
 
         /**
