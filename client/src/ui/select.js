@@ -199,6 +199,8 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                         let wasFocused = self.isFocused;
 
                         if (wasFocused) {
+                            self.showInput();
+
                             return;
                         }
 
