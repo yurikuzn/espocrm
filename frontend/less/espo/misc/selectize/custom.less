@@ -11,3 +11,27 @@
     border-radius: var(--border-radius);
     padding: 1px 4px;
 }
+
+.selectize-control.single {
+    .selectize-dropdown {
+        position: absolute;
+    }
+
+    .selectize-input {
+        &.dropdown-active:after,
+        &:after {
+            color: var(--text-muted-color);
+            display: inline-block;
+            width: 0;
+            height: 0;
+            top: 15px;
+            right: 8px;
+            margin-left: 2px;
+            vertical-align: middle;
+            border-top: 4px dashed;
+            border-right: 4px solid transparent;
+            border-left: 4px solid transparent;
+            position: absolute;
+        }
+    }
+}
