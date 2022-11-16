@@ -3592,25 +3592,46 @@ a.close:hover {
 
 .reminders-container {
     > .reminder {
+        table-layout: fixed;
+        width: 100%;
+
         > .input-group-item:first-child {
             width: 40%;
+        }
+
+        > .input-group-btn {
+            width: 35px;
         }
     }
 }
 
 .input-group-link-parent {
+    table-layout: fixed;
+    width: 100%;
+
     > .input-group-item:first-child {
         width: 34%;
+    }
+
+    > .input-group-btn {
+        width: calc(35px * 2);
     }
 }
 
 .input-group.phone-number-block {
+    table-layout: fixed;
+    width: 100%;
+
     > .input-group-item:first-child {
         width: 24%;
     }
 
-    > .input-group-btn > .btn.phone-property.active {
-        z-index: unset;
+    > .input-group-btn {
+        .btn.phone-property.active {
+            z-index: unset;
+        }
+
+        width: calc(35px * 4 + 1px);
     }
 }
 
