@@ -49,10 +49,8 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
 
             let plugins = [];
 
-            Select.loadCloseOnClickPlugin();
-            Select.loadBypassCtrlEnterPlugin();
-            plugins.push('bypass_ctrl_enter');
-            plugins.push('close_on_click');
+            Select.loadEspoSelectPlugin();
+            plugins.push('espo_select');
 
             let allowedValues = $el.children().toArray().map(item => {
                 return item.getAttributeNode('value').value;
@@ -213,15 +211,31 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
         /**
          * @private
          */
-        loadBypassCtrlEnterPlugin: function () {
-            if ('bypass_ctrl_enter' in Selectize.plugins) {
+        loadEspoSelectPlugin: function () {
+            if ('espo_select' in Selectize.plugins) {
                 return;
             }
 
             const IS_MAC = /Mac/.test(navigator.userAgent);
 
-            Selectize.define('bypass_ctrl_enter', function () {
+            Selectize.define('espo_select', function () {
                 let self = this;
+
+                this.onFocus = (function() {
+                    let original = self.onFocus;
+
+                    return function (e) {
+                        let wasFocused = self.isFocused;
+
+                        if (wasFocused) {
+                            self.showInput();
+
+                            return;
+                        }
+
+                        return original.apply(this, arguments);
+                    };
+                })();
 
                 this.onKeyDown = (function() {
                     let original = self.onKeyDown;
