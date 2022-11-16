@@ -342,7 +342,7 @@ function (Dep, RecordModal, /** module:ui/select*/Select) {
                 this.addActionHandler('clearLink', () => {
                     if (this.foreignScopeList.length) {
                         this.foreignScope = this.foreignScopeList[0];
-                        this.$elementType.val(this.foreignScope);
+                        Select.setValue(this.$elementType, this.foreignScope);
                     }
 
                     this.$elementName.val('');

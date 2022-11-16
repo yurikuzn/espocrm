@@ -1,7 +1,7 @@
 <div class="input-group input-group-link-parent">
     {{#if foreignScopeList.length}}
-    <span class="input-group-btn">
-        <select class="form-control" data-name="{{typeName}}">
+    <span class="input-group-item">
+        <select class="form-control radius-left" data-name="{{typeName}}">
             {{options foreignScopeList foreignScope category='scopeNames'}}
         </select>
     </span>
