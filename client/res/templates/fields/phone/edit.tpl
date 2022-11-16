@@ -1,5 +1,4 @@
-
-<div>
+<div class="phone-number-block-container">
 {{#each phoneNumberData}}
     <div class="input-group phone-number-block">
         <span class="input-group-item">

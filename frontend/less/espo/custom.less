@@ -3631,20 +3631,30 @@ a.close:hover {
     }
 }
 
-.input-group.phone-number-block {
-    table-layout: fixed;
-    width: 100%;
+.phone-number-block-container {
+    .input-group.phone-number-block {
+        table-layout: fixed;
+        width: 100%;
 
-    > .input-group-item:first-child {
-        width: 24%;
-    }
-
-    > .input-group-btn {
-        .btn.phone-property.active {
-            z-index: unset;
+        > .input-group-item:first-child {
+            width: 24%;
         }
 
-        width: calc(35px * 4 + 1px);
+        > .input-group-btn {
+            .btn.phone-property.active {
+                z-index: unset;
+            }
+
+            width: calc(35px * 2 + 1px);
+        }
+    }
+
+    &.many {
+        .input-group.phone-number-block {
+            > .input-group-btn {
+                width: calc(35px * 4 + 1px);
+            }
+        }
     }
 }
 

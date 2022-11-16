@@ -336,14 +336,19 @@ function (Dep, /** module:ui/select*/Select) {
         manageButtonsVisibility: function () {
             let $primary = this.$el.find('button[data-property-type="primary"]');
             let $remove = this.$el.find('button[data-action="removePhoneNumber"]');
+            let $container = this.$el.find('.phone-number-block-container');
 
             if ($primary.length > 1) {
                 $primary.removeClass('hidden');
                 $remove.removeClass('hidden');
-            } else {
-                $primary.addClass('hidden');
-                $remove.addClass('hidden');
+                $container.addClass('many')
+
+                return;
             }
+
+            $container.removeClass('many')
+            $primary.addClass('hidden');
+            $remove.addClass('hidden');
         },
 
         setup: function () {
