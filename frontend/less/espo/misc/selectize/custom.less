@@ -1,10 +1,24 @@
-.filter > .form-group .field {
-    .selectize-control {
+.filter > .form-group .field .selectize-control,
+.selectize-control.input-sm {
+    &.multi {
         .selectize-input {
             font-size: @font-size-small;
-            padding: 4px 5px 0;
+            padding: 4px 7px 0;
         }
     }
+
+    &.single {
+        .selectize-input {
+            font-size: @font-size-small;
+            padding: 4px 10px 4px;
+        }
+
+        height: @input-height-small;
+    }
+}
+
+.form-control.selectize-control.single {
+    height: @input-height-base;
 }
 
 .selectize-control {
@@ -47,6 +61,15 @@
         > .item + input {
             caret-color: transparent;
             margin-right: -4px !important; // Prevent select changing width on focus.
+        }
+    }
+
+    &.input-sm {
+        .selectize-input {
+            &.dropdown-active:after,
+            &:after {
+                top: 13px;
+            }
         }
     }
 }
