@@ -144,8 +144,12 @@
     margin-left: 0 !important;
 }
 
-.input-group .form-control:focus {
-    z-index: 3;
+.input-group .form-control {
+    z-index: unset;
+
+    &:focus {
+        z-index: 3;
+    }
 }
 
 .input-group-container-2 {

@@ -26,6 +26,8 @@
     }
 
     .selectize-input {
+        padding-right: 19px;
+
         &.dropdown-active:after,
         &:after {
             color: var(--text-muted-color);
@@ -40,6 +42,11 @@
             border-right: 4px solid transparent;
             border-left: 4px solid transparent;
             position: absolute;
+        }
+
+        > .item + input {
+            caret-color: transparent;
+            margin-right: -4px !important; // Prevent select changing width on focus.
         }
     }
 }

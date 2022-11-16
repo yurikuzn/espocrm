@@ -217,6 +217,7 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
             }
 
             const IS_MAC = /Mac/.test(navigator.userAgent);
+            const KEY_BACKSPACE = 8;
 
             Selectize.define('espo_select', function () {
                 let self = this;
@@ -243,6 +244,23 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                     return function (e) {
                         if (e.code === 'Enter' && (IS_MAC ? e.metaKey : e.ctrlKey)) {
                             return;
+                        }
+
+                        if (self.isFull() || self.isInputHidden) {
+                            if (
+                                e.key.length === 1 &&
+                                (
+                                    e.key.match(/[a-z]/i) ||
+                                    e.key.match(/[0-9]/)
+                                )
+                            ) {
+                                let keyCode = e.keyCode;
+                                e.keyCode = KEY_BACKSPACE;
+
+                                self.deleteSelection(e);
+
+                                e.keyCode = keyCode;
+                            }
                         }
 
                         return original.apply(this, arguments);
