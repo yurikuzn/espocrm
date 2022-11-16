@@ -226,6 +226,10 @@ function (Dep, /** module:ui/select*/Select) {
             return parts.join(' ');
         },
 
+        focusOnInlineEdit: function () {
+            Select.focus(this.$duration);
+        },
+
         afterRender: function () {
             let parentView = this.getParentView();
 

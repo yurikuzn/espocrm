@@ -318,7 +318,7 @@ function (Dep, RegExpPattern, /** module:ui/select*/Select) {
             let options = this.columnsDefs[column].options || [];
 
             let $select = $('<select>')
-                .addClass('role form-control input-sm pull-right')
+                .addClass('role form-control input-sm')
                 .attr('data-id', id)
                 .attr('data-column', column);
 
@@ -355,7 +355,7 @@ function (Dep, RegExpPattern, /** module:ui/select*/Select) {
             let text = this.translate(field, 'fields', scope);
 
             let $input = $('<input>')
-                .addClass('role form-control input-sm pull-right')
+                .addClass('role form-control input-sm')
                 .attr('data-column', column)
                 .attr('placeholder', text)
                 .attr('data-id', id)
@@ -467,7 +467,12 @@ function (Dep, RegExpPattern, /** module:ui/select*/Select) {
             let $left = $('<div>');
             let $right = $('<div>');
 
-            $columnList.forEach($item => $left.append($item));
+            $columnList.forEach($item => $left.append(
+                $('<span>')
+                    .addClass('link-item-column')
+                    .addClass('link-item-column-' + $item.get(0).tagName.toLowerCase())
+                    .append($item)
+            ));
 
             if ($liList.length) {
                 let $ul = $('<ul>').addClass('dropdown-menu');

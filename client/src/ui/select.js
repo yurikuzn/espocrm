@@ -51,8 +51,16 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
             Select.loadEspoSelectPlugin();
             plugins.push('espo_select');
 
+            let itemClasses = {};
+
             let allowedValues = $el.children().toArray().map(item => {
-                return item.getAttributeNode('value').value;
+                let value = item.getAttributeNode('value').value;
+
+                if (item.classList) {
+                    itemClasses[value] = item.classList.toString();
+                }
+
+                return value;
             });
 
             let removedValue = null;
@@ -64,7 +72,26 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                 copyClassesToDropdown: false,
                 allowEmptyOption: allowedValues.includes(''),
                 showEmptyOptionInDropdown: true,
-                onDelete: function (values)  {
+                render: {
+                    item: function (data) {
+                        return $('<div>')
+                            .addClass('item')
+                            .addClass(itemClasses[data.value] || '')
+                            .text(data.text)
+                            .get(0).outerHTML;
+                    },
+                    option: function (data) {
+                        let $div = $('<div>')
+                            .addClass('option')
+                            .addClass(data.value === '' ? 'selectize-dropdown-emptyoptionlabel' : '')
+                            .addClass(itemClasses[data.value] || '')
+                            .val(data.value)
+                            .text(data.text);
+
+                        return $div.get(0).outerHTML;
+                    },
+                },
+                onDelete: function (values) {
                     if (values.length) {
                         removedValue = values[0];
                     }
@@ -118,6 +145,17 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
             }
 
             $el.selectize(selectizeOptions);
+        },
+
+        /**
+         * Focus.
+         *
+         * @param {JQuery} $el An element.
+         */
+        focus: function ($el) {
+            let selectize = $el.get(0).selectize;
+
+            selectize.focus();
         },
 
         /**
