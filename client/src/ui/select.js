@@ -31,7 +31,6 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
     /**
      * @typedef module:ui/select~Options
      * @type {Object}
-     * @property {{value: string, label: string}[]} items
      * @property {boolean} [selectOnTab=false]
      * @property {boolean} [matchAnyWord=false]
      */
@@ -42,10 +41,10 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
     let Select = {
         /**
          * @param {JQuery} $el An element.
-         * @param {module:ui/select~Options} options Options.
+         * @param {module:ui/select~Options} [options] Options.
          */
         init: function ($el, options) {
-            options = Select.applyDefaultOptions(options);
+            options = Select.applyDefaultOptions(options || {});
 
             let plugins = [];
 
