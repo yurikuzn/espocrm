@@ -50,6 +50,7 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
 
             Select.loadEspoSelectPlugin();
             plugins.push('espo_select');
+            plugins.push('auto_position');
 
             let itemClasses = {};
 
@@ -218,35 +219,6 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
             }
 
             return options;
-        },
-
-        /**
-         * @private
-         */
-        loadCloseOnClickPlugin: function () {
-            if ('close_on_click' in Selectize.plugins) {
-                return;
-            }
-
-            Selectize.define('close_on_click', function () {
-                let self = this;
-
-                this.onFocus = (function() {
-                    let original = self.onFocus;
-
-                    return function (e) {
-                        let wasFocused = self.isFocused;
-
-                        if (wasFocused) {
-                            self.showInput();
-
-                            return;
-                        }
-
-                        return original.apply(this, arguments);
-                    };
-                })();
-            });
         },
 
         /**
