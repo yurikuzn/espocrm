@@ -88,6 +88,10 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                             .val(data.value)
                             .text(data.text);
 
+                        if (data.text === '') {
+                            $div.html('&nbsp;');
+                        }
+
                         return $div.get(0).outerHTML;
                     },
                 },
