@@ -235,6 +235,35 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
             Selectize.define('espo_select', function () {
                 let self = this;
 
+                this.open = (function() {
+                    let original = self.open;
+
+                    return function () {
+                        let toProcess = !(self.isLocked || self.isOpen);
+
+                        original.apply(this, arguments);
+
+                        if (!toProcess) {
+                            return;
+                        }
+
+                        let $selected = self.$dropdown.find('.selected');
+
+                        if (!$selected.length) {
+                            return;
+                        }
+
+                        self.$dropdown
+                            .find('.selectize-dropdown-content')
+                            .scrollTop($selected.get(0).offsetTop)
+
+
+                        /*if ($selected.get(0).scrollIntoView) {
+                            $selected.get(0).scrollIntoView(true);
+                        }*/
+                    };
+                })();
+
                 this.onFocus = (function() {
                     let original = self.onFocus;
 
