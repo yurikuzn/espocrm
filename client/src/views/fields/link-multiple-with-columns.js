@@ -26,8 +26,9 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('views/fields/link-multiple-with-columns', ['views/fields/link-multiple', 'helpers/reg-exp-pattern'],
-function (Dep, RegExpPattern) {
+define('views/fields/link-multiple-with-columns',
+['views/fields/link-multiple', 'helpers/reg-exp-pattern', 'ui/select'],
+function (Dep, RegExpPattern, /** module:ui/select*/Select) {
 
     /**
      * A link-multiple field with relation column(s).
@@ -499,6 +500,11 @@ function (Dep, RegExpPattern) {
 
             if (this.isEditMode()) {
                 $columnList.forEach($column => {
+
+                    if ($column.get(0).tagName === 'SELECT') {
+                        Select.init($column);
+                    }
+
                     let fetch = ($target) => {
                         if (!$target || !$target.length) {
                             return;

@@ -1,5 +1,5 @@
 .filter > .form-group .field .selectize-control,
-.selectize-control.input-sm {
+.selectize-control.input-sm.form-control {
     &.multi {
         .selectize-input {
             font-size: @font-size-small;
@@ -10,10 +10,29 @@
     &.single {
         .selectize-input {
             font-size: @font-size-small;
-            padding: 4px 10px 4px;
+            padding: 4px 19px 4px 10px;
+            min-height: @input-height-small;
         }
 
         height: @input-height-small;
+    }
+
+    .selectize-dropdown {
+        .selectize-dropdown-emptyoptionlabel {
+            min-height: @line-height-small-computed;
+        }
+    }
+}
+
+.selectize-input {
+    min-width: 80px;
+}
+
+.selectize-dropdown {
+    min-width: 120px;
+
+    .selectize-dropdown-emptyoptionlabel {
+        min-height: @line-height-computed;
     }
 }
 

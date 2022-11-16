@@ -62,7 +62,7 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                 highlight: false,
                 selectOnTab: options.selectOnTab,
                 copyClassesToDropdown: false,
-                allowEmptyOption: false,
+                allowEmptyOption: allowedValues.includes(''),
                 showEmptyOptionInDropdown: true,
                 onDelete: function (values)  {
                     if (values.length) {
