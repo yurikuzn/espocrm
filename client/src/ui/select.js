@@ -129,11 +129,20 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
          * Focus.
          *
          * @param {JQuery} $el An element.
+         * @param {{noTrigger?: boolean}} [options] Options.
          */
-        focus: function ($el) {
+        focus: function ($el, options) {
+            options = options || {};
+
             let selectize = $el.get(0).selectize;
 
+            if (options.noTrigger) {
+                selectize.focusNoTrigger = true;
+            }
+
             selectize.focus();
+
+            setTimeout(() => selectize.focusNoTrigger = false, 100);
         },
 
         /**
@@ -207,6 +216,19 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
 
             Selectize.define('espo_select', function () {
                 let self = this;
+
+                this.refreshOptions = (function () {
+                    let original = self.refreshOptions;
+
+                    return function () {
+                        if (self.focusNoTrigger) {
+                            original.apply(this, [false]);
+                            return;
+                        }
+
+                        original.apply(this, arguments);
+                    };
+                })();
 
                 this.onOptionSelect = (function () {
                     let original = self.onOptionSelect;
@@ -313,7 +335,7 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                                 self.hideInput();
                             }
 
-                            self.addItem(this.selectedValue);
+                            self.addItem(this.selectedValue, true);
                         }
 
                         if (self.isFull() || self.isInputHidden) {
