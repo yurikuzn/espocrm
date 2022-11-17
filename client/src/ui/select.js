@@ -64,8 +64,6 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                 return value;
             });
 
-            let removedValue = null;
-
             let selectizeOptions = {
                 plugins: plugins,
                 highlight: false,
@@ -97,10 +95,6 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                     },
                 },
                 onDelete: function (values) {
-                    if (values.length) {
-                        removedValue = values[0];
-                    }
-
                     while (values.length) {
                         this.removeItem(values.pop(), true);
                     }
@@ -108,27 +102,6 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                     this.showInput();
                     this.positionDropdown();
                     this.refreshOptions(true);
-                },
-                onBlur: function ()  {
-                    let value = $el.val();
-
-                    if (allowedValues.includes(value)) {
-                        if (removedValue !== null) {
-                            this.trigger('change');
-                        }
-
-                        return;
-                    }
-
-                    if (removedValue !== null) {
-                        this.setValue(removedValue, true);
-                    }
-
-                    if (removedValue === null && allowedValues.length) {
-                        this.setValue(allowedValues[0], true);
-                    }
-
-                    removedValue = null;
                 },
             };
 
@@ -235,6 +208,16 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
             Selectize.define('espo_select', function () {
                 let self = this;
 
+                this.onOptionSelect = (function () {
+                    let original = self.onOptionSelect;
+
+                    return function (e) {
+                        original.apply(this, arguments);
+
+                        self.selectedValue = $(e.currentTarget).attr('data-value');
+                    };
+                })();
+
                 this.open = (function() {
                     let original = self.open;
 
@@ -256,11 +239,6 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                         self.$dropdown
                             .find('.selectize-dropdown-content')
                             .scrollTop($selected.get(0).offsetTop)
-
-
-                        /*if ($selected.get(0).scrollIntoView) {
-                            $selected.get(0).scrollIntoView(true);
-                        }*/
                     };
                 })();
 
@@ -268,6 +246,8 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                     let original = self.onFocus;
 
                     return function (e) {
+                        self.selectedValue = self.getValue();
+
                         let wasFocused = self.isFocused;
 
                         if (wasFocused) {
@@ -280,12 +260,38 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                     };
                 })();
 
+                this.revertValue = function () {
+                    if (this.selectedValue !== null) {
+                        this.setValue(this.selectedValue, true);
+                    }
+
+                    this.selectedValue = null;
+                };
+
+                this.onBlur = (function() {
+                    let original = self.onBlur;
+
+                    return function () {
+                        self.revertValue();
+
+                        return original.apply(this, arguments);
+                    };
+                })();
+
                 this.onKeyDown = (function() {
                     let original = self.onKeyDown;
 
                     return function (e) {
                         if (e.code === 'Enter' && (IS_MAC ? e.metaKey : e.ctrlKey)) {
                             return;
+                        }
+
+                        if (e.code === 'Escape') {
+                            e.stopPropagation();
+
+                            self.close();
+                            self.hideInput();
+                            self.addItem(this.selectedValue);
                         }
 
                         if (self.isFull() || self.isInputHidden) {
