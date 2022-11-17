@@ -16,6 +16,10 @@
 
         height: @input-height-small;
     }
+
+    .selectize-dropdown-content {
+        max-height: 198px;
+    }
 }
 
 .selectize-input {
@@ -34,6 +38,19 @@
     .selectize-dropdown-content {
         > .option {
             cursor: default;
+        }
+    }
+
+    &.single {
+        > .selectize-input {
+            > .item {
+                width: 100%;
+                height: @line-height-computed;
+                overflow: hidden;
+                vertical-align: middle;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
         }
     }
 }
