@@ -299,10 +299,18 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                         }
 
                         if (e.code === 'Escape') {
-                            e.stopPropagation();
+                            if (self.isOpen || !self.isInputHidden) {
+                                e.stopPropagation();
+                            }
 
-                            self.close();
-                            self.hideInput();
+                            if (self.isOpen) {
+                                self.close();
+                            }
+
+                            if (!self.isInputHidden) {
+                                self.hideInput();
+                            }
+
                             self.addItem(this.selectedValue);
                         }
 
