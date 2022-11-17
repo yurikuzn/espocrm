@@ -286,6 +286,8 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                     return function () {
                         self.revertValue();
 
+                        self.$control_input.css({width: '4px'});
+
                         return original.apply(this, arguments);
                     };
                 })();
@@ -326,6 +328,8 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                                 e.keyCode = KEY_BACKSPACE;
 
                                 self.deleteSelection(e);
+
+                                //self.clear();
 
                                 e.keyCode = keyCode;
                             }
