@@ -238,7 +238,19 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
 
                         self.$dropdown
                             .find('.selectize-dropdown-content')
-                            .scrollTop($selected.get(0).offsetTop)
+                            .scrollTop($selected.get(0).offsetTop);
+                    };
+                })();
+
+                this.onMouseDown = (function() {
+                    let original = self.onMouseDown;
+
+                    return function (e) {
+                        if (self.isOpen) {
+                            self.closedByMouseDown = true;
+                        }
+
+                        return original.apply(this, arguments);
                     };
                 })();
 
@@ -248,13 +260,13 @@ define('ui/select', ['lib!Selectize'], (Selectize) => {
                     return function (e) {
                         self.selectedValue = self.getValue();
 
-                        let wasFocused = self.isFocused;
-
-                        if (wasFocused) {
-                            self.showInput();
+                        if (self.closedByMouseDown) {
+                            self.closedByMouseDown = false;
 
                             return;
                         }
+
+                        self.closedByMouseDown = false;
 
                         return original.apply(this, arguments);
                     };
