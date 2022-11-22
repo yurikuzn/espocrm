@@ -128,7 +128,7 @@ define('crm:views/meeting/detail', ['views/detail', 'lib!moment'], function (Dep
                 if (!contactIdList.length && !leadIdList.length && !userIdList.length) {
                     show = false;
                 }
-                else if (
+                /*else if (
                     !contactIdList.length &&
                     !leadIdList.length &&
                     userIdList.length === 1 &&
@@ -136,7 +136,7 @@ define('crm:views/meeting/detail', ['views/detail', 'lib!moment'], function (Dep
                     this.model.getLinkMultipleColumn('users', 'status', this.getUser().id) === 'Accepted'
                 ) {
                     show = false;
-                }
+                }*/
             }
 
             if (show) {
