@@ -134,8 +134,6 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
                             .filter(model => {
                                 let status = model.get('acceptanceStatus');
 
-                                console.log(status);
-
                                 return !status || status === 'None';
                             })
                             .forEach(model => {
