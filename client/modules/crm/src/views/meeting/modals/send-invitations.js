@@ -96,6 +96,8 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
             this.wait(
                 this.collection.fetch()
                     .then(() => {
+                        console.log(this.model.getFieldParam('acceptanceStatus', 'options'));
+
                         return this.createView('list', 'views/record/list', {
                             selector: '.list-container',
                             collection: this.collection,
@@ -107,14 +109,19 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
                             listLayout: [
                                 {
                                     name: 'name',
-                                    customLabel: '',
+                                    noLabel: true,
                                     notSortable: true,
                                 },
                                 {
                                     name: 'acceptanceStatus',
                                     width: 40,
-                                    customLabel: '',
+                                    noLabel: true,
                                     notSortable: true,
+                                    view: 'views/fields/enum',
+                                    params: {
+                                        options: this.model.getFieldParam('acceptanceStatus', 'options'),
+                                        style: this.model.getFieldParam('acceptanceStatus', 'style'),
+                                    },
                                 },
                             ],
                         });

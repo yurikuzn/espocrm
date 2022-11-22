@@ -2435,6 +2435,16 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
                     item.options.defs.align = col.align;
                 }
 
+                if (col.options) {
+                    for (let optionName in col.options) {
+                        if (typeof item.options[optionName] !== 'undefined') {
+                            continue;
+                        }
+
+                        item.options[optionName] = col.options[optionName];
+                    }
+                }
+
                 layout.push(item);
             }
             if (this.rowActionsView && !this.rowActionsDisabled) {
