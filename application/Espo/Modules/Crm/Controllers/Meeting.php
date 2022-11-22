@@ -82,8 +82,6 @@ class Meeting extends Record
     {
         $targets = $request->getParsedBody()->targets ?? null;
 
-        $invitees = null;
-
         if ($targets === null) {
             return null;
         }
