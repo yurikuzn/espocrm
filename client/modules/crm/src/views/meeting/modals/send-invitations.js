@@ -26,7 +26,7 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('crm:views/meeting/modals/send-invitations', ['views/modal'], function (Dep) {
+define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'], function (Dep, Collection) {
     /**
      * @module crm_views/meeting/modals/send-invitations
      */
@@ -87,6 +87,27 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal'], function (D
             this.addButton({
                 label: 'Cancel',
                 name: 'cancel',
+            });
+
+            this.collection = new Collection();
+            this.collection.url = this.model.entityType + '/attendees';
+
+            this.wait(this.collection.fetch());
+
+            this.createView('list', 'views/record/list', {
+                collection: this.collection,
+                rowActionsDisabled: true,
+                massActionsDisabled: true,
+                listLayout: [
+                    {
+                        name: "name",
+                        width: 30,
+                    },
+                    {
+                        name: "acceptanceStatus",
+                        width: 30,
+                    },
+                ]
             });
         },
 

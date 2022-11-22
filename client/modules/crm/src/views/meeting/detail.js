@@ -164,9 +164,13 @@ define('crm:views/meeting/detail', ['views/detail', 'lib!moment'], function (Dep
         },
 
         actionSendInvitations: function () {
+            Espo.Ui.notify(' ... ');
+
             this.createView('dialog', 'crm:views/meeting/modals/send-invitations', {
                 model: this.model,
             }).then(view => {
+                Espo.Ui.notify(false);
+
                 view.render();
             });
         },
