@@ -97,8 +97,12 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
             this.wait(
                 this.collection.fetch()
                     .then(() => {
-                        this.collection.models.forEach(model => {
+                        Espo.Utils.clone(this.collection.models).forEach(model => {
                             model.entityType = model.get('_scope');
+
+                            if (!model.get('emailAddress')) {
+                                this.collection.remove(model.id);
+                            }
                         });
 
                         return this.createView('list', 'views/record/list', {
