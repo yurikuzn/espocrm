@@ -138,9 +138,16 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
         },
 
         controlSendButton: function () {
-            this.getView('list').checkedList.length ?
+            this.getListView().checkedList.length ?
                 this.enableButton('send') :
                 this.disableButton('send');
+        },
+
+        /**
+         * @return {module:views/record/list.Class}
+         */
+        getListView: function () {
+            return this.getView('list');
         },
 
         actionSend: function () {
@@ -148,11 +155,17 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
 
             Espo.Ui.notify(' ... ');
 
-            // @todo Add selected invitees.
+            let targets = this.getListView().checkedList.map(id => {
+                return {
+                    entityType: this.collection.get(id).entityType,
+                    id: id,
+                };
+            });
 
             Espo.Ajax
                 .postRequest(this.model.entityType + '/action/sendInvitations', {
                     id: this.model.id,
+                    targets: targets,
                 })
                 .then(result => {
                     result ?
