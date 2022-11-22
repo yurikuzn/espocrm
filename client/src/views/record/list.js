@@ -857,6 +857,57 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
         },
 
         /**
+         * Select a record.
+         *
+         * @public
+         * @param {string} id An ID.
+         */
+        selectById: function (id) {
+            if (!this.collection.get(id)) {
+                return;
+            }
+
+            this.$el
+                .find(`input.record-checkbox[data-id="${id}"]`)
+                .prop('checked', true);
+
+            if (this.checkedList.includes(id)) {
+                return;
+            }
+
+            this.checkedList.push(id);
+            this.trigger('check');
+        },
+
+        /**
+         * Unselect a record.
+         *
+         * @public
+         * @param {string} id An ID.
+         */
+        unselectById: function (id) {
+            if (!this.collection.get(id)) {
+                return;
+            }
+
+            this.$el
+                .find(`input.record-checkbox[data-id="${id}"]`)
+                .prop('checked', false);
+
+            let index = this.checkedList.indexOf(id);
+
+            if (index === -1) {
+                return;
+            }
+
+            if (index !== -1) {
+                this.checkedList.splice(index, 1);
+            }
+
+            this.trigger('check');
+        },
+
+        /**
          * @protected
          */
         selectAllHandler: function (isChecked) {

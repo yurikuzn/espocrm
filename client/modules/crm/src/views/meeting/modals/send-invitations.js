@@ -130,9 +130,21 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
                         });
                     })
                     .then(view => {
-                        view.selectAllHandler(true);
+                        this.collection.models
+                            .filter(model => {
+                                let status = model.get('acceptanceStatus');
+
+                                console.log(status);
+
+                                return !status || status === 'None';
+                            })
+                            .forEach(model => {
+                                this.getListView().selectById(model.id);
+                            });
 
                         this.listenTo(view, 'check', () => this.controlSendButton());
+
+                        this.controlSendButton();
                     })
             );
         },
