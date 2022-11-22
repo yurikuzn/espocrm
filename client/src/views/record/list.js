@@ -108,7 +108,7 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
         /**
          * A scope. Set automatically.
          *
-         * @type {string|null}
+         * @type {?string}
          */
         scope: null,
 
@@ -1913,13 +1913,13 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
 
             this.checkAllResultMassActionList = checkAllResultMassActionList;
 
-            let metadataCheckkAllMassActionList = (
+            let metadataCheckAllMassActionList = (
                     this.getMetadata().get(['clientDefs', this.scope, 'checkAllResultMassActionList']) || []
                 ).concat(
                     this.getMetadata().get(['clientDefs', 'Global', 'checkAllResultMassActionList']) || []
                 );
 
-            metadataCheckkAllMassActionList.forEach(item => {
+            metadataCheckAllMassActionList.forEach(item => {
                 if (this.collection.url !== this.entityType) {
                     return;
                 }
@@ -1941,7 +1941,7 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
             });
 
             metadataMassActionList
-                .concat(metadataCheckkAllMassActionList)
+                .concat(metadataCheckAllMassActionList)
                 .forEach(action => {
                     let defs = this.getMetadata()
                            .get(['clientDefs', this.scope, 'massActionDefs', action]) || {};
@@ -2216,7 +2216,9 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
         _loadListLayout: function (callback) {
             this.layoutLoadCallbackList.push(callback);
 
-            if (this.layoutIsBeingLoaded) return;
+            if (this.layoutIsBeingLoaded) {
+                return;
+            }
 
             this.layoutIsBeingLoaded = true;
 
@@ -2257,7 +2259,7 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
                 return;
             }
 
-            this._loadListLayout((listLayout) => {
+            this._loadListLayout(listLayout => {
                 this.listLayout = listLayout;
 
                 let attributeList = this.fetchAttributeListFromLayout();
@@ -2587,17 +2589,19 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
          * @protected
          */
         getInternalLayout: function (callback, model) {
-            if (this.scope === null || this.rowHasOwnLayout) {
+            if (
+                (this.scope === null || this.rowHasOwnLayout) &&
+                !Array.isArray(this.listLayout)
+            ) {
                 if (!model) {
                     callback(null);
 
                     return;
                 }
-                else {
-                    this.getInternalLayoutForModel(callback, model);
 
-                    return;
-                }
+                this.getInternalLayoutForModel(callback, model);
+
+                return;
             }
 
             if (this._internalLayout !== null) {
@@ -2614,7 +2618,7 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
                 return;
             }
 
-            this._loadListLayout((listLayout) => {
+            this._loadListLayout(listLayout => {
                 this.listLayout = listLayout;
                 this._internalLayout = this._convertLayout(listLayout);
 
@@ -2652,7 +2656,7 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
 
             this.rowList.push(key);
 
-            this.getInternalLayout((internalLayout) => {
+            this.getInternalLayout(internalLayout => {
                 internalLayout = Espo.Utils.cloneDeep(internalLayout);
 
                 this.prepareInternalLayout(internalLayout, model);

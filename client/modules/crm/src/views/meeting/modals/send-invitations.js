@@ -101,6 +101,9 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
                             collection: this.collection,
                             rowActionsDisabled: true,
                             massActionsDisabled: true,
+                            checkAllResultDisabled: true,
+                            selectable: true,
+                            buttonsDisabled: true,
                             listLayout: [
                                 {
                                     name: 'name',
