@@ -45,7 +45,7 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
             <div class="margin-bottom">
                 <p>{{message}}</p>
             </div>
-            <div class="list-container no-side-margin">{{{list}}}</div>
+            <div class="list-container">{{{list}}}</div>
         `,
 
         data: function () {
@@ -57,6 +57,7 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
         setup: function () {
             Dep.prototype.setup.call(this);
 
+            this.shortcutKeys = {};
             this.shortcutKeys['Control+Enter'] = e => {
                 if (!this.hasAvailableActionItem('send')) {
                     return;
@@ -90,33 +91,40 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
             });
 
             this.collection = new Collection();
-            this.collection.url = this.model.entityType + '/attendees';
+            this.collection.url = this.model.entityType + `/${this.model.id}/attendees`;
 
-            this.wait(this.collection.fetch());
-
-            this.createView('list', 'views/record/list', {
-                collection: this.collection,
-                rowActionsDisabled: true,
-                massActionsDisabled: true,
-                listLayout: [
-                    {
-                        name: "name",
-                        width: 30,
-                    },
-                    {
-                        name: "acceptanceStatus",
-                        width: 30,
-                    },
-                ]
-            });
+            this.wait(
+                this.collection.fetch()
+                    .then(() => {
+                        return this.createView('list', 'views/record/list', {
+                            selector: '.list-container',
+                            collection: this.collection,
+                            rowActionsDisabled: true,
+                            massActionsDisabled: true,
+                            listLayout: [
+                                {
+                                    name: 'name',
+                                    customLabel: '',
+                                    notSortable: true,
+                                },
+                                {
+                                    name: 'acceptanceStatus',
+                                    width: 40,
+                                    customLabel: '',
+                                    notSortable: true,
+                                },
+                            ],
+                        });
+                    })
+            );
         },
 
-        actionSend: function (data) {
+        actionSend: function () {
             this.disableButton('sendInvitations');
 
             Espo.Ui.notify(' ... ');
 
-            // @todo Add invitees.
+            // @todo Add selected invitees.
 
             Espo.Ajax
                 .postRequest(this.model.entityType + '/action/sendInvitations', {
