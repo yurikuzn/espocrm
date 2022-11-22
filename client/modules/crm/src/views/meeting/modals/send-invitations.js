@@ -27,43 +27,90 @@
  ************************************************************************/
 
 define('crm:views/meeting/modals/send-invitations', ['views/modal'], function (Dep) {
+    /**
+     * @module crm_views/meeting/modals/send-invitations
+     */
 
     /**
      * @class
      * @name Class
-     * @extends module:views/
+     * @extends module:views/modal.Class
+     * @memberOf module:crm_views/meeting/modals/send-invitations
      */
-    return Dep.extend({
+    return Dep.extend(/** @lends module:crm_views/meeting/modals/send-invitations.Class# */{
 
-        backdrop: true,
+        backdrop: 'static',
 
         templateContent: `
             <div class="margin-bottom">
                 <p>{{message}}</p>
             </div>
-            <div class="list-container no-side-margin">
-            </div>
+            <div class="list-container no-side-margin">{{{list}}}</div>
         `,
 
         data: function () {
-
+            return {
+                message: this.translate('sendInvitationsConfirmation', 'messages', 'Meeting'),
+            };
         },
 
         setup: function () {
             Dep.prototype.setup.call(this);
 
+            this.shortcutKeys['Control+Enter'] = e => {
+                if (!this.hasAvailableActionItem('send')) {
+                    return;
+                }
+
+                e.preventDefault();
+
+                this.actionSend();
+            };
+
             this.$header = $('<span>').append(
-                $('<span>').text(this.translate(this.model.entityType, 'scopeNames')),
+                $('<span>')
+                    .text(this.translate(this.model.entityType, 'scopeNames')),
                 ' <span class="chevron-right"></span> ',
-                $('<span>').text(this.model.get('name')),
+                $('<span>')
+                    .text(this.model.get('name')),
                 ' <span class="chevron-right"></span> ',
-                $('<span>').text(this.translate('Send Invitations', 'labels', 'Meeting'))
+                $('<span>')
+                    .text(this.translate('Send Invitations', 'labels', 'Meeting'))
             );
 
-            this.addButton()
+            this.addButton({
+                label: 'Send',
+                name: 'send',
+                style: 'danger',
+            });
+
+            this.addButton({
+                label: 'Cancel',
+                name: 'cancel',
+            });
         },
 
         actionSend: function (data) {
+            this.disableButton('sendInvitations');
+
+            Espo.Ui.notify(' ... ');
+
+            // @todo Add invitees.
+
+            Espo.Ajax
+                .postRequest(this.model.entityType + '/action/sendInvitations', {
+                    id: this.model.id,
+                })
+                .then(result => {
+                    result ?
+                        Espo.Ui.success(this.translate('Sent')) :
+                        Espo.Ui.warning(this.translate('nothingHasBeenSent', 'messages', 'Meeting'));
+
+                    this.close();
+                })
+                .catch(() => {
+                    this.enableButton('send');
+                });
         },
     });
 });

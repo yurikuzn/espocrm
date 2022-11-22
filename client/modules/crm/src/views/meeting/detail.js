@@ -164,30 +164,11 @@ define('crm:views/meeting/detail', ['views/detail', 'lib!moment'], function (Dep
         },
 
         actionSendInvitations: function () {
-            this.confirm({
-                    message: this.translate('sendInvitationsConfirmation', 'messages', 'Meeting'),
-                })
-                .then(() => {
-                    this.disableMenuItem('sendInvitations');
-                    this.notify('Sending...');
-
-                    Espo.Ajax
-                        .postRequest(this.model.entityType + '/action/sendInvitations', {
-                            id: this.model.id,
-                        })
-                        .then(result => {
-                            if (result) {
-                                this.notify('Sent', 'success');
-                            } else {
-                                Espo.Ui.warning(this.translate('nothingHasBeenSent', 'messages', 'Meeting'));
-                            }
-
-                            this.enableMenuItem('sendInvitations');
-                        })
-                        .catch(() => {
-                            this.enableMenuItem('sendInvitations');
-                        });
-                });
+            this.createView('dialog', 'crm:views/meeting/modals/send-invitations', {
+                model: this.model,
+            }).then(view => {
+                view.render();
+            });
         },
 
         actionSetAcceptanceStatus: function () {
