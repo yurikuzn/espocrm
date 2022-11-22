@@ -39,7 +39,7 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
      */
     return Dep.extend(/** @lends module:crm_views/meeting/modals/send-invitations.Class# */{
 
-        backdrop: 'static',
+        backdrop: true,
 
         templateContent: `
             <div class="margin-bottom">
@@ -83,6 +83,7 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
                 label: 'Send',
                 name: 'send',
                 style: 'danger',
+                disabled: true,
             });
 
             this.addButton({
@@ -96,6 +97,10 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
             this.wait(
                 this.collection.fetch()
                     .then(() => {
+                        this.collection.models.forEach(model => {
+                            model.entityType = model.get('_scope');
+                        });
+
                         return this.createView('list', 'views/record/list', {
                             selector: '.list-container',
                             collection: this.collection,
@@ -124,7 +129,18 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
                             ],
                         });
                     })
+                    .then(view => {
+                        view.selectAllHandler(true);
+
+                        this.listenTo(view, 'check', () => this.controlSendButton());
+                    })
             );
+        },
+
+        controlSendButton: function () {
+            this.getView('list').checkedList.length ?
+                this.enableButton('send') :
+                this.disableButton('send');
         },
 
         actionSend: function () {
