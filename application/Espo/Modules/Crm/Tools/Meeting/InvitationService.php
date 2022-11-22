@@ -81,13 +81,14 @@ class InvitationService
     /**
      * Send invitations for a meeting (or call). Checks access. Uses user's SMTP if available.
      *
+     * @param ?Invitee[] $targets
      * @return Entity[] Entities an invitation was sent to.
      * @throws NotFound
      * @throws Forbidden
      * @throws Error
      * @throws SendingError
      */
-    public function send(string $entityType, string $id): array
+    public function send(string $entityType, string $id, ?array $targets = null): array
     {
         $entity = $this->recordServiceContainer
             ->get($entityType)
@@ -108,6 +109,10 @@ class InvitationService
 
         foreach ($this->getUsers($entity) as $user) {
             $emailAddress = $user->getEmailAddress();
+
+            if ($targets && !self::isInTargets($user, $targets)) {
+                continue;
+            }
 
             if ($emailAddress) {
                 $sender->sendInvitation($entity, $user, 'users');
@@ -132,6 +137,10 @@ class InvitationService
         foreach ($contacts as $contact) {
             $emailAddress = $contact->getEmailAddress();
 
+            if ($targets && !self::isInTargets($contact, $targets)) {
+                continue;
+            }
+
             if ($emailAddress && !in_array($emailAddress, $sentAddressList)) {
                 $sender->sendInvitation($entity, $contact, 'contacts');
 
@@ -143,6 +152,10 @@ class InvitationService
         foreach ($leads as $lead) {
             $emailAddress = $lead->getEmailAddress();
 
+            if ($targets && !self::isInTargets($lead, $targets)) {
+                continue;
+            }
+
             if ($emailAddress && !in_array($emailAddress, $sentAddressList)) {
                 $sender->sendInvitation($entity, $lead, 'leads');
 
@@ -152,6 +165,23 @@ class InvitationService
         }
 
         return $resultEntityList;
+    }
+
+    /**
+     * @param Invitee[] $targets
+     */
+    private static function isInTargets(Entity $entity, array $targets): bool
+    {
+        foreach ($targets as $target) {
+            if (
+                $entity->getEntityType() === $target->getEntityType() &&
+                $entity->getId() && $target->getId()
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
