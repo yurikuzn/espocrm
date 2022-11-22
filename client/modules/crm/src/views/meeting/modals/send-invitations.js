@@ -127,7 +127,7 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
                                     },
                                 },
                             ],
-                        });
+                        })
                     })
                     .then(view => {
                         this.collection.models
@@ -137,7 +137,7 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
                                 return !status || status === 'None';
                             })
                             .forEach(model => {
-                                this.getListView().selectById(model.id);
+                                this.getListView().checkRecord(model.id);
                             });
 
                         this.listenTo(view, 'check', () => this.controlSendButton());

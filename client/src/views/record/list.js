@@ -857,57 +857,6 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
         },
 
         /**
-         * Select a record.
-         *
-         * @public
-         * @param {string} id An ID.
-         */
-        selectById: function (id) {
-            if (!this.collection.get(id)) {
-                return;
-            }
-
-            this.$el
-                .find(`input.record-checkbox[data-id="${id}"]`)
-                .prop('checked', true);
-
-            if (this.checkedList.includes(id)) {
-                return;
-            }
-
-            this.checkedList.push(id);
-            this.trigger('check');
-        },
-
-        /**
-         * Unselect a record.
-         *
-         * @public
-         * @param {string} id An ID.
-         */
-        unselectById: function (id) {
-            if (!this.collection.get(id)) {
-                return;
-            }
-
-            this.$el
-                .find(`input.record-checkbox[data-id="${id}"]`)
-                .prop('checked', false);
-
-            let index = this.checkedList.indexOf(id);
-
-            if (index === -1) {
-                return;
-            }
-
-            if (index !== -1) {
-                this.checkedList.splice(index, 1);
-            }
-
-            this.trigger('check');
-        },
-
-        /**
          * @protected
          */
         selectAllHandler: function (isChecked) {
@@ -2515,19 +2464,16 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
         checkRecord: function (id, $target, isSilent) {
             $target = $target || this.$el.find('.record-checkbox[data-id="' + id + '"]');
 
-            if (!$target.length) {
-                return;
+            if ($target.length) {
+                $target.get(0).checked = true;
+                $target.closest('tr').addClass('active');
             }
 
-            $target.get(0).checked = true;
-
-            var index = this.checkedList.indexOf(id);
+            let index = this.checkedList.indexOf(id);
 
             if (index === -1) {
                 this.checkedList.push(id);
             }
-
-            $target.closest('tr').addClass('active');
 
             this.handleAfterCheck(isSilent);
         },
@@ -2544,16 +2490,13 @@ function (Dep, MassActionHelper, ExportHelper, RecordModal) {
 
             if ($target.get(0)) {
                 $target.get(0).checked = false;
+                $target.closest('tr').removeClass('active');
             }
 
-            var index = this.checkedList.indexOf(id);
+            let index = this.checkedList.indexOf(id);
 
             if (index !== -1) {
                 this.checkedList.splice(index, 1);
-            }
-
-            if ($target.get(0)) {
-                $target.closest('tr').removeClass('active');
             }
 
             this.handleAfterCheck(isSilent);
