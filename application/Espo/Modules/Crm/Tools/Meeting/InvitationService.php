@@ -175,7 +175,7 @@ class InvitationService
         foreach ($targets as $target) {
             if (
                 $entity->getEntityType() === $target->getEntityType() &&
-                $entity->getId() && $target->getId()
+                $entity->getId() === $target->getId()
             ) {
                 return true;
             }
