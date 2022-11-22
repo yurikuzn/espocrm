@@ -117,7 +117,7 @@ class InvitationService
 
             if ($targets === null) {
                 $builder->where([
-                    '@relation.status=' => Meeting::STATUS_NOT_HELD,
+                    '@relation.status=' => Meeting::ATTENDEE_STATUS_NONE,
                 ]);
             }
 
