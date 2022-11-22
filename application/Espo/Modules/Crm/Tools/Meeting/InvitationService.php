@@ -119,6 +119,11 @@ class InvitationService
 
                 $sentAddressList[] = $emailAddress;
                 $resultEntityList[] = $user;
+
+                $this->entityManager
+                    ->getRDBRepository($entityType)
+                    ->getRelation($entity, 'users')
+                    ->updateColumns($user, ['status' => Meeting::ATTENDEE_STATUS_NONE]);
             }
         }
 
@@ -146,6 +151,11 @@ class InvitationService
 
                 $sentAddressList[] = $emailAddress;
                 $resultEntityList[] = $contact;
+
+                $this->entityManager
+                    ->getRDBRepository($entityType)
+                    ->getRelation($entity, 'contacts')
+                    ->updateColumns($contact, ['status' => Meeting::ATTENDEE_STATUS_NONE]);
             }
         }
 
@@ -162,6 +172,11 @@ class InvitationService
                 $sentAddressList[] = $emailAddress;
                 $resultEntityList[] = $lead;
             }
+
+            $this->entityManager
+                ->getRDBRepository($entityType)
+                ->getRelation($entity, 'leads')
+                ->updateColumns($lead, ['status' => Meeting::ATTENDEE_STATUS_NONE]);
         }
 
         return $resultEntityList;
