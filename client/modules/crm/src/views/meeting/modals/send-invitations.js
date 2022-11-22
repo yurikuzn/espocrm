@@ -50,7 +50,7 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
 
         data: function () {
             return {
-                message: this.translate('sendInvitationsConfirmation', 'messages', 'Meeting'),
+                message: this.translate('sendInvitationsToSelectedAttendees', 'messages', 'Meeting'),
             };
         },
 
@@ -116,13 +116,13 @@ define('crm:views/meeting/modals/send-invitations', ['views/modal', 'collection'
                             listLayout: [
                                 {
                                     name: 'name',
-                                    noLabel: true,
+                                    customLabel: this.translate('name', 'fields'),
                                     notSortable: true,
                                 },
                                 {
                                     name: 'acceptanceStatus',
                                     width: 40,
-                                    noLabel: true,
+                                    customLabel: this.translate('acceptanceStatus', 'fields', 'Meeting'),
                                     notSortable: true,
                                     view: 'views/fields/enum',
                                     params: {

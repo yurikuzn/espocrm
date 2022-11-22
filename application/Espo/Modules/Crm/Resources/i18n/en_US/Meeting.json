@@ -53,7 +53,7 @@
         "todays": "Today's"
     },
     "messages": {
-        "sendInvitationsConfirmation": "Send invitation emails to attendees?",
+        "sendInvitationsToSelectedAttendees": "Invitation emails will be sent to selected attendees.",
         "selectAcceptanceStatus": "Set your acceptance status.",
         "nothingHasBeenSent": "Nothing were sent"
     }
