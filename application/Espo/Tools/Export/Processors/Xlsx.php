@@ -44,6 +44,8 @@ use Espo\Tools\Export\Processor;
 use Espo\Tools\Export\Processor\Data;
 use Espo\Tools\Export\Processor\Params;
 
+use Espo\Tools\Export\Processors\Xlsx\CellValuePreparatorFactory;
+use Espo\Tools\Export\Processors\Xlsx\FieldHelper;
 use Psr\Http\Message\StreamInterface;
 
 use GuzzleHttp\Psr7\Stream;
@@ -66,31 +68,17 @@ use RuntimeException;
  */
 class Xlsx implements Processor
 {
-    private Config $config;
-    private Metadata $metadata;
-    private Language $language;
-    private DateTimeUtil $dateTime;
-    private EntityManager $entityManager;
-    private FileStorageManager $fileStorageManager;
-    private AddressFormatterFactory $addressFormatterFactory;
-
     public function __construct(
-        Config $config,
-        Metadata $metadata,
-        Language $language,
-        DateTimeUtil $dateTime,
-        EntityManager $entityManager,
-        FileStorageManager $fileStorageManager,
-        AddressFormatterFactory $addressFormatterFactory
-    ) {
-        $this->config = $config;
-        $this->metadata = $metadata;
-        $this->language = $language;
-        $this->dateTime = $dateTime;
-        $this->entityManager = $entityManager;
-        $this->fileStorageManager = $fileStorageManager;
-        $this->addressFormatterFactory = $addressFormatterFactory;
-    }
+        private Config $config,
+        private Metadata $metadata,
+        private Language $language,
+        private DateTimeUtil $dateTime,
+        private EntityManager $entityManager,
+        private FileStorageManager $fileStorageManager,
+        private AddressFormatterFactory $addressFormatterFactory,
+        private FieldHelper $fieldHelper,
+        private CellValuePreparatorFactory $cellValuePreparatorFactory
+    ) {}
 
     /**
      * @throws \PhpOffice\PhpSpreadsheet\Exception
@@ -345,20 +333,29 @@ class Xlsx implements Processor
         foreach ($fieldList as $i => $name) {
             $col = $azRange[$i];
 
-            $defs = $this->metadata->get(['entityDefs', $entityType, 'fields', $name]);
+            //$defs = $this->metadata->get(['entityDefs', $entityType, 'fields', $name]) ?? [];
 
-            if (!$defs) {
-                $defs = [];
-                $defs['type'] = 'base';
-            }
-
-            $type = $defs['type'];
             $foreignField = $name;
-            $linkName = null;
 
+            $linkName = null;
             $foreignScope = null;
 
-            if (str_contains($name, '_')) {
+            $type = $typesCache[$name] ?? null;
+
+            if (!$type) {
+                $fieldData = $this->fieldHelper->getData($entityType, $name);
+
+                $type = $fieldData ? $fieldData->getType() : 'base';
+
+                $typesCache[$name] = $type;
+            }
+
+            // @todo Cache preparators.
+            $preparator = $this->cellValuePreparatorFactory->create($type, $entityType);
+
+            $value = $preparator->prepare($name, $row);
+
+            /*if (str_contains($name, '_')) {
                 list($linkName, $foreignField) = explode('_', $name);
 
                 $foreignScope = $this->metadata
@@ -384,9 +381,9 @@ class Xlsx implements Processor
                     $type = $this->metadata
                         ->get(['entityDefs', $foreignScope, 'fields', $foreignField, 'type'], $type);
                 }
-            }
+            }*/
 
-            $typesCache[$name] = $type;
+
 
             if ($type === 'link' || $type === 'linkOne') {
                 if (array_key_exists($name.'Name', $row)) {
