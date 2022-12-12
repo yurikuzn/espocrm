@@ -15,11 +15,11 @@ class Address implements CellValuePreparator
     public function prepare(string $name, array $data): ?string
     {
         $address = AddressValue::createBuilder()
-            ->setStreet($row[$name . 'Street'] ?? null)
-            ->setCity($row[$name . 'City'] ?? null)
-            ->setState($row[$name . 'State'] ?? null)
-            ->setCountry($row[$name . 'Country'] ?? null)
-            ->setPostalCode($row[$name . 'PostalCode'] ?? null)
+            ->setStreet($data[$name . 'Street'] ?? null)
+            ->setCity($data[$name . 'City'] ?? null)
+            ->setState($data[$name . 'State'] ?? null)
+            ->setCountry($data[$name . 'Country'] ?? null)
+            ->setPostalCode($data[$name . 'PostalCode'] ?? null)
             ->build();
 
         $formatter = $this->formatterFactory->createDefault();

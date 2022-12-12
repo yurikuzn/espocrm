@@ -679,12 +679,9 @@ class Xlsx implements Processor
             $link = null;
 
             $foreignLink = null;
-            $isForeign = false;
             $foreignField = null;
 
             if (strpos($name, '_')) {
-                $isForeign = true;
-
                 list($foreignLink, $foreignField) = explode('_', $name);
             }
 
@@ -699,22 +696,18 @@ class Xlsx implements Processor
                 }
             }
             else if ($type === 'link') {
-                if (array_key_exists($name.'Id', $row) && $foreignField) {
+                if (array_key_exists($name . 'Id', $row) && $foreignField) {
                     $foreignEntity = null;
 
-                    if (!$isForeign) {
-                        $foreignEntity = $this->metadata->get(
-                            ['entityDefs', $entityType, 'links', $name, 'entity']
-                        );
+                    if (!$foreignLink) {
+                        $foreignEntity = $this->metadata->get(['entityDefs', $entityType, 'links', $name, 'entity']);
                     }
                     else {
-                        $foreignEntity1 = $this->metadata->get(
-                            ['entityDefs', $entityType, 'links', $foreignLink, 'entity']
-                        );
+                        $foreignEntity1 = $this->metadata
+                            ->get(['entityDefs', $entityType, 'links', $foreignLink, 'entity']);
 
-                        $foreignEntity = $this->metadata->get(
-                            ['entityDefs', $foreignEntity1, 'links', $foreignField, 'entity']
-                        );
+                        $foreignEntity = $this->metadata
+                            ->get(['entityDefs', $foreignEntity1, 'links', $foreignField, 'entity']);
                     }
 
                     if ($foreignEntity) {
