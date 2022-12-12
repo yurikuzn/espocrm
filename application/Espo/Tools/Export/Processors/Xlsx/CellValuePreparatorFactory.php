@@ -51,7 +51,7 @@ class CellValuePreparatorFactory
 
         $binding = BindingContainerBuilder::create()
             ->inContext($className, function (ContextualBinder $binder) use ($entityType) {
-                $binder->bindValue('entityType', $entityType);
+                $binder->bindValue('$entityType', $entityType);
             })
             ->build();
 
