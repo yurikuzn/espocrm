@@ -30,26 +30,28 @@
 namespace Espo\Tools\Export\Processors\Xlsx\CellValuePreparators;
 
 use Espo\Tools\Export\Processors\Xlsx\CellValuePreparator;
+use stdClass;
 
-class PersonName implements CellValuePreparator
+class LinkMultiple implements CellValuePreparator
 {
     public function prepare(string $name, array $data): ?string
     {
-        $name = $data[$name] ?? null;
-
-        $arr = [];
-
-        $firstName = $data['first' . ucfirst($name)];
-        $lastName = $data['last' . ucfirst($name)];
-
-        if ($firstName) {
-            $arr[] = $firstName;
+        if (
+            array_key_exists($name . 'Ids', $data) ||
+            array_key_exists($name . 'Names', $data)
+        ) {
+            return null;
         }
 
-        if ($lastName) {
-            $arr[] = $lastName;
-        }
+        /** @var string[] $ids */
+        $ids = $data[$name . 'Ids'];
+        /** @var ?stdClass $names */
+        $names = $data[$name . 'Names'];
 
-        return implode(' ', $arr) ?: null;
+        $nameList = array_map(function ($id) use ($names) {
+            return $names->$id ?? $id;
+        }, $ids);
+
+        return implode(',', $nameList);
     }
 }

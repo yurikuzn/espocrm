@@ -29,12 +29,13 @@
 
 namespace Espo\Tools\Export\Processors\Xlsx\CellValuePreparators;
 
+use Espo\Core\Utils\Json;
 use Espo\Core\Utils\Language;
 use Espo\ORM\Defs;
 use Espo\Tools\Export\Processors\Xlsx\CellValuePreparator;
 use Espo\Tools\Export\Processors\Xlsx\FieldHelper;
 
-class Enumeration implements CellValuePreparator
+class MultiEnum implements CellValuePreparator
 {
     public function __construct(
         private string $entityType,
@@ -51,10 +52,18 @@ class Enumeration implements CellValuePreparator
 
         $value = $data[$name];
 
+        $list = Json::decode($value);
+
+        if (!is_array($value)) {
+            return null;
+        }
+
+        /** @var string[] $list */
+
         $fieldData = $this->fieldHelper->getData($this->entityType, $name);
 
         if (!$fieldData) {
-            return $value;
+            return $this->joinList($list);
         }
 
         $entityType = $fieldData->getEntityType();
@@ -66,15 +75,37 @@ class Enumeration implements CellValuePreparator
             ->getParam('translation');
 
         if (!$translation) {
-            return $this->language->translateOption($value, $field, $entityType);
+            return $this->joinList(
+                array_map(
+                    function ($item) use ($field, $entityType) {
+                        return $this->language->translateOption($item, $field, $entityType);
+                    },
+                    $list
+                )
+            );
         }
 
         $map = $this->language->get($translation);
 
         if (!is_array($map)) {
-            return $value;
+            return $this->joinList($list);
         }
 
-        return $map[$value] ?? $value;
+        return $this->joinList(
+            array_map(
+                function ($item) use ($map) {
+                    return $map[$item] ?? $item;
+                },
+                $list
+            )
+        );
+    }
+
+    /**
+     * @param string[] $list
+     */
+    private function joinList(array $list): string
+    {
+        return implode(', ', $list);
     }
 }

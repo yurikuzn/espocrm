@@ -29,27 +29,52 @@
 
 namespace Espo\Tools\Export\Processors\Xlsx\CellValuePreparators;
 
+use Espo\Core\Utils\Language;
 use Espo\Tools\Export\Processors\Xlsx\CellValuePreparator;
 
-class PersonName implements CellValuePreparator
+class Duration implements CellValuePreparator
 {
+    public function __construct(private Language $language)
+    {}
+
     public function prepare(string $name, array $data): ?string
     {
-        $name = $data[$name] ?? null;
+        $value = $data[$name] ?? null;
 
-        $arr = [];
-
-        $firstName = $data['first' . ucfirst($name)];
-        $lastName = $data['last' . ucfirst($name)];
-
-        if ($firstName) {
-            $arr[] = $firstName;
+        if (!$value) {
+            return null;
         }
 
-        if ($lastName) {
-            $arr[] = $lastName;
+        $seconds = intval($value);
+
+        $days = intval(floor($seconds / 86400));
+        $seconds = $seconds - $days * 86400;
+        $hours = intval(floor($seconds / 3600));
+        $seconds = $seconds - $hours * 3600;
+        $minutes = intval(floor($seconds / 60));
+
+        $value = '';
+
+        if ($days) {
+            $value .= $days . $this->language->translateLabel('d', 'durationUnits');
+
+            if ($minutes || $hours) {
+                $value .= ' ';
+            }
         }
 
-        return implode(' ', $arr) ?: null;
+        if ($hours) {
+            $value .= $hours . $this->language->translateLabel('h', 'durationUnits');
+
+            if ($minutes) {
+                $value .= ' ';
+            }
+        }
+
+        if ($minutes) {
+            $value .= $minutes . $this->language->translateLabel('m', 'durationUnits');
+        }
+
+        return $value;
     }
 }

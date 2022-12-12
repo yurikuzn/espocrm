@@ -31,25 +31,10 @@ namespace Espo\Tools\Export\Processors\Xlsx\CellValuePreparators;
 
 use Espo\Tools\Export\Processors\Xlsx\CellValuePreparator;
 
-class PersonName implements CellValuePreparator
+class Boolean implements CellValuePreparator
 {
-    public function prepare(string $name, array $data): ?string
+    public function prepare(string $name, array $data): bool
     {
-        $name = $data[$name] ?? null;
-
-        $arr = [];
-
-        $firstName = $data['first' . ucfirst($name)];
-        $lastName = $data['last' . ucfirst($name)];
-
-        if ($firstName) {
-            $arr[] = $firstName;
-        }
-
-        if ($lastName) {
-            $arr[] = $lastName;
-        }
-
-        return implode(' ', $arr) ?: null;
+        return (bool) ($data[$name] ?? false);
     }
 }
