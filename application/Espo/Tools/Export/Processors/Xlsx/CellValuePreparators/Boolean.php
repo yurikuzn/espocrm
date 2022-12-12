@@ -33,7 +33,7 @@ use Espo\Tools\Export\Processors\Xlsx\CellValuePreparator;
 
 class Boolean implements CellValuePreparator
 {
-    public function prepare(string $name, array $data): bool
+    public function prepare(string $entityType, string $name, array $data): bool
     {
         return (bool) ($data[$name] ?? false);
     }

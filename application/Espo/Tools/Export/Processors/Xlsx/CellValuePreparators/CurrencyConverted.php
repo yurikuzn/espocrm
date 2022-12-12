@@ -15,7 +15,7 @@ class CurrencyConverted implements CellValuePreparator
         $this->code = $config->get('defaultCurrency');
     }
 
-    public function prepare(string $name, array $data): ?CurrencyValue
+    public function prepare(string $entityType, string $name, array $data): ?CurrencyValue
     {
         $value = $data[$name] ?? null;
 

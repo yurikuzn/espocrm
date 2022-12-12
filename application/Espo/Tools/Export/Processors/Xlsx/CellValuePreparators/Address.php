@@ -12,7 +12,7 @@ class Address implements CellValuePreparator
         private AddressFormatterFactory $formatterFactory
     ) {}
 
-    public function prepare(string $name, array $data): ?string
+    public function prepare(string $entityType, string $name, array $data): ?string
     {
         $address = AddressValue::createBuilder()
             ->setStreet($data[$name . 'Street'] ?? null)

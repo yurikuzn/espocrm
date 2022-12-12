@@ -34,7 +34,7 @@ use stdClass;
 
 class LinkMultiple implements CellValuePreparator
 {
-    public function prepare(string $name, array $data): ?string
+    public function prepare(string $entityType, string $name, array $data): ?string
     {
         if (
             array_key_exists($name . 'Ids', $data) ||

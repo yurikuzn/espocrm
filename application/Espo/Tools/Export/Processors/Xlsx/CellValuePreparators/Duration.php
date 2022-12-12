@@ -37,7 +37,7 @@ class Duration implements CellValuePreparator
     public function __construct(private Language $language)
     {}
 
-    public function prepare(string $name, array $data): ?string
+    public function prepare(string $entityType, string $name, array $data): ?string
     {
         $value = $data[$name] ?? null;
 

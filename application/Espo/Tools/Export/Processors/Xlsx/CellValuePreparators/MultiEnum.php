@@ -38,13 +38,12 @@ use Espo\Tools\Export\Processors\Xlsx\FieldHelper;
 class MultiEnum implements CellValuePreparator
 {
     public function __construct(
-        private string $entityType,
         private Defs $ormDefs,
         private Language $language,
         private FieldHelper $fieldHelper
     ) {}
 
-    public function prepare(string $name, array $data): ?string
+    public function prepare(string $entityType, string $name, array $data): ?string
     {
         if (!array_key_exists($name, $data)) {
             return null;
@@ -60,7 +59,7 @@ class MultiEnum implements CellValuePreparator
 
         /** @var string[] $list */
 
-        $fieldData = $this->fieldHelper->getData($this->entityType, $name);
+        $fieldData = $this->fieldHelper->getData($entityType, $name);
 
         if (!$fieldData) {
             return $this->joinList($list);

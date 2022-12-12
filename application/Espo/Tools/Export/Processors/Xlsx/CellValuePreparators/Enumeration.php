@@ -37,13 +37,12 @@ use Espo\Tools\Export\Processors\Xlsx\FieldHelper;
 class Enumeration implements CellValuePreparator
 {
     public function __construct(
-        private string $entityType,
         private Defs $ormDefs,
         private Language $language,
         private FieldHelper $fieldHelper
     ) {}
 
-    public function prepare(string $name, array $data): ?string
+    public function prepare(string $entityType, string $name, array $data): ?string
     {
         if (!array_key_exists($name, $data)) {
             return null;
@@ -51,7 +50,7 @@ class Enumeration implements CellValuePreparator
 
         $value = $data[$name];
 
-        $fieldData = $this->fieldHelper->getData($this->entityType, $name);
+        $fieldData = $this->fieldHelper->getData($entityType, $name);
 
         if (!$fieldData) {
             return $value;

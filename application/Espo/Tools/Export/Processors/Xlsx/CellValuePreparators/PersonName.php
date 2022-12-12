@@ -33,7 +33,7 @@ use Espo\Tools\Export\Processors\Xlsx\CellValuePreparator;
 
 class PersonName implements CellValuePreparator
 {
-    public function prepare(string $name, array $data): ?string
+    public function prepare(string $entityType, string $name, array $data): ?string
     {
         $name = $data[$name] ?? null;
 

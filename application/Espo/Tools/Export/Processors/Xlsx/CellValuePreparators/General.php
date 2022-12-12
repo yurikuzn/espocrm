@@ -36,7 +36,7 @@ class General implements CellValuePreparator
     /**
      * @inheritDoc
      */
-    public function prepare(string $name, array $data): string|bool|int|float|null
+    public function prepare(string $entityType, string $name, array $data): string|bool|int|float|null
     {
         $value = $data[$name] ?? null;
 

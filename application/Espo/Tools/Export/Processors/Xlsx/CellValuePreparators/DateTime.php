@@ -17,7 +17,7 @@ class DateTime implements CellValuePreparator
         $this->timezone = $config->get('timeZone') ?? 'UTC';
     }
 
-    public function prepare(string $name, array $data): ?DateTimeValue
+    public function prepare(string $entityType, string $name, array $data): ?DateTimeValue
     {
         $value = $data[$name] ?? null;
 

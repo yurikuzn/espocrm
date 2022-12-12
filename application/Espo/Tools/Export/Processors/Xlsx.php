@@ -45,6 +45,7 @@ use Espo\Tools\Export\Processor;
 use Espo\Tools\Export\Processor\Data;
 use Espo\Tools\Export\Processor\Params;
 
+use Espo\Tools\Export\Processors\Xlsx\CellValuePreparator;
 use Espo\Tools\Export\Processors\Xlsx\CellValuePreparatorFactory;
 use Espo\Tools\Export\Processors\Xlsx\FieldHelper;
 use PhpOffice\PhpSpreadsheet\Exception as SpreadsheetException;
@@ -70,6 +71,9 @@ use RuntimeException;
  */
 class Xlsx implements Processor
 {
+    /** @var array<string, CellValuePreparator> */
+    private array $preparatorsCache = [];
+
     public function __construct(
         private Config $config,
         private Metadata $metadata,
@@ -373,10 +377,9 @@ class Xlsx implements Processor
             $typesCache[$name] = $type;
         }
 
-        // @todo Cache preparators.
-        $preparator = $this->cellValuePreparatorFactory->create($type, $entityType);
+        $preparator = $this->getPreparator($type);
 
-        $value = $preparator->prepare($name, $row);
+        $value = $preparator->prepare($entityType, $name, $row);
 
         if ($type === 'image') {
             $attachmentId = $row[$name . 'Id'] ?? null;
@@ -435,275 +438,6 @@ class Xlsx implements Processor
                 ->getNumberFormat()
                 ->setFormatCode($this->getCurrencyFormatCode($value->getCode()));
         }
-
-        /*if (str_contains($name, '_')) {
-            list($linkName, $foreignField) = explode('_', $name);
-
-            $foreignScope = $this->metadata
-                ->get(['entityDefs', $entityType, 'links', $linkName, 'entity']);
-
-            if ($foreignScope) {
-                $type = $this->metadata
-                    ->get(['entityDefs', $foreignScope, 'fields', $foreignField, 'type'], $type);
-            }
-        }
-
-        if ($type === 'foreign') {
-            $linkName = $this->metadata
-                ->get(['entityDefs', $entityType, 'fields', $name, 'link']);
-
-            $foreignField = $this->metadata
-                ->get(['entityDefs', $entityType, 'fields', $name, 'field']);
-
-            $foreignScope = $this->metadata
-                ->get(['entityDefs', $entityType, 'links', $linkName, 'entity']);
-
-            if ($foreignScope) {
-                $type = $this->metadata
-                    ->get(['entityDefs', $foreignScope, 'fields', $foreignField, 'type'], $type);
-            }
-        }*/
-
-        /*if ($type === 'link' || $type === 'linkOne') {
-            if (array_key_exists($name.'Name', $row)) {
-                $sheet->setCellValue("$col$rowNumber", $row[$name.'Name']);
-            }
-        }
-        else if ($type === 'linkParent') {
-            if (array_key_exists($name.'Name', $row)) {
-                $sheet->setCellValue("$col$rowNumber", $row[$name.'Name']);
-            }
-        }
-        else if ($type === 'int') {
-            $sheet->setCellValue("$col$rowNumber", $row[$name] ?: 0);
-        }
-        else if ($type === 'float') {
-            $sheet->setCellValue("$col$rowNumber", $row[$name] ?: 0);
-        }
-        else if ($type === 'currency') {
-            if (array_key_exists($name.'Currency', $row) && array_key_exists($name, $row)) {
-                $sheet->setCellValue("$col$rowNumber", $row[$name] ? $row[$name] : '');
-
-                $currency = $row[$name . 'Currency'] ?? $this->config->get('defaultCurrency');
-
-                $sheet->getStyle("$col$rowNumber")
-                    ->getNumberFormat()
-                    ->setFormatCode(
-                        $this->getCurrencyFormatCode($currency)
-                    );
-            }
-        }
-        else if ($type === 'currencyConverted') {
-            if (array_key_exists($name, $row)) {
-                $currency = $this->config->get('defaultCurrency');
-
-                $sheet->getStyle("$col$rowNumber")
-                    ->getNumberFormat()
-                    ->setFormatCode(
-                        $this->getCurrencyFormatCode($currency)
-                    );
-
-                $sheet->setCellValue("$col$rowNumber", $row[$name] ? $row[$name] : '');
-            }
-        }
-        else if ($type === 'personName') {
-            if (!empty($row['name'])) {
-                $sheet->setCellValue("$col$rowNumber", $row['name']);
-            }
-            else {
-                $personName = '';
-
-                if (!empty($row['firstName'])) {
-                    $personName .= $row['firstName'];
-                }
-
-                if (!empty($row['lastName'])) {
-                    if (!empty($row['firstName'])) {
-                        $personName .= ' ';
-                    }
-
-                    $personName .= $row['lastName'];
-                }
-
-                $sheet->setCellValue($col . $rowNumber, $personName);
-            }
-        }
-        else if ($type === 'date') {
-            if (isset($row[$name])) {
-                $sheet->setCellValue(
-                    $col . $rowNumber,
-                    SharedDate::PHPToExcel(strtotime($row[$name]))
-                );
-            }
-        }
-        else if ($type === 'datetime' || $type === 'datetimeOptional') {
-            $value = null;
-
-            if ($type === 'datetimeOptional') {
-                if (isset($row[$name . 'Date']) && $row[$name . 'Date']) {
-                    $value = $row[$name . 'Date'];
-                }
-            }
-
-            if (!$value) {
-                if (isset($row[$name])) {
-                    $value = $row[$name];
-                }
-            }
-
-            if ($value && strlen($value) > 11) {
-                try {
-                    $timeZone = $this->config->get('timeZone');
-
-                    $dt = new DateTime($value);
-                    $dt->setTimezone(new DateTimeZone($timeZone));
-
-                    $value = $dt->format(DateTimeUtil::SYSTEM_DATE_TIME_FORMAT);
-                }
-                catch (Exception) {
-                    $value = '';
-                }
-            }
-
-            if ($value) {
-                $sheet->setCellValue("$col$rowNumber", SharedDate::PHPToExcel(strtotime($value)));
-            }
-        }
-        else if ($type === 'image') {
-            $attachmentId = $row[$name . 'Id'] ?? null;
-
-            if ($attachmentId) {
-                $attachment = $this->entityManager->getEntityById(Attachment::ENTITY_TYPE, $attachmentId);
-
-                if ($attachment) {
-                    $objDrawing = new Drawing();
-                    $filePath = $this->fileStorageManager->getLocalFilePath($attachment);
-
-                    if ($filePath && file_exists($filePath)) {
-                        $objDrawing->setPath($filePath);
-                        $objDrawing->setHeight(100);
-                        $objDrawing->setCoordinates("$col$rowNumber");
-                        $objDrawing->setWorksheet($sheet);
-
-                        $sheet->getRowDimension($rowNumber)->setRowHeight(100);
-                    }
-                }
-            }
-        }
-        else if ($type === 'file') {
-            if (array_key_exists($name.'Name', $row)) {
-                $sheet->setCellValue("$col$rowNumber", $row[$name.'Name']);
-            }
-        }
-        else if ($type === 'enum') {
-            if (array_key_exists($name, $row)) {
-                if ($linkName) {
-                    $value = $this->language->translateOption($row[$name], $foreignField, $foreignScope);
-                }
-                else {
-                    $value = $this->language->translateOption($row[$name], $name, $entityType);
-                }
-
-                $sheet->setCellValue("$col$rowNumber", $value);
-            }
-        }
-        else if ($type === 'linkMultiple' || $type === 'attachmentMultiple') {
-            if (array_key_exists($name . 'Ids', $row) && array_key_exists($name . 'Names', $row)) {
-                $nameList = [];
-
-                foreach ($row[$name . 'Ids'] as $relatedId) {
-                    $relatedName = $relatedId;
-
-                    if (property_exists($row[$name . 'Names'], $relatedId)) {
-                        $relatedName = $row[$name . 'Names']->$relatedId;
-                    }
-
-                    $nameList[] = $relatedName;
-                }
-
-                $sheet->setCellValue("$col$rowNumber", implode(', ', $nameList));
-            }
-        }
-        else if ($type === 'address') {
-            $address = Address::createBuilder()
-                ->setStreet($row[$name . 'Street'] ?? null)
-                ->setCity($row[$name . 'City'] ?? null)
-                ->setState($row[$name . 'State'] ?? null)
-                ->setCountry($row[$name . 'Country'] ?? null)
-                ->setPostalCode($row[$name . 'PostalCode'] ?? null)
-                ->build();
-
-            $formatter = $this->addressFormatterFactory->createDefault();
-
-            $value = $formatter->format($address);
-
-            $sheet->setCellValue("$col$rowNumber", $value);
-        }
-        else if ($type == 'duration') {
-            if (!empty($row[$name])) {
-                $seconds = intval($row[$name]);
-
-                $days = intval(floor($seconds / 86400));
-                $seconds = $seconds - $days * 86400;
-                $hours = intval(floor($seconds / 3600));
-                $seconds = $seconds - $hours * 3600;
-                $minutes = intval(floor($seconds / 60));
-
-                $value = '';
-
-                if ($days) {
-                    $value .= $days . $this->language->translateLabel('d', 'durationUnits');
-
-                    if ($minutes || $hours) {
-                        $value .= ' ';
-                    }
-                }
-
-                if ($hours) {
-                    $value .= $hours . $this->language->translateLabel('h', 'durationUnits');
-
-                    if ($minutes) {
-                        $value .= ' ';
-                    }
-                }
-
-                if ($minutes) {
-                    $value .= $minutes . $this->language->translateLabel('m', 'durationUnits');
-                }
-
-                $sheet->setCellValue("$col$rowNumber", $value);
-            }
-        }
-        else if ($type === 'multiEnum' || $type === 'array') {
-            if (!empty($row[$name])) {
-                $array = json_decode($row[$name]);
-
-                if (!is_array($array)) {
-                    $array = [];
-                }
-
-                foreach ($array as $item) {
-                    if ($linkName) {
-                        $itemValue = $this->language
-                            ->translateOption($item, $foreignField, $foreignScope);
-                    }
-                    else {
-                        $itemValue = $this->language
-                            ->translateOption($item, $name, $entityType);
-                    }
-                    $array[$i] = $itemValue;
-                }
-
-                $value = implode(', ', $array);
-
-                $sheet->setCellValue("$col$rowNumber", $value);
-            }
-        }
-        else {
-            if (array_key_exists($name, $row)) {
-                $sheet->setCellValueExplicit("$col$rowNumber", $row[$name], DataType::TYPE_STRING);
-            }
-        }*/
 
         $link = null;
 
@@ -778,6 +512,15 @@ class Xlsx implements Processor
             $hyperLink->setUrl($link);
             $hyperLink->setTooltip($link);
         }
+    }
+
+    private function getPreparator(string $type): CellValuePreparator
+    {
+        if (!array_key_exists($type, $this->preparatorsCache)) {
+            $this->preparatorsCache[$type] = $this->cellValuePreparatorFactory->create($type);
+        }
+
+        return $this->preparatorsCache[$type];
     }
 
     private function getCurrencyFormatCode(string $currency): string

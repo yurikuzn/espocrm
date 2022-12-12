@@ -45,7 +45,7 @@ class DateTimeOptional implements CellValuePreparator
         $this->timezone = $config->get('timeZone') ?? 'UTC';
     }
 
-    public function prepare(string $name, array $data): DateTimeValue|DateValue|null
+    public function prepare(string $entityType, string $name, array $data): DateTimeValue|DateValue|null
     {
         $dateValue = $data[$name . 'Date'] ?? null;
 

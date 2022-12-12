@@ -33,7 +33,7 @@ use Espo\Tools\Export\Processors\Xlsx\CellValuePreparator;
 
 class Integer implements CellValuePreparator
 {
-    public function prepare(string $name, array $data): int
+    public function prepare(string $entityType, string $name, array $data): int
     {
         /** @var int */
         return $data[$name] ?? 0;

@@ -33,7 +33,7 @@ use Espo\Tools\Export\Processors\Xlsx\CellValuePreparator;
 
 class Floating implements CellValuePreparator
 {
-    public function prepare(string $name, array $data): float
+    public function prepare(string $entityType, string $name, array $data): float
     {
         return $data[$name] ?? 0;
     }

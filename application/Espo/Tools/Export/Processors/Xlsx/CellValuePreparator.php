@@ -39,5 +39,9 @@ interface CellValuePreparator
      * @param string $name A field name.
      * @param array<string, mixed> $data An attribute-value map.
      */
-    public function prepare(string $name, array $data): string|bool|int|float|Date|DateTime|Currency|null;
+    public function prepare(
+        string $entityType,
+        string $name,
+        array $data
+    ): string|bool|int|float|Date|DateTime|Currency|null;
 }

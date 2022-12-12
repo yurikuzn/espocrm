@@ -7,7 +7,7 @@ use Espo\Tools\Export\Processors\Xlsx\CellValuePreparator;
 
 class Currency implements CellValuePreparator
 {
-    public function prepare(string $name, array $data): ?CurrencyValue
+    public function prepare(string $entityType, string $name, array $data): ?CurrencyValue
     {
         $code = $data[$name . 'Currency'] ?? null;
         $value = $data[$name] ?? null;
