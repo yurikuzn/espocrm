@@ -39,8 +39,9 @@ use Espo\Core\Utils\Config;
 use Espo\Core\Utils\DateTime as DateTimeUtil;
 use Espo\Core\Utils\Language;
 use Espo\Core\Utils\Metadata;
+use Espo\ORM\Entity;
+use Espo\Tools\Export\Collection;
 use Espo\Tools\Export\Processor as ProcessorInterface;
-use Espo\Tools\Export\Processor\Data;
 use Espo\Tools\Export\Processor\Params;
 
 use Psr\Http\Message\StreamInterface;
@@ -108,7 +109,7 @@ class Processor implements ProcessorInterface
      * @throws SpreadsheetException
      * @throws WriterException
      */
-    public function process(Params $params, Data $data): StreamInterface
+    public function process(Params $params, Collection $collection): StreamInterface
     {
         $entityType = $params->getEntityType();
         $fieldList = $params->getFieldList();
@@ -189,6 +190,19 @@ class Processor implements ProcessorInterface
         $typesCache = [];
 
         $rowNumber++;
+
+        foreach ($collection as $entity) {
+            $this->processRow(
+                $entity,
+                $sheet,
+                $rowNumber,
+                $fieldList,
+                $azRange,
+                $typesCache
+            );
+
+            $rowNumber++;
+        }
 
         while (true) {
             $row = $data->readRow();
@@ -314,15 +328,13 @@ class Processor implements ProcessorInterface
     }
 
     /**
-     * @param array<string, mixed> $row
      * @param string[] $fieldList
      * @param string[] $azRange
      * @param array<string, string> $typesCache
      * @throws SpreadsheetException
      */
     private function processRow(
-        string $entityType,
-        array $row,
+        Entity $entity,
         Worksheet $sheet,
         int $rowNumber,
         array $fieldList,
@@ -336,8 +348,7 @@ class Processor implements ProcessorInterface
             $coordinate = $col . $rowNumber;
 
             $this->processCell(
-                $entityType,
-                $row,
+                $entity,
                 $sheet,
                 $rowNumber,
                 $coordinate,
@@ -348,19 +359,19 @@ class Processor implements ProcessorInterface
     }
 
     /**
-     * @param array<string, mixed> $row
      * @param array<string, string> $typesCache
      * @throws SpreadsheetException
      */
     private function processCell(
-        string $entityType,
-        array $row,
+        Entity $entity,
         Worksheet $sheet,
         int $rowNumber,
         string $coordinate,
         string $name,
         array &$typesCache
     ): void {
+
+        $entityType = $entity->getEntityType();
 
         $type = $typesCache[$name] ?? null;
 
