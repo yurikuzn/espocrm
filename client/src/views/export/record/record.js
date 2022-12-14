@@ -58,6 +58,13 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
             this.controlAllFields();
             this.listenTo(this.model, 'change:exportAllFields', () => this.controlAllFields());
 
+            this.setupExportFieldDefs(formatList, fieldsData);
+            this.setupExportLayout(fieldsData);
+        },
+
+        setupExportFieldDefs: function (formatList, fieldsData) {
+            let formatDefs = this.getMetadata().get(['app', 'export', 'formatDefs']) || {};
+
             let fieldDefs = {
                 format: {
                     type: 'enum',
@@ -73,9 +80,17 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
                 },
             };
 
-            this.model.setDefs({fields: fieldDefs});
+            formatList.forEach(format => {
+                let params = (formatDefs[format] || {}).params || {};
 
-            this.setupExportLayout(fieldsData);
+                for (let name in params) {
+                    let newName = format + Espo.Utils.upperCaseFirst(name);
+
+                    fieldDefs[newName] = Espo.Utils.cloneDeep(params[name]);
+                }
+            });
+
+            this.model.setDefs({fields: fieldDefs});
         },
 
         setupExportLayout: function (fieldsData) {
