@@ -26,7 +26,7 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('views/export/record/record', 'views/record/base', function (Dep) {
+define('views/export/record/record', ['views/record/base'], function (Dep) {
 
     return Dep.extend({
 
@@ -37,40 +37,46 @@ define('views/export/record/record', 'views/record/base', function (Dep) {
 
             this.scope = this.options.scope;
 
-            var fieldList = this.getFieldManager().getEntityTypeFieldList(this.scope);
+            let fieldList = this.getFieldManager().getEntityTypeFieldList(this.scope);
+            let forbiddenFieldList = this.getAcl().getScopeForbiddenFieldList(this.scope);
 
-            var forbiddenFieldList = this.getAcl().getScopeForbiddenFieldList(this.scope);
-
-            fieldList = fieldList.filter(function (item) {
+            fieldList = fieldList.filter(item => {
                 return !~forbiddenFieldList.indexOf(item);
-            }, this);
+            });
 
-
-            fieldList = fieldList.filter(function (item) {
+            fieldList = fieldList.filter(item => {
                 var defs = this.getMetadata().get(['entityDefs', this.scope, 'fields', item]) || {};
 
-                if (defs.disabled) return;
-                if (defs.exportDisabled) return;
-                if (defs.type === 'map') return;
+                if (defs.disabled) {
+                    return;
+                }
+
+                if (defs.exportDisabled) {
+                    return;
+                }
+
+                if (defs.type === 'map') {
+                    return;
+                }
 
                 return true;
-            }, this);
+            });
 
             this.getLanguage().sortFieldList(this.scope, fieldList);
 
             fieldList.unshift('id');
 
-            var translatedOptions = {};
+            let translatedOptions = {};
 
-            fieldList.forEach(function (item) {
+            fieldList.forEach(item => {
                 translatedOptions[item] = this.getLanguage().translate(item, 'fields', this.scope);
-            }, this);
+            });
 
             this.createField('exportAllFields', 'views/fields/bool', {});
 
-            var setFieldList = this.model.get('fieldList') || [];
+            let setFieldList = this.model.get('fieldList') || [];
 
-            setFieldList.forEach(function (item) {
+            setFieldList.forEach(item => {
                 if (~fieldList.indexOf(item)) {
                     return;
                 }
@@ -79,11 +85,11 @@ define('views/export/record/record', 'views/record/base', function (Dep) {
                     return;
                 }
 
-                var arr = item.split('_');
+                let arr = item.split('_');
 
                 fieldList.push(item);
 
-                var foreignScope = this.getMetadata().get(['entityDefs', this.scope, 'links', arr[0], 'entity']);
+                let foreignScope = this.getMetadata().get(['entityDefs', this.scope, 'links', arr[0], 'entity']);
 
                 if (!foreignScope) {
                     return;
@@ -91,8 +97,7 @@ define('views/export/record/record', 'views/record/base', function (Dep) {
 
                 translatedOptions[item] = this.getLanguage().translate(arr[0], 'links', this.scope) + '.' +
                     this.getLanguage().translate(arr[1], 'fields', foreignScope);
-            }, this);
-
+            });
 
             this.createField('fieldList', 'views/fields/multi-enum', {
                 required: true,
@@ -100,7 +105,7 @@ define('views/export/record/record', 'views/record/base', function (Dep) {
                 options: fieldList,
             });
 
-            var formatList =
+            let formatList =
                 this.getMetadata().get(['scopes', this.scope, 'exportFormatList']) ||
                 this.getMetadata().get('app.export.formatList');
 
@@ -110,18 +115,19 @@ define('views/export/record/record', 'views/record/base', function (Dep) {
 
             this.controlAllFields();
 
-            this.listenTo(this.model, 'change:exportAllFields', function () {
+            this.listenTo(this.model, 'change:exportAllFields', () => {
                 this.controlAllFields();
-            }, this);
+            });
         },
 
         controlAllFields: function () {
             if (!this.model.get('exportAllFields')) {
                 this.showField('fieldList');
-            } else {
-                this.hideField('fieldList');
-            }
-        },
 
+                return;
+            }
+
+            this.hideField('fieldList');
+        },
     });
 });

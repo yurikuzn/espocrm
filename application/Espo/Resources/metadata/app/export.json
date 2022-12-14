@@ -43,11 +43,17 @@
                     "type": "bool",
                     "default": false
                 },
-                "recordLinks": {
+                "titleRow": {
                     "type": "bool",
                     "default": false
                 }
-            }
+            },
+            "paramsLayout": [
+                [
+                    {"name": "recordLinks"},
+                    {"name": "titleRow"}
+                ]
+            ]
         }
     }
 }
