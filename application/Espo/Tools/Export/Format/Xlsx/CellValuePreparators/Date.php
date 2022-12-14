@@ -31,7 +31,7 @@ namespace Espo\Tools\Export\Format\Xlsx\CellValuePreparators;
 
 use Espo\Core\Field\Date as DateValue;
 use Espo\ORM\Entity;
-use Espo\Tools\Export\Format\Xlsx\CellValuePreparator;
+use Espo\Tools\Export\Format\CellValuePreparator;
 
 class Date implements CellValuePreparator
 {

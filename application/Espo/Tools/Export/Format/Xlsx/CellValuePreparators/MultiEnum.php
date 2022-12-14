@@ -33,7 +33,7 @@ use Espo\Core\Utils\Json;
 use Espo\Core\Utils\Language;
 use Espo\ORM\Defs;
 use Espo\ORM\Entity;
-use Espo\Tools\Export\Format\Xlsx\CellValuePreparator;
+use Espo\Tools\Export\Format\CellValuePreparator;
 use Espo\Tools\Export\Format\Xlsx\FieldHelper;
 
 class MultiEnum implements CellValuePreparator

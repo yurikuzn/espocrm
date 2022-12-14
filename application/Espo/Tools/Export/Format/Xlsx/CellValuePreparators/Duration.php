@@ -31,7 +31,7 @@ namespace Espo\Tools\Export\Format\Xlsx\CellValuePreparators;
 
 use Espo\Core\Utils\Language;
 use Espo\ORM\Entity;
-use Espo\Tools\Export\Format\Xlsx\CellValuePreparator;
+use Espo\Tools\Export\Format\CellValuePreparator;
 
 class Duration implements CellValuePreparator
 {

@@ -30,7 +30,7 @@
 namespace Espo\Tools\Export\Format\Xlsx\CellValuePreparators;
 
 use Espo\ORM\Entity;
-use Espo\Tools\Export\Format\Xlsx\CellValuePreparator;
+use Espo\Tools\Export\Format\CellValuePreparator;
 
 class General implements CellValuePreparator
 {

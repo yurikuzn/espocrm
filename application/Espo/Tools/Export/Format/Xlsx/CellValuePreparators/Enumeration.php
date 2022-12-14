@@ -32,7 +32,7 @@ namespace Espo\Tools\Export\Format\Xlsx\CellValuePreparators;
 use Espo\Core\Utils\Language;
 use Espo\ORM\Defs;
 use Espo\ORM\Entity;
-use Espo\Tools\Export\Format\Xlsx\CellValuePreparator;
+use Espo\Tools\Export\Format\CellValuePreparator;
 use Espo\Tools\Export\Format\Xlsx\FieldHelper;
 
 class Enumeration implements CellValuePreparator

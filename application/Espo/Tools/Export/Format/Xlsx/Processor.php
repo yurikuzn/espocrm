@@ -41,6 +41,8 @@ use Espo\Core\Utils\Language;
 use Espo\Core\Utils\Metadata;
 use Espo\ORM\Entity;
 use Espo\Tools\Export\Collection;
+use Espo\Tools\Export\Format\CellValuePreparator;
+use Espo\Tools\Export\Format\CellValuePreparatorFactory;
 use Espo\Tools\Export\Processor as ProcessorInterface;
 use Espo\Tools\Export\Processor\Params;
 
@@ -63,6 +65,8 @@ use RuntimeException;
 
 class Processor implements ProcessorInterface
 {
+    private const FORMAT = 'xlsx';
+
     /** @var array<string, CellValuePreparator> */
     private array $preparatorsCache = [];
 
@@ -566,7 +570,7 @@ class Processor implements ProcessorInterface
     private function getPreparator(string $type): CellValuePreparator
     {
         if (!array_key_exists($type, $this->preparatorsCache)) {
-            $this->preparatorsCache[$type] = $this->cellValuePreparatorFactory->create($type);
+            $this->preparatorsCache[$type] = $this->cellValuePreparatorFactory->create(self::FORMAT, $type);
         }
 
         return $this->preparatorsCache[$type];

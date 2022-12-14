@@ -33,7 +33,7 @@ use Espo\Core\Field\DateTime as DateTimeValue;
 use Espo\Core\Field\Date as DateValue;
 use Espo\Core\Utils\Config;
 use Espo\ORM\Entity;
-use Espo\Tools\Export\Format\Xlsx\CellValuePreparator;
+use Espo\Tools\Export\Format\CellValuePreparator;
 
 use DateTimeZone;
 

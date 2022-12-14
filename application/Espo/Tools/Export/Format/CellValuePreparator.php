@@ -27,7 +27,7 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Tools\Export\Format\Xlsx;
+namespace Espo\Tools\Export\Format;
 
 use Espo\Core\Field\Currency;
 use Espo\Core\Field\Date;
