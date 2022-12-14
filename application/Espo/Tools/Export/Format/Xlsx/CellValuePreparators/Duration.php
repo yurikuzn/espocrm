@@ -30,6 +30,7 @@
 namespace Espo\Tools\Export\Format\Xlsx\CellValuePreparators;
 
 use Espo\Core\Utils\Language;
+use Espo\ORM\Entity;
 use Espo\Tools\Export\Format\Xlsx\CellValuePreparator;
 
 class Duration implements CellValuePreparator
@@ -37,9 +38,9 @@ class Duration implements CellValuePreparator
     public function __construct(private Language $language)
     {}
 
-    public function prepare(string $entityType, string $name, array $data): ?string
+    public function prepare(Entity $entity, string $name): ?string
     {
-        $value = $data[$name] ?? null;
+        $value = $entity->get($name);
 
         if (!$value) {
             return null;
