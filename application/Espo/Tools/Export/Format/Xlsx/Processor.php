@@ -130,7 +130,7 @@ class Processor implements ProcessorInterface
         $now = new DateTime();
         $now->setTimezone(new DateTimeZone($this->config->get('timeZone', 'UTC')));
 
-        $sheet->setCellValue('A1', $this->sanitizeCell($exportName));
+        $sheet->setCellValue('A1', $this->sanitizeCellValue($exportName));
         $sheet->setCellValue('B1',
             SharedDate::PHPToExcel(strtotime($now->format(DateTimeUtil::SYSTEM_DATE_TIME_FORMAT)))
         );
@@ -169,7 +169,7 @@ class Processor implements ProcessorInterface
                 $type = $fieldData->getType();
             }
 
-            $sheet->setCellValue($col . $rowNumber, $this->sanitizeCell($label));
+            $sheet->setCellValue($col . $rowNumber, $this->sanitizeCellValue($label));
             $sheet->getColumnDimension($col)->setAutoSize(true);
 
             if (
@@ -399,6 +399,8 @@ class Processor implements ProcessorInterface
             $value = null;
         }
 
+        $value = $this->sanitizeCellValue($value);
+
         if (is_string($value)) {
             $sheet->setCellValueExplicit($coordinate, $value, DataType::TYPE_STRING);
         }
@@ -617,7 +619,7 @@ class Processor implements ProcessorInterface
         return str_replace('\'', '', $sheetName);
     }
 
-    private function sanitizeCell(mixed $value): mixed
+    private function sanitizeCellValue(mixed $value): mixed
     {
         if (!is_string($value)) {
             return $value;
@@ -632,19 +634,5 @@ class Processor implements ProcessorInterface
         }
 
         return $value;
-    }
-
-    /**
-     * @param array<string, mixed> $row
-     * @return array<string, mixed>
-     */
-    private function sanitizeRow(array $row): array
-    {
-        return array_map(
-            function ($item) {
-                return $this->sanitizeCell($item);
-            },
-            $row
-        );
     }
 }

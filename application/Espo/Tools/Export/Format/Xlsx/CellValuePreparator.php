@@ -32,16 +32,15 @@ namespace Espo\Tools\Export\Format\Xlsx;
 use Espo\Core\Field\Currency;
 use Espo\Core\Field\Date;
 use Espo\Core\Field\DateTime;
+use Espo\ORM\Entity;
 
 interface CellValuePreparator
 {
     /**
      * @param string $name A field name.
-     * @param array<string, mixed> $data An attribute-value map.
      */
     public function prepare(
-        string $entityType,
-        string $name,
-        array $data
+        Entity $entity,
+        string $name
     ): string|bool|int|float|Date|DateTime|Currency|null;
 }
