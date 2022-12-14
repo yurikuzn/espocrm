@@ -385,11 +385,11 @@ class Processor implements ProcessorInterface
 
         $preparator = $this->getPreparator($type);
 
-        $value = $preparator->prepare($entityType, $name, $row);
+        $value = $preparator->prepare($entity, $name);
 
         if ($type === 'image') {
             $this->applyImage(
-                $row,
+                $entity,
                 $coordinate,
                 $sheet,
                 $rowNumber,
@@ -434,8 +434,7 @@ class Processor implements ProcessorInterface
 
         $this->applyLinks(
             $type,
-            $entityType,
-            $row,
+            $entity,
             $sheet,
             $coordinate,
             $name
@@ -443,17 +442,17 @@ class Processor implements ProcessorInterface
     }
 
     /**
-     * @param array<string, mixed> $row
      * @throws SpreadsheetException
      */
     private function applyImage(
-        array $row,
+        Entity $entity,
         string $coordinate,
         Worksheet $sheet,
         int $rowNumber,
         string $name
     ): void {
-        $attachmentId = $row[$name . 'Id'] ?? null;
+
+        $attachmentId = $entity->get($name . 'Id');
 
         if (!$attachmentId) {
             return;
@@ -482,13 +481,11 @@ class Processor implements ProcessorInterface
     }
 
     /**
-     * @param array<string, mixed> $row
      * @throws SpreadsheetException
      */
     private function applyLinks(
         string $type,
-        string $entityType,
-        array $row,
+        Entity $entity,
         Worksheet $sheet,
         string $coordinate,
         string $name
