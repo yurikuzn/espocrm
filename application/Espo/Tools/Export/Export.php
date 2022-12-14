@@ -120,12 +120,6 @@ class Export
                 ->handle($params, $processorParams);
         }
 
-        $dataResource = fopen('php://temp', 'w');
-
-        if ($dataResource === false) {
-            throw new RuntimeException("Could not open temp.");
-        }
-
         $loaderParams = LoaderParams::create()
             ->withSelect($processorParams->getAttributeList());
 
@@ -143,35 +137,7 @@ class Export
             processorParams: $processorParams,
         ) ;
 
-        /*foreach ($collection as $entity) {
-            $this->listLoadProcessor->process($entity, $loaderParams);
-
-            if (method_exists($recordService, 'loadAdditionalFieldsForExport')) {
-                $recordService->loadAdditionalFieldsForExport($entity);
-            }
-
-            if ($loader && $processorParams->getFieldList()) {
-                $loader->load($entity, $processorParams->getFieldList());
-            }
-
-            $row = [];
-
-            foreach ($processorParams->getAttributeList() as $attribute) {
-                $row[$attribute] = $this->getAttributeFromEntity($entity, $attribute);
-            }
-
-            $line = base64_encode(serialize($row)) . \PHP_EOL;
-
-            fwrite($dataResource, $line);
-        }
-
-        rewind($dataResource);
-
-        $processorData = new ProcessorData($dataResource);*/
-
         $stream = $processor->process($processorParams, $exportCollection);
-
-        fclose($dataResource);
 
         $mimeType = $this->metadata->get(['app', 'export', 'formatDefs', $format, 'mimeType']);
 
