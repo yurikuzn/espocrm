@@ -89,12 +89,12 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
             this.formatList.forEach(format => {
                 let params = (formatDefs[format] || {}).params || {};
 
-                customParams[format] = [];
+                this.customParams[format] = [];
 
                 for (let name in params) {
                     let newName = this.modifyParamName(format, name);
 
-                    customParams[format].push(name);
+                    this.customParams[format].push(name);
 
                     fieldDefs[newName] = Espo.Utils.cloneDeep(params[name]);
                 }
