@@ -48,7 +48,9 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
 
         setup: function () {
             Dep.prototype.setup.call(this);
+        },
 
+        setupBeforeFinal: function () {
             this.formatList = this.options.formatList;
             this.scope = this.options.scope;
 
@@ -63,6 +65,8 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
 
             this.controlAllFields();
             this.listenTo(this.model, 'change:exportAllFields', () => this.controlAllFields());
+
+            Dep.prototype.setupBeforeFinal.call(this);
         },
 
         setupExportFieldDefs: function (fieldsData) {
@@ -148,13 +152,29 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
             };
 
             this.formatList.forEach(format => {
-                let logic = this.getFormatParamsDefs(format).dynamicLogic || {};
+                let defs = this.getFormatParamsDefs(format).dynamicLogic || {};
 
-                for (let param in logic) {
+                this.customParams[format].forEach(param => {
+                    let logic = defs[param] || {};
+
+                    if (!logic.visible) {
+                        logic.visible = {};
+                    }
+
+                    if (!logic.visible.conditionGroup) {
+                        logic.visible.conditionGroup = [];
+                    }
+
+                    logic.visible.conditionGroup.push({
+                        type: 'equals',
+                        attribute: 'format',
+                        value: format,
+                    });
+
                     let newName = this.modifyParamName(format, param);
 
-                    this.dynamicLogicDefs.fields[newName] = logic[param];
-                }
+                    this.dynamicLogicDefs.fields[newName] = logic;
+                });
             });
         },
 
@@ -257,10 +277,6 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
                 .filter(item => item !== format)
                 .forEach(format => {
                     this.hidePanel(format);
-
-                    this.customParams[format].forEach(param => {
-                        this.hideField(this.modifyParamName(format, param))
-                    });
                 });
 
             this.formatList
@@ -269,10 +285,6 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
                     this.customParams[format].length ?
                         this.showPanel(format) :
                         this.hidePanel(format);
-
-                    this.customParams[format].forEach(param => {
-                        this.showField(this.modifyParamName(format, param))
-                    });
                 });
         },
     });
