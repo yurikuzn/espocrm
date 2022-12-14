@@ -29,7 +29,6 @@
 
 namespace Espo\Tools\Export\Format\Xlsx\CellValuePreparators;
 
-use Espo\Core\Utils\Json;
 use Espo\Core\Utils\Language;
 use Espo\ORM\Defs;
 use Espo\ORM\Entity;
