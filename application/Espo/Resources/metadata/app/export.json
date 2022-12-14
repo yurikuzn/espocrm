@@ -45,7 +45,8 @@
                 },
                 "titleRow": {
                     "type": "bool",
-                    "default": false
+                    "default": false,
+                    "tooltip": true
                 }
             },
             "paramsLayout": [
