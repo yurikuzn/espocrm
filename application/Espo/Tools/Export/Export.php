@@ -30,6 +30,7 @@
 namespace Espo\Tools\Export;
 
 use Espo\Core\ORM\Repository\SaveOption;
+use Espo\Tools\Export\Collection as ExportCollection;
 use Espo\Tools\Export\Processor\Data as ProcessorData;
 use Espo\Tools\Export\Processor\Params as ProcessorParams;
 use Espo\ORM\Entity;
@@ -133,6 +134,15 @@ class Export
 
         $loader = $this->additionalFieldsLoaderFactory->isCreatable($format) ?
             $this->additionalFieldsLoaderFactory->create($format) : null;
+
+        $exportCollection = new ExportCollection(
+            collection: $collection,
+            listLoadProcessor: $this->listLoadProcessor,
+            loaderParams: $loaderParams,
+            additionalFieldsLoader: $loader,
+            recordService: $recordService,
+            processorParams: $processorParams,
+        ) ;
 
         foreach ($collection as $entity) {
             $this->listLoadProcessor->process($entity, $loaderParams);
