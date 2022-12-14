@@ -58,17 +58,15 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
             this.controlAllFields();
             this.listenTo(this.model, 'change:exportAllFields', () => this.controlAllFields());
 
-            this.setupExportFieldDefs(formatList, fieldsData);
+            this.setupExportFieldDefs(fieldsData);
             this.setupExportLayout(fieldsData);
         },
 
-        setupExportFieldDefs: function (formatList, fieldsData) {
-            let formatDefs = this.getMetadata().get(['app', 'export', 'formatDefs']) || {};
-
+        setupExportFieldDefs: function (fieldsData) {
             let fieldDefs = {
                 format: {
                     type: 'enum',
-                    options: formatList,
+                    options: this.formatList,
                 },
                 fieldList: {
                     type: 'multiEnum',
@@ -80,7 +78,9 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
                 },
             };
 
-            formatList.forEach(format => {
+            let formatDefs = this.getMetadata().get(['app', 'export', 'formatDefs']) || {};
+
+            this.formatList.forEach(format => {
                 let params = (formatDefs[format] || {}).params || {};
 
                 for (let name in params) {
@@ -113,11 +113,28 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
                                 translatedOptions: fieldsData.translations,
                             },
                         }
-                    ]
+                    ],
                 ]
             };
 
             this.detailLayout.push(mainPanel);
+
+            let formatDefs = this.getMetadata().get(['app', 'export', 'formatDefs']) || {};
+
+            this.formatList.forEach(format => {
+                let rows = Espo.Utils.cloneDeep((formatDefs[format] || {}).paramsLayout || []);
+
+                rows.forEach(row => {
+                    row.forEach(item => {
+                        item.name = format + Espo.Utils.upperCaseFirst(item.name);
+                    });
+                })
+
+                this.detailLayout.push({
+                    name: format,
+                    rows: this.detailLayout,
+                })
+            });
         },
 
         /**
