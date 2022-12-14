@@ -73,6 +73,8 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
                 },
             };
 
+            this.model.setDefs({fields: fieldDefs});
+
             this.setupExportLayout(fieldsData);
         },
 
