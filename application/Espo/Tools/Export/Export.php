@@ -141,12 +141,14 @@ class Export
 
         $mimeType = $this->metadata->get(['app', 'export', 'formatDefs', $format, 'mimeType']);
 
+        /** @var Attachment $attachment */
         $attachment = $this->entityManager->getRepositoryByClass(Attachment::class)->getNew();
 
-        $attachment->set('name', $processorParams->getFileName());
-        $attachment->set('role', Attachment::ROLE_EXPORT_FILE);
-        $attachment->set('type', $mimeType);
-        $attachment->set('size', $stream->getSize());
+        $attachment
+            ->setName($processorParams->getFileName())
+            ->setRole(Attachment::ROLE_EXPORT_FILE)
+            ->setType($mimeType)
+            ->setSize($stream->getSize());
 
         $this->entityManager->saveEntity($attachment, [
             SaveOption::CREATED_BY_ID => $this->user->getId(),

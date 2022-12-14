@@ -35,7 +35,6 @@ use Espo\Entities\Preferences;
 use Espo\ORM\Entity;
 use Espo\Tools\Export\Collection;
 use Espo\Tools\Export\Processor as ProcessorInterface;
-use Espo\Tools\Export\Processor\Data;
 use Espo\Tools\Export\Processor\Params;
 
 use Psr\Http\Message\StreamInterface;
@@ -86,7 +85,6 @@ class Processor implements ProcessorInterface
      */
     private function prepareRow(Entity $entity, array $attributeList): array
     {
-
         $preparedRow = [];
 
         foreach ($attributeList as $attribute) {
