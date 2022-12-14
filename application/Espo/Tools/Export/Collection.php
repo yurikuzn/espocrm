@@ -38,6 +38,10 @@ use Espo\Tools\Export\Processor\Params as ProcessorParams;
 use IteratorAggregate;
 use Traversable;
 
+/**
+ * @template TEntity of Entity
+ * @implements IteratorAggregate<int, TEntity>
+ */
 class Collection implements IteratorAggregate
 {
     public function __construct(
