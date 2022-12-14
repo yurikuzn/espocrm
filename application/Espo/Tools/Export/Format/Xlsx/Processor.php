@@ -490,6 +490,9 @@ class Processor implements ProcessorInterface
         string $coordinate,
         string $name
     ): void {
+
+        $entityType = $entity->getEntityType();
+
         $link = null;
 
         $foreignLink = null;
@@ -502,19 +505,23 @@ class Processor implements ProcessorInterface
         $siteUrl = $this->config->getSiteUrl();
 
         if ($name === 'name') {
-            if (array_key_exists('id', $row)) {
-                $link = $siteUrl . "/#" . $entityType . "/view/" . $row['id'];
+            if ($entity->hasId()) {
+                $link = $siteUrl . '/#' . $entityType . '/view/' . $entity->getId();
             }
         }
         else if ($type === 'url') {
-            if (array_key_exists($name, $row) && filter_var($row[$name], FILTER_VALIDATE_URL)) {
-                $link = $row[$name];
+            $value = $entity->get($name);
+
+            if ($value && filter_var($value, FILTER_VALIDATE_URL)) {
+                $link = $value;
             }
         }
         else if ($type === 'link') {
             $idKey = $name . 'Id';
 
-            if (array_key_exists($idKey, $row) && $foreignField) {
+            $idValue = $entity->get($idKey);
+
+            if ($idValue && $foreignField) {
                 if (!$foreignLink) {
                     $foreignEntity = $this->metadata->get(['entityDefs', $entityType, 'links', $name, 'entity']);
                 }
@@ -527,7 +534,7 @@ class Processor implements ProcessorInterface
                 }
 
                 if ($foreignEntity) {
-                    $link = $siteUrl . "/#" . $foreignEntity . "/view/" . $row[$idKey];
+                    $link = $siteUrl . '/#' . $foreignEntity . '/view/' . $idValue;
                 }
             }
         }
