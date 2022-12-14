@@ -31,7 +31,6 @@ namespace Espo\Tools\Export;
 
 use Espo\Core\ORM\Repository\SaveOption;
 use Espo\Tools\Export\Collection as ExportCollection;
-use Espo\Tools\Export\Format\Xlsx\FieldHelper;
 use Espo\Tools\Export\Processor\Params as ProcessorParams;
 use Espo\ORM\Entity;
 use Espo\ORM\BaseEntity;
@@ -45,7 +44,6 @@ use Espo\Core\FileStorage\Manager as FileStorageManager;
 use Espo\Core\Record\ServiceContainer;
 use Espo\Core\Select\SelectBuilderFactory;
 use Espo\Core\Utils\FieldUtil;
-use Espo\Core\Utils\Json;
 use Espo\Core\Utils\Metadata;
 use Espo\ORM\Collection;
 use Espo\ORM\EntityManager;

@@ -34,17 +34,19 @@ use Espo\Core\FieldProcessing\Loader\Params as LoaderParams;
 use Espo\Core\Record\Service as RecordService;
 use Espo\ORM\Collection as OrmCollection;
 use Espo\ORM\Entity;
-use Espo\Tools\Export\Format\Xlsx\FieldHelper;
 use Espo\Tools\Export\Processor\Params as ProcessorParams;
 use IteratorAggregate;
 use Traversable;
 
 /**
- * @template TEntity of Entity
- * @implements IteratorAggregate<int, TEntity>
+ * @implements IteratorAggregate<int, Entity>
  */
 class Collection implements IteratorAggregate
 {
+    /**
+     * @param OrmCollection<Entity> $collection
+     * @param RecordService<Entity> $recordService
+     */
     public function __construct(
         private OrmCollection $collection,
         private ListLoadProcessor $listLoadProcessor,
