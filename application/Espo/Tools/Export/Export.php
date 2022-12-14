@@ -183,52 +183,17 @@ class Export
             ->withEntityType($params->getEntityType());
     }
 
-    private function getAttributeFromEntity(Entity $entity, string $attribute): mixed
-    {
-        $type = $entity->getAttributeType($attribute);
-
-        if ($type === Entity::FOREIGN) {
-            $type = $this->getForeignAttributeType($entity, $attribute) ?? $type;
-        }
-
-        switch ($type) {
-            case Entity::JSON_OBJECT:
-                if ($this->getAttributeParam($entity, $attribute, 'isLinkMultipleNameMap')) {
-                    break;
-                }
-
-                $value = $entity->get($attribute);
-
-                return Json::encode($value, \JSON_UNESCAPED_UNICODE);
-
-            case Entity::JSON_ARRAY:
-                if ($this->getAttributeParam($entity, $attribute, 'isLinkMultipleIdList')) {
-                    break;
-                }
-
-                $value = $entity->get($attribute);
-
-                if (is_array($value)) {
-                    return Json::encode($value, \JSON_UNESCAPED_UNICODE);
-                }
-
-                return null;
-
-            case Entity::PASSWORD:
-                return null;
-        }
-
-        return $entity->get($attribute);
-    }
-
     private function getForeignAttributeType(Entity $entity, string $attribute): ?string
     {
         $defs = $this->entityManager->getDefs();
-
         $entityDefs = $defs->getEntity($entity->getEntityType());
 
-        $relation = $this->getAttributeParam($entity, $attribute, 'relation');
-        $foreign = $this->getAttributeParam($entity, $attribute, 'foreign');
+        [$relation, $foreign] = str_contains($attribute, '_') ?
+            explode('_', $attribute) :
+            [
+                $this->getAttributeParam($entity, $attribute, 'relation'),
+                $this->getAttributeParam($entity, $attribute, 'foreign')
+            ];
 
         if (!$relation) {
             return null;
