@@ -517,9 +517,7 @@ class Processor implements ProcessorInterface
             }
         }
         else if ($type === 'link') {
-            $idKey = $name . 'Id';
-
-            $idValue = $entity->get($idKey);
+            $idValue = $entity->get($name . 'Id');
 
             if ($idValue && $foreignField) {
                 if (!$foreignLink) {
@@ -539,29 +537,33 @@ class Processor implements ProcessorInterface
             }
         }
         else if ($type === 'file') {
-            $idKey = $name . 'Id';
+            $idValue = $entity->get($name . 'Id');
 
-            if (array_key_exists($idKey, $row)) {
-                $link = $siteUrl . "/?entryPoint=download&id=" . $row[$idKey];
+            if ($idValue) {
+                $link = $siteUrl . '/?entryPoint=download&id=' . $idValue;
             }
         }
         else if ($type === 'linkParent') {
-            $idKey = $name . 'Id';
-            $typeKey = $name . 'Type';
+            $idValue = $entity->get($name . 'Id');
+            $typeValue = $entity->get($name . 'Type');;
 
-            if (array_key_exists($idKey, $row) && array_key_exists($typeKey, $row)) {
-                $link = $siteUrl . "/#" . $typeKey . "/view/" . $idKey;
+            if ($idValue && $typeValue) {
+                $link = $siteUrl . '/#' . $typeValue . '/view/' . $idValue;
             }
         }
         else if ($type === 'phone') {
-            if (array_key_exists($name, $row)) {
-                $link = "tel:" . $row[$name];
+            $value = $entity->get($name);
+
+            if ($value) {
+                $link = 'tel:' . $value;
             }
         }
 
         else if ($type === 'email') {
-            if (array_key_exists($name, $row)) {
-                $link = "mailto:" . $row[$name];
+            $value = $entity->get($name);
+
+            if ($value) {
+                $link = 'mailto:' . $value;
             }
         }
 
