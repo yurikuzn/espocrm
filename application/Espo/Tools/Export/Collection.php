@@ -39,6 +39,8 @@ use IteratorAggregate;
 use Traversable;
 
 /**
+ * A lazy-iterable collection of entities.
+ *
  * @implements IteratorAggregate<int, Entity>
  */
 class Collection implements IteratorAggregate
