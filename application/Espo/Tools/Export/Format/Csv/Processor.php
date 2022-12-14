@@ -82,7 +82,7 @@ class Processor implements ProcessorInterface
 
     /**
      * @param string[] $attributeList
-     * @return mixed[]
+     * @return string[]
      */
     private function prepareRow(Entity $entity, array $attributeList): array
     {
@@ -104,12 +104,8 @@ class Processor implements ProcessorInterface
         return $preparedRow;
     }
 
-    private function sanitizeCellValue(mixed $value): mixed
+    private function sanitizeCellValue(string $value): string
     {
-        if (!is_string($value)) {
-            return $value;
-        }
-
         if ($value === '') {
             return $value;
         }
