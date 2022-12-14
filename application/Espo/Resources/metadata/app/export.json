@@ -37,6 +37,16 @@
                 "enum": "Espo\\Tools\\Export\\Format\\Xlsx\\CellValuePreparators\\Enumeration",
                 "multiEnum": "Espo\\Tools\\Export\\Format\\Xlsx\\CellValuePreparators\\MultiEnum",
                 "array": "Espo\\Tools\\Export\\Format\\Xlsx\\CellValuePreparators\\MultiEnum"
+            },
+            "params": {
+                "recordLinks": {
+                    "type": "bool",
+                    "default": false
+                },
+                "recordLinks": {
+                    "type": "bool",
+                    "default": false
+                }
             }
         }
     }
