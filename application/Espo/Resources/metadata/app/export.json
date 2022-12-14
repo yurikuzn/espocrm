@@ -55,19 +55,7 @@
                         {"name": "recordLinks"},
                         {"name": "titleRow"}
                     ]
-                ],
-                "dynamicLogic": {
-                    "titleRow": {
-                        "visible": {
-                            "conditionGroup": [
-                                {
-                                    "type": "isTrue",
-                                    "attribute": "xlsxRecordLinks"
-                                }
-                            ]
-                        }
-                    }
-                }
+                ]
             }
         }
     }
