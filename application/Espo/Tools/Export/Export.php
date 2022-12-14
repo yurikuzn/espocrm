@@ -31,7 +31,6 @@ namespace Espo\Tools\Export;
 
 use Espo\Core\ORM\Repository\SaveOption;
 use Espo\Tools\Export\Collection as ExportCollection;
-use Espo\Tools\Export\Processor\Data as ProcessorData;
 use Espo\Tools\Export\Processor\Params as ProcessorParams;
 use Espo\ORM\Entity;
 use Espo\ORM\BaseEntity;
@@ -144,10 +143,9 @@ class Export
             processorParams: $processorParams,
         ) ;
 
-        foreach ($collection as $entity) {
+        /*foreach ($collection as $entity) {
             $this->listLoadProcessor->process($entity, $loaderParams);
 
-            /** For bc. */
             if (method_exists($recordService, 'loadAdditionalFieldsForExport')) {
                 $recordService->loadAdditionalFieldsForExport($entity);
             }
@@ -169,9 +167,9 @@ class Export
 
         rewind($dataResource);
 
-        $processorData = new ProcessorData($dataResource);
+        $processorData = new ProcessorData($dataResource);*/
 
-        $stream = $processor->process($processorParams, $processorData);
+        $stream = $processor->process($processorParams, $exportCollection);
 
         fclose($dataResource);
 
