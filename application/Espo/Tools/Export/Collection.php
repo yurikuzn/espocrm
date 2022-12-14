@@ -51,9 +51,13 @@ class Collection implements IteratorAggregate
 
     public function getIterator(): Traversable
     {
-        foreach ($this->collection as $entity) {
-            $this->loadAdditionalFields($entity);
-        }
+        return (function () {
+            foreach ($this->collection as $entity) {
+                $this->loadAdditionalFields($entity);
+
+                yield $entity;
+            }
+        })();
     }
 
     private function loadAdditionalFields(Entity $entity): void
