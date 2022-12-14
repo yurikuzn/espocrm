@@ -50,9 +50,7 @@ class MultiEnum implements CellValuePreparator
             return null;
         }
 
-        $value = $entity->get($name);
-
-        $list = Json::decode($value);
+        $list = $entity->get($name);
 
         if (!is_array($list)) {
             return null;
