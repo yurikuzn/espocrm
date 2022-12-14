@@ -204,26 +204,6 @@ class Processor implements ProcessorInterface
             $rowNumber++;
         }
 
-        while (true) {
-            $row = $data->readRow();
-
-            if ($row === null) {
-                break;
-            }
-
-            $this->processRow(
-                $entityType,
-                $this->sanitizeRow($row),
-                $sheet,
-                $rowNumber,
-                $fieldList,
-                $azRange,
-                $typesCache
-            );
-
-            $rowNumber++;
-        }
-
         $sheet->getStyle("A2:A{$rowNumber}")
             ->getNumberFormat()
             ->setFormatCode(NumberFormat::FORMAT_TEXT);
