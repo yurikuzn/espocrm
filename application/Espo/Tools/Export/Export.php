@@ -31,6 +31,7 @@ namespace Espo\Tools\Export;
 
 use Espo\Core\ORM\Repository\SaveOption;
 use Espo\Tools\Export\Collection as ExportCollection;
+use Espo\Tools\Export\Format\Xlsx\FieldHelper;
 use Espo\Tools\Export\Processor\Params as ProcessorParams;
 use Espo\ORM\Entity;
 use Espo\ORM\BaseEntity;
@@ -134,7 +135,7 @@ class Export
             loaderParams: $loaderParams,
             additionalFieldsLoader: $loader,
             recordService: $recordService,
-            processorParams: $processorParams,
+            processorParams: $processorParams
         ) ;
 
         $stream = $processor->process($processorParams, $exportCollection);
@@ -265,6 +266,16 @@ class Export
         string $attribute,
         bool $exportAllFields = false
     ): bool {
+
+        $type = $entity->getAttributeType($attribute);
+
+        if ($type === Entity::FOREIGN) {
+            $type = $this->getForeignAttributeType($entity, $attribute) ?? $type;
+        }
+
+        if ($type === Entity::PASSWORD) {
+            return false;
+        }
 
         if ($this->getAttributeParam($entity, $attribute, 'notExportable')) {
             return false;

@@ -34,6 +34,7 @@ use Espo\Core\FieldProcessing\Loader\Params as LoaderParams;
 use Espo\Core\Record\Service as RecordService;
 use Espo\ORM\Collection as OrmCollection;
 use Espo\ORM\Entity;
+use Espo\Tools\Export\Format\Xlsx\FieldHelper;
 use Espo\Tools\Export\Processor\Params as ProcessorParams;
 use IteratorAggregate;
 use Traversable;
@@ -84,9 +85,7 @@ class Collection implements IteratorAggregate
 
     private function prepareEntityValue(Entity $entity, string $attribute): void
     {
-        $type = $entity->getAttributeType($attribute);
-
-        if ($type === Entity::PASSWORD) {
+        if (!in_array($attribute, $this->processorParams->getAttributeList())) {
             $entity->clear($attribute);
         }
     }
