@@ -57,14 +57,14 @@ class Collection implements IteratorAggregate
     {
         return (function () {
             foreach ($this->collection as $entity) {
-                $this->loadAdditionalFields($entity);
+                $this->prepareEntity($entity);
 
                 yield $entity;
             }
         })();
     }
 
-    private function loadAdditionalFields(Entity $entity): void
+    private function prepareEntity(Entity $entity): void
     {
         $this->listLoadProcessor->process($entity, $this->loaderParams);
 
@@ -75,6 +75,12 @@ class Collection implements IteratorAggregate
 
         if ($this->additionalFieldsLoader && $this->processorParams->getFieldList()) {
             $this->additionalFieldsLoader->load($entity, $this->processorParams->getFieldList());
+        }
+
+        foreach ($entity->getAttributeList() as $attribute) {
+            if ($entity->getAttributeType($attribute) === Entity::PASSWORD) {
+                $entity->clear($attribute);
+            }
         }
     }
 }

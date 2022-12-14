@@ -42,6 +42,8 @@ use GuzzleHttp\Psr7\Stream;
 
 use RuntimeException;
 
+use const JSON_UNESCAPED_UNICODE;
+
 class Processor implements ProcessorInterface
 {
     public function __construct(
@@ -91,7 +93,7 @@ class Processor implements ProcessorInterface
             $value = $entity->get($attribute);
 
             if (is_array($value) || is_object($value)) {
-                $value = Json::encode($value);
+                $value = Json::encode($value, JSON_UNESCAPED_UNICODE);
             }
 
             $value = (string) $value;
