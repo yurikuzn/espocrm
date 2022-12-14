@@ -30,9 +30,11 @@
 namespace Espo\Tools\Export;
 
 use Espo\Core\FieldProcessing\ListLoadProcessor;
+use Espo\Core\FieldProcessing\Loader\Params as LoaderParams;
 use Espo\Core\Record\Service as RecordService;
 use Espo\ORM\Collection as OrmCollection;
 use Espo\ORM\Entity;
+use Espo\Tools\Export\Processor\Params as ProcessorParams;
 use IteratorAggregate;
 use Traversable;
 
@@ -41,8 +43,10 @@ class Collection implements IteratorAggregate
     public function __construct(
         private OrmCollection $collection,
         private ListLoadProcessor $listLoadProcessor,
+        private LoaderParams $loaderParams,
         private ?AdditionalFieldsLoader $additionalFieldsLoader,
-        private RecordService $recordService
+        private RecordService $recordService,
+        private ProcessorParams $processorParams
     ) {}
 
     public function getIterator(): Traversable
@@ -54,6 +58,15 @@ class Collection implements IteratorAggregate
 
     private function loadAdditionalFields(Entity $entity): void
     {
+        $this->listLoadProcessor->process($entity, $this->loaderParams);
 
+        /** For bc. */
+        if (method_exists($this->recordService, 'loadAdditionalFieldsForExport')) {
+            $this->recordService->loadAdditionalFieldsForExport($entity);
+        }
+
+        if ($this->additionalFieldsLoader && $this->processorParams->getFieldList()) {
+            $this->additionalFieldsLoader->load($entity, $this->processorParams->getFieldList());
+        }
     }
 }
