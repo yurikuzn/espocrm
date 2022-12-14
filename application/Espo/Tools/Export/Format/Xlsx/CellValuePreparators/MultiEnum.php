@@ -32,6 +32,7 @@ namespace Espo\Tools\Export\Format\Xlsx\CellValuePreparators;
 use Espo\Core\Utils\Json;
 use Espo\Core\Utils\Language;
 use Espo\ORM\Defs;
+use Espo\ORM\Entity;
 use Espo\Tools\Export\Format\Xlsx\CellValuePreparator;
 use Espo\Tools\Export\Format\Xlsx\FieldHelper;
 
@@ -43,13 +44,13 @@ class MultiEnum implements CellValuePreparator
         private FieldHelper $fieldHelper
     ) {}
 
-    public function prepare(string $entityType, string $name, array $data): ?string
+    public function prepare(Entity $entity, string $name): ?string
     {
-        if (!array_key_exists($name, $data)) {
+        if (!$entity->has($name)) {
             return null;
         }
 
-        $value = $data[$name];
+        $value = $entity->get($name);
 
         $list = Json::decode($value);
 
