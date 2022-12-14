@@ -26,13 +26,13 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('views/export/record/record', ['views/record/base'], function (Dep) {
+define('views/export/record/record', ['views/record/detail'], function (Dep) {
 
     /**
      * @class
      * @name Class
-     * @memberOf module:views/export/record/record.Class
-     * @extends module:views/record/base.Class
+     * @memberOf module:views/export/record/record
+     * @extends module:views/record/detail.Class
      */
     return Dep.extend(/** @lends module:views/export/record/record.Class# */{
 
@@ -49,6 +49,67 @@ define('views/export/record/record', ['views/record/base'], function (Dep) {
             this.formatList = this.options.formatList;
             this.scope = this.options.scope;
 
+            let fieldsData = this.getExportFieldsData();
+
+            let formatList =
+                this.getMetadata().get(['scopes', this.scope, 'exportFormatList']) ||
+                this.getMetadata().get('app.export.formatList');
+
+            this.controlAllFields();
+            this.listenTo(this.model, 'change:exportAllFields', () => this.controlAllFields());
+
+            let fieldDefs = {
+                format: {
+                    type: 'enum',
+                    options: formatList,
+                },
+                fieldList: {
+                    type: 'multiEnum',
+                    options: fieldsData.list,
+                    required: true,
+                },
+                exportAllFields: {
+                    type: 'bool',
+                },
+            };
+
+            this.setupExportLayout(fieldsData);
+        },
+
+        setupExportLayout: function (fieldsData) {
+            this.detailLayout = [];
+
+            let mainPanel = {
+                rows: [
+                    [
+                        {name: 'format'},
+                        false
+                    ],
+                    [
+                        {name: 'exportAllFields'},
+                        false
+                    ],
+                    [
+                        {
+                            name: 'fieldList',
+                            options: {
+                                translatedOptions: fieldsData.translations,
+                            },
+                        }
+                    ]
+                ]
+            };
+
+            this.detailLayout.push(mainPanel);
+        },
+
+        /**
+         * @return {{
+         *   translations: Object.<string, string>,
+         *   list: string[]
+         * }}
+         */
+        getExportFieldsData: function () {
             let fieldList = this.getFieldManager().getEntityTypeFieldList(this.scope);
             let forbiddenFieldList = this.getAcl().getScopeForbiddenFieldList(this.scope);
 
@@ -74,13 +135,11 @@ define('views/export/record/record', ['views/record/base'], function (Dep) {
 
             fieldList.unshift('id');
 
-            let translatedOptions = {};
+            let fieldListTranslations = {};
 
             fieldList.forEach(item => {
-                translatedOptions[item] = this.getLanguage().translate(item, 'fields', this.scope);
+                fieldListTranslations[item] = this.getLanguage().translate(item, 'fields', this.scope);
             });
-
-            this.createField('exportAllFields', 'views/fields/bool', {});
 
             let setFieldList = this.model.get('fieldList') || [];
 
@@ -103,29 +162,14 @@ define('views/export/record/record', ['views/record/base'], function (Dep) {
                     return;
                 }
 
-                translatedOptions[item] = this.getLanguage().translate(arr[0], 'links', this.scope) + '.' +
+                fieldListTranslations[item] = this.getLanguage().translate(arr[0], 'links', this.scope) + '.' +
                     this.getLanguage().translate(arr[1], 'fields', foreignScope);
             });
 
-            this.createField('fieldList', 'views/fields/multi-enum', {
-                required: true,
-                translatedOptions: translatedOptions,
-                options: fieldList,
-            });
-
-            let formatList =
-                this.getMetadata().get(['scopes', this.scope, 'exportFormatList']) ||
-                this.getMetadata().get('app.export.formatList');
-
-            this.createField('format', 'views/fields/enum', {
-                options: formatList,
-            });
-
-            this.controlAllFields();
-
-            this.listenTo(this.model, 'change:exportAllFields', () => {
-                this.controlAllFields();
-            });
+            return {
+                list: fieldList,
+                translations: fieldListTranslations,
+            };
         },
 
         controlAllFields: function () {
