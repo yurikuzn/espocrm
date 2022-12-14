@@ -127,7 +127,7 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
             this.detailLayout.push(mainPanel);
 
             this.formatList.forEach(format => {
-                let rows = this.getFormatParamsDefs(format).layouts || [];
+                let rows = this.getFormatParamsDefs(format).layout || [];
 
                 rows.forEach(row => {
                     row.forEach(item => {
@@ -140,12 +140,6 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
                     rows: rows,
                 })
             });
-        },
-
-        setupBeforeFinal: function () {
-            this.setupExportDynamicLogic();
-
-            Dep.prototype.setupBeforeFinal.call(this);
         },
 
         setupExportDynamicLogic: function () {
@@ -170,7 +164,7 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
         getFormatParamsDefs: function (format) {
             let defs = this.getMetadata().get(['app', 'export', 'formatDefs', format]) || {};
 
-            return Espo.Utils.cloneDeep(defs.params);
+            return Espo.Utils.cloneDeep(defs.params || {});
         },
 
         modifyParamName: function (format, name) {
