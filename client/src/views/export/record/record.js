@@ -51,10 +51,6 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
 
             let fieldsData = this.getExportFieldsData();
 
-            let formatList =
-                this.getMetadata().get(['scopes', this.scope, 'exportFormatList']) ||
-                this.getMetadata().get('app.export.formatList');
-
             this.controlAllFields();
             this.listenTo(this.model, 'change:exportAllFields', () => this.controlAllFields());
 
