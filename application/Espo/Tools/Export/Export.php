@@ -205,6 +205,10 @@ class Export
             return Entity::VARCHAR;
         }
 
+        if (!$entityDefs->hasRelation($relation)) {
+            return null;
+        }
+
         if (!$entityDefs->getRelation($relation)->hasForeignEntityType()) {
             return null;
         }
