@@ -234,7 +234,7 @@ class Export
 
         $type = $entity->getAttributeType($attribute);
 
-        if ($type === Entity::FOREIGN) {
+        if ($type === Entity::FOREIGN || str_contains($attribute, '_')) {
             $type = $this->getForeignAttributeType($entity, $attribute) ?? $type;
         }
 
