@@ -39,22 +39,36 @@
                 "array": "Espo\\Tools\\Export\\Format\\Xlsx\\CellValuePreparators\\MultiEnum"
             },
             "params": {
-                "recordLinks": {
-                    "type": "bool",
-                    "default": false
+                "fields": {
+                    "recordLinks": {
+                        "type": "bool",
+                        "default": false
+                    },
+                    "titleRow": {
+                        "type": "bool",
+                        "default": false,
+                        "tooltip": true
+                    }
                 },
-                "titleRow": {
-                    "type": "bool",
-                    "default": false,
-                    "tooltip": true
+                "layout": [
+                    [
+                        {"name": "recordLinks"},
+                        {"name": "titleRow"}
+                    ]
+                ],
+                "dynamicLogic": {
+                    "titleRow": {
+                        "visible": {
+                            "conditionGroup": [
+                                {
+                                    "type": "isTrue",
+                                    "attribute": "xlsxType"
+                                }
+                            ]
+                        }
+                    }
                 }
-            },
-            "paramsLayout": [
-                [
-                    {"name": "recordLinks"},
-                    {"name": "titleRow"}
-                ]
-            ]
+            }
         }
     }
 }

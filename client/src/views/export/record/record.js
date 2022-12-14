@@ -56,6 +56,7 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
 
             this.setupExportFieldDefs(fieldsData);
             this.setupExportLayout(fieldsData);
+            this.setupExportDynamicLogic();
 
             this.controlFormatField();
             this.listenTo(this.model, 'change:format', () => this.controlFormatField());
@@ -82,19 +83,17 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
 
             this.customParams = {};
 
-            let formatDefs = this.getMetadata().get(['app', 'export', 'formatDefs']) || {};
-
             this.formatList.forEach(format => {
-                let params = (formatDefs[format] || {}).params || {};
+                let fields = this.getFormatParamsDefs(format).fields || {};
 
                 this.customParams[format] = [];
 
-                for (let name in params) {
+                for (let name in fields) {
                     let newName = this.modifyParamName(format, name);
 
                     this.customParams[format].push(name);
 
-                    fieldDefs[newName] = Espo.Utils.cloneDeep(params[name]);
+                    fieldDefs[newName] = Espo.Utils.cloneDeep(fields[name]);
                 }
             });
 
@@ -127,10 +126,8 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
 
             this.detailLayout.push(mainPanel);
 
-            let formatDefs = this.getMetadata().get(['app', 'export', 'formatDefs']) || {};
-
             this.formatList.forEach(format => {
-                let rows = Espo.Utils.cloneDeep((formatDefs[format] || {}).paramsLayout || []);
+                let rows = this.getFormatParamsDefs(format).layouts || [];
 
                 rows.forEach(row => {
                     row.forEach(item => {
@@ -143,6 +140,37 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
                     rows: rows,
                 })
             });
+        },
+
+        setupBeforeFinal: function () {
+            this.setupExportDynamicLogic();
+
+            Dep.prototype.setupBeforeFinal.call(this);
+        },
+
+        setupExportDynamicLogic: function () {
+            this.dynamicLogicDefs = {
+                fields: {},
+            };
+
+            this.formatList.forEach(format => {
+                let logic = this.getFormatParamsDefs(format).dynamicLogic || {};
+
+                for (let param in logic) {
+                    let newName = this.modifyParamName(format, param);
+
+                    this.dynamicLogicDefs.fields[newName] = logic[param];
+                }
+            });
+        },
+
+        /**
+         * @return {Object.<string, *>}
+         */
+        getFormatParamsDefs: function (format) {
+            let defs = this.getMetadata().get(['app', 'export', 'formatDefs', format]) || {};
+
+            return Espo.Utils.cloneDeep(defs.params);
         },
 
         modifyParamName: function (format, name) {
