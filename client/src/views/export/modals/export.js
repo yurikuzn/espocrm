@@ -80,6 +80,7 @@ define('views/export/modals/export', ['views/modal', 'model'], function (Dep, Mo
                 scope: this.scope,
                 model: this.model,
                 el: this.getSelector() + ' .record',
+                formatList: formatList,
             });
         },
 

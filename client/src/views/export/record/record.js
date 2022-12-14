@@ -28,13 +28,25 @@
 
 define('views/export/record/record', ['views/record/base'], function (Dep) {
 
-    return Dep.extend({
+    /**
+     * @class
+     * @name Class
+     * @memberOf module:views/export/record/record.Class
+     * @extends module:views/record/base.Class
+     */
+    return Dep.extend(/** @lends module:views/export/record/record.Class# */{
 
         template: 'export/record/record',
+
+        /**
+         * @type {string[]},
+         */
+        formatList: null,
 
         setup: function () {
             Dep.prototype.setup.call(this);
 
+            this.formatList = this.options.formatList;
             this.scope = this.options.scope;
 
             let fieldList = this.getFieldManager().getEntityTypeFieldList(this.scope);
@@ -45,18 +57,14 @@ define('views/export/record/record', ['views/record/base'], function (Dep) {
             });
 
             fieldList = fieldList.filter(item => {
-                var defs = this.getMetadata().get(['entityDefs', this.scope, 'fields', item]) || {};
+                let defs = this.getMetadata().get(['entityDefs', this.scope, 'fields', item]) || {};
 
-                if (defs.disabled) {
-                    return;
-                }
-
-                if (defs.exportDisabled) {
-                    return;
-                }
-
-                if (defs.type === 'map') {
-                    return;
+                if (
+                    defs.disabled ||
+                    defs.exportDisabled ||
+                    defs.type === 'map'
+                ) {
+                    return false
                 }
 
                 return true;
@@ -110,7 +118,7 @@ define('views/export/record/record', ['views/record/base'], function (Dep) {
                 this.getMetadata().get('app.export.formatList');
 
             this.createField('format', 'views/fields/enum', {
-                options: formatList
+                options: formatList,
             });
 
             this.controlAllFields();
