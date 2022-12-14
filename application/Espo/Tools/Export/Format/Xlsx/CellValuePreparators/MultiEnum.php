@@ -60,7 +60,7 @@ class MultiEnum implements CellValuePreparator
 
         /** @var string[] $list */
 
-        $fieldData = $this->fieldHelper->getData($entityType, $name);
+        $fieldData = $this->fieldHelper->getData($entity->getEntityType(), $name);
 
         if (!$fieldData) {
             return $this->joinList($list);
