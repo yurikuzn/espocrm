@@ -78,9 +78,16 @@ class Collection implements IteratorAggregate
         }
 
         foreach ($entity->getAttributeList() as $attribute) {
-            if ($entity->getAttributeType($attribute) === Entity::PASSWORD) {
-                $entity->clear($attribute);
-            }
+            $this->prepareEntityValue($entity, $attribute);
+        }
+    }
+
+    private function prepareEntityValue(Entity $entity, string $attribute): void
+    {
+        $type = $entity->getAttributeType($attribute);
+
+        if ($type === Entity::PASSWORD) {
+            $entity->clear($attribute);
         }
     }
 }
