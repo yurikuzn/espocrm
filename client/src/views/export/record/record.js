@@ -43,6 +43,11 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
          */
         formatList: null,
 
+        /**
+         * @type {Object.<string, string[]>},
+         */
+        customParams: null,
+
         setup: function () {
             Dep.prototype.setup.call(this);
 
@@ -50,6 +55,9 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
             this.scope = this.options.scope;
 
             let fieldsData = this.getExportFieldsData();
+
+            this.controlFormatField();
+            this.listenTo(this.model, 'change:format', () => this.controlFormatField());
 
             this.controlAllFields();
             this.listenTo(this.model, 'change:exportAllFields', () => this.controlAllFields());
@@ -74,13 +82,19 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
                 },
             };
 
+            this.customParams = {};
+
             let formatDefs = this.getMetadata().get(['app', 'export', 'formatDefs']) || {};
 
             this.formatList.forEach(format => {
                 let params = (formatDefs[format] || {}).params || {};
 
+                customParams[format] = [];
+
                 for (let name in params) {
-                    let newName = format + Espo.Utils.upperCaseFirst(name);
+                    let newName = this.modifyParamName(format, name);
+
+                    customParams[format].push(name);
 
                     fieldDefs[newName] = Espo.Utils.cloneDeep(params[name]);
                 }
@@ -122,7 +136,7 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
 
                 rows.forEach(row => {
                     row.forEach(item => {
-                        item.name = format + Espo.Utils.upperCaseFirst(item.name);
+                        item.name = this.modifyParamName(format, item.name);
                     });
                 })
 
@@ -131,6 +145,10 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
                     rows: this.detailLayout,
                 })
             });
+        },
+
+        modifyParamName: function (format, name) {
+            return format + Espo.Utils.upperCaseFirst(name);;
         },
 
         /**
@@ -210,6 +228,30 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
             }
 
             this.hideField('fieldList');
+        },
+
+        controlFormatField: function () {
+            let format = this.model.get('format');
+
+            this.formatList
+                .filter(item => item !== format)
+                .forEach(format => {
+                    this.hidePanel(format);
+
+                    this.customParams[format].forEach(param => {
+                        this.hideField(this.modifyParamName(format, param))
+                    });
+                });
+
+            this.formatList
+                .filter(item => item === format)
+                .forEach(format => {
+                    this.showPanel(format);
+
+                    this.customParams[format].forEach(param => {
+                        this.showField(this.modifyParamName(format, param))
+                    });
+                });
         },
     });
 });
