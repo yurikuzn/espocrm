@@ -26,17 +26,15 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('views/export/record/record', ['views/record/detail'], function (Dep) {
+define('views/export/record/record', ['views/record/edit-for-modal'], function (Dep) {
 
     /**
      * @class
      * @name Class
      * @memberOf module:views/export/record/record
-     * @extends module:views/record/detail.Class
+     * @extends module:views/record/edit-for-modal.Class
      */
     return Dep.extend(/** @lends module:views/export/record/record.Class# */{
-
-        template: 'export/record/record',
 
         /**
          * @type {string[]},
@@ -56,14 +54,14 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
 
             let fieldsData = this.getExportFieldsData();
 
+            this.setupExportFieldDefs(fieldsData);
+            this.setupExportLayout(fieldsData);
+
             this.controlFormatField();
             this.listenTo(this.model, 'change:format', () => this.controlFormatField());
 
             this.controlAllFields();
             this.listenTo(this.model, 'change:exportAllFields', () => this.controlAllFields());
-
-            this.setupExportFieldDefs(fieldsData);
-            this.setupExportLayout(fieldsData);
         },
 
         setupExportFieldDefs: function (fieldsData) {
@@ -142,13 +140,13 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
 
                 this.detailLayout.push({
                     name: format,
-                    rows: this.detailLayout,
+                    rows: rows,
                 })
             });
         },
 
         modifyParamName: function (format, name) {
-            return format + Espo.Utils.upperCaseFirst(name);;
+            return format + Espo.Utils.upperCaseFirst(name);
         },
 
         /**
@@ -246,7 +244,9 @@ define('views/export/record/record', ['views/record/detail'], function (Dep) {
             this.formatList
                 .filter(item => item === format)
                 .forEach(format => {
-                    this.showPanel(format);
+                    this.customParams[format].length ?
+                        this.showPanel(format) :
+                        this.hidePanel(format);
 
                     this.customParams[format].forEach(param => {
                         this.showField(this.modifyParamName(format, param))

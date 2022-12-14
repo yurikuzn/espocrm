@@ -70,7 +70,7 @@ define('views/export/modals/export', ['views/modal', 'model'], function (Dep, Mo
                 this.model.set('exportAllFields', true);
             }
 
-            var formatList =
+            let formatList =
                 this.getMetadata().get(['scopes', this.scope, 'exportFormatList']) ||
                 this.getMetadata().get('app.export.formatList');
 
@@ -85,40 +85,42 @@ define('views/export/modals/export', ['views/modal', 'model'], function (Dep, Mo
         },
 
         actionExport: function () {
-            var data = this.getView('record').fetch();
+            let data = this.getView('record').fetch();
+
             this.model.set(data);
 
             if (this.getView('record').validate()) {
                 return;
             }
 
-            var returnData = {
+            let returnData = {
                 exportAllFields: data.exportAllFields,
                 format: data.format,
             };
 
             if (!data.exportAllFields) {
-                var attributeList = [];
+                let attributeList = [];
 
-                data.fieldList.forEach(function (item) {
+                data.fieldList.forEach(item => {
                     if (item === 'id') {
                         attributeList.push('id');
 
                         return;
                     }
 
-                    var type = this.getMetadata().get(['entityDefs', this.scope, 'fields', item, 'type']);
+                    let type = this.getMetadata().get(['entityDefs', this.scope, 'fields', item, 'type']);
 
                     if (type) {
-                        this.getFieldManager().getAttributeList(type, item).forEach(function (attribute) {
-                            attributeList.push(attribute);
-                        }, this);
+                        this.getFieldManager().getAttributeList(type, item)
+                            .forEach(attribute => {
+                                attributeList.push(attribute);
+                            });
                     }
 
                     if (~item.indexOf('_')) {
                         attributeList.push(item);
                     }
-                }, this);
+                });
 
                 returnData.attributeList = attributeList;
                 returnData.fieldList = data.fieldList;
@@ -127,6 +129,5 @@ define('views/export/modals/export', ['views/modal', 'model'], function (Dep, Mo
             this.trigger('proceed', returnData);
             this.close();
         },
-
     });
 });
