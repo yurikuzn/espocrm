@@ -40,19 +40,16 @@ use RuntimeException;
 class Params
 {
     private string $entityType;
-    /**
-     * @var ?string[]
-     */
+    /** @var ?string[] */
     private $attributeList = null;
-    /**
-     * @var ?string[]
-     */
+    /** @var ?string[] */
     private $fieldList = null;
     private ?string $fileName = null;
     private ?string $format = null;
     private ?string $name = null;
+    /** @var array<string, mixed> */
+    private array $params = [];
     private ?SearchParams $searchParams = null;
-
     private bool $applyAccessControl = true;
 
     public function __construct(string $entityType)
@@ -61,7 +58,7 @@ class Params
     }
 
     /**
-     * @param array<string,mixed> $params
+     * @param array<string, mixed> $params
      * @throws RuntimeException
      */
     public static function fromRaw(array $params): self
