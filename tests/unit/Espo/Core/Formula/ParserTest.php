@@ -893,4 +893,15 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         ];
         $this->assertEquals($expected, $actual);
     }
+
+    public function testIfStatement1(): void
+    {
+        $expression = "
+            if (true) {
+                \$test = 1;
+            }
+        ";
+
+        $actual = $this->parser->parse($expression);
+    }
 }
