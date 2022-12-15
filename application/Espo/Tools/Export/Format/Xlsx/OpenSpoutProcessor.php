@@ -29,6 +29,9 @@
 
 namespace Espo\Tools\Export\Format\Xlsx;
 
+use Espo\Core\Field\Date;
+use Espo\Core\Field\DateTime;
+use Espo\Core\Utils\DateTime as DateTimeUtil;
 use Espo\Core\Utils\Language;
 use Espo\ORM\Entity;
 use Espo\Tools\Export\Collection;
@@ -37,6 +40,8 @@ use Espo\Tools\Export\Format\CellValuePreparatorFactory;
 use Espo\Tools\Export\Processor as ProcessorInterface;
 use Espo\Tools\Export\Processor\Params;
 
+use OpenSpout\Common\Entity\Cell;
+use OpenSpout\Common\Entity\Style\Style;
 use OpenSpout\Writer\XLSX\Writer;
 use OpenSpout\Writer\XLSX\Entity\SheetView;
 use OpenSpout\Writer\XLSX\Options;
@@ -57,6 +62,7 @@ class OpenSpoutProcessor implements ProcessorInterface
         private FieldHelper $fieldHelper,
         private CellValuePreparatorFactory $cellValuePreparatorFactory,
         private Language $language,
+        private DateTimeUtil $dateTime,
     ) {}
 
     public function process(Params $params, Collection $collection): StreamInterface
@@ -105,16 +111,16 @@ class OpenSpoutProcessor implements ProcessorInterface
 
     private function processRow(Params $params, Entity $entity, Writer $writer): void
     {
-        $valueList = [];
+        $cells = [];
 
         foreach ($params->getFieldList() as $name) {
-            $valueList = $this->prepareCellValue($params, $entity, $name);
+            $cells = $this->prepareCell($params, $entity, $name);
         }
 
-        $writer->addRow(Row::fromValues($valueList));
+        $writer->addRow(new Row($cells));
     }
 
-    private function prepareCellValue(Params $params, Entity $entity, mixed $name): mixed
+    private function prepareCell(Params $params, Entity $entity, mixed $name): Cell
     {
         $entityType = $entity->getEntityType();
         $key = $entityType . '-' . $name;
@@ -131,7 +137,27 @@ class OpenSpoutProcessor implements ProcessorInterface
 
         $value = $preparator->prepare($entity, $name);
 
+        if (is_string($value)) {
+            return Cell\StringCell::fromValue($value);
+        }
 
+        if ($value instanceof Date) {
+            $dateFormat = self::convertDateFormat($this->dateTime->getDateFormat());
+
+            $style = new Style();
+            $style->setFormat($dateFormat);
+
+            return Cell\DateTimeCell::fromValue($value->getDateTime(), $style);
+        }
+
+        if ($value instanceof DateTime) {
+            $dateTimeFormat = self::convertDateFormat($this->dateTime->getDateTimeFormat());
+
+            $style = new Style();
+            $style->setFormat($dateTimeFormat);
+
+            return Cell\DateTimeCell::fromValue($value->getDateTime(), $style);
+        }
     }
 
     private function getPreparator(string $type): CellValuePreparator
@@ -141,5 +167,26 @@ class OpenSpoutProcessor implements ProcessorInterface
         }
 
         return $this->preparatorsCache[$type];
+    }
+
+    public static function convertDateFormat(string $format): string
+    {
+        $map = [
+            'MM' => 'mm',
+            'DD' => 'dd',
+            'YYYY' => 'yyyy',
+            'HH' => 'hh',
+            'mm' => 'mm',
+            'hh' => 'hh',
+            'A' => 'AM/PM',
+            'a' => 'AM/PM',
+            'ss' => 'ss',
+        ];
+
+        return str_replace(
+            array_keys($map),
+            array_values($map),
+            $format
+        );
     }
 }
