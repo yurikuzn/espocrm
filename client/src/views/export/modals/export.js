@@ -84,14 +84,23 @@ define('views/export/modals/export', ['views/modal', 'model'], function (Dep, Mo
             });
         },
 
+        /**
+         * @return module:views/export/record/record.Class
+         */
+        getRecordView: function () {
+            return this.getView('record');
+        },
+
         actionExport: function () {
-            let data = this.getView('record').fetch();
+            let data = this.getRecordView().fetch();
 
             this.model.set(data);
 
-            if (this.getView('record').validate()) {
+            if (this.getRecordView().validate()) {
                 return;
             }
+
+
 
             let returnData = {
                 exportAllFields: data.exportAllFields,

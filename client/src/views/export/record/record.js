@@ -179,6 +179,15 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
         },
 
         /**
+         * @param {string} format
+         * @return {string[]}
+         */
+        getFormatParamList: function (format) {
+
+        },
+
+        /**
+         * @private
          * @return {Object.<string, *>}
          */
         getFormatParamsDefs: function (format) {
@@ -187,6 +196,11 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
             return Espo.Utils.cloneDeep(defs.params || {});
         },
 
+        /**
+         * @param {string} format
+         * @param {string} name
+         * @return {string}
+         */
         modifyParamName: function (format, name) {
             return format + Espo.Utils.upperCaseFirst(name);
         },
