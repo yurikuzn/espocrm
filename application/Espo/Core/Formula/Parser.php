@@ -157,7 +157,7 @@ class Parser
 
         $modifiedString = $string;
 
-        $braceCounter = 0;
+        $parenthesisCounter = 0;
 
         for ($i = 0; $i < strlen($string); $i++) {
             $isStringStart = false;
@@ -210,14 +210,14 @@ class Parser
                 }
 
                 if ($string[$i] === '(') {
-                    $braceCounter++;
+                    $parenthesisCounter++;
                 }
 
                 if ($string[$i] === ')') {
-                    $braceCounter--;
+                    $parenthesisCounter--;
                 }
 
-                if ($braceCounter === 0) {
+                if ($parenthesisCounter === 0) {
                     if (!is_null($splitterIndexList)) {
                         if ($string[$i] === ';') {
                             $splitterIndexList[] = $i;
@@ -255,10 +255,12 @@ class Parser
     {
         $expression = trim($expression);
 
-        $braceCounter = 0;
-        $hasExcessBraces = true;
+        $parenthesisCounter = 0;
+        //$braceCounter = 0;
+        $hasExcessParenthesis = true;
         $modifiedExpression = '';
         $splitterIndexList = [];
+        $expressionOutOfParenthesisList = [];
 
         $isStringNotClosed = $this->processStrings($expression, $modifiedExpression, $splitterIndexList, true);
 
@@ -276,40 +278,50 @@ class Parser
 
         $splitterIndexList = array_values($splitterIndexList);
 
-        $expressionOutOfBraceList = [];
+        $expressionLength = strlen($modifiedExpression);
 
-        for ($i = 0; $i < strlen($modifiedExpression); $i++) {
-            if ($modifiedExpression[$i] === '(') {
+        for ($i = 0; $i < $expressionLength; $i++) {
+            $value = $modifiedExpression[$i];
+
+            if ($value === '(') {
+                $parenthesisCounter++;
+            }
+            else if ($value === ')') {
+                $parenthesisCounter--;
+            }
+            /*else if ($value === '{') {
                 $braceCounter++;
             }
-
-            if ($modifiedExpression[$i] === ')') {
+            else if ($value === '}') {
                 $braceCounter--;
+            }*/
+
+            if ($parenthesisCounter === 0 && $i < $expressionLength - 1) {
+                $hasExcessParenthesis = false;
             }
 
-            if ($braceCounter === 0 && $i < strlen($modifiedExpression) - 1) {
-                $hasExcessBraces = false;
-            }
-
-            if ($braceCounter === 0) {
-                $expressionOutOfBraceList[] = true;
-            } else {
-                $expressionOutOfBraceList[] = false;
-            }
+            $expressionOutOfParenthesisList[] = $parenthesisCounter === 0;
         }
 
-        if ($braceCounter !== 0) {
+        if ($parenthesisCounter !== 0) {
             throw SyntaxError::create(
-                'Incorrect round brackets in expression ' . $expression . '.',
-                'Incorrect round brackets.'
+                'Incorrect usage of parentheses in expression ' . $expression . '.',
+                'Incorrect parentheses.'
             );
         }
+
+        /*if ($braceCounter !== 0) {
+            throw SyntaxError::create(
+                'Incorrect usage of braces in expression ' . $expression . '.',
+                'Incorrect braces.'
+            );
+        }*/
 
         if (
             strlen($expression) > 1 &&
             $expression[0] === '(' &&
             $expression[strlen($expression) - 1] === ')' &&
-            $hasExcessBraces
+            $hasExcessParenthesis
         ) {
             $expression = substr($expression, 1, strlen($expression) - 2);
 
@@ -324,12 +336,9 @@ class Parser
             $parsedPartList = [];
 
             for ($i = 0; $i < count($splitterIndexList); $i++) {
-                if ($i > 0) {
-                    $previousSplitterIndex = $splitterIndexList[$i - 1] + 1;
-                }
-                else {
-                    $previousSplitterIndex = 0;
-                }
+                $previousSplitterIndex = $i > 0 ?
+                    $splitterIndexList[$i - 1] + 1 :
+                    0;
 
                 $part = trim(
                     substr(
@@ -369,7 +378,7 @@ class Parser
                         break;
                     }
 
-                    if ($expressionOutOfBraceList[$index]) {
+                    if ($expressionOutOfParenthesisList[$index]) {
                         break;
                     }
 
@@ -597,7 +606,6 @@ class Parser
                 if ($modifiedExpression[$i] === "\n" || $i === strlen($modifiedExpression) - 1) {
                     for ($j = $commentIndexStart; $j <= $i; $j++) {
                         $modifiedExpression[$j] = ' ';
-
                         $expression[$j] = ' ';
                     }
 
@@ -616,7 +624,6 @@ class Parser
                 if ($modifiedExpression[$i] === '*' && $modifiedExpression[$i + 1] === '/') {
                     for ($j = $commentIndexStart; $j <= $i + 1; $j++) {
                         $modifiedExpression[$j] = ' ';
-
                         $expression[$j] = ' ';
                     }
 
