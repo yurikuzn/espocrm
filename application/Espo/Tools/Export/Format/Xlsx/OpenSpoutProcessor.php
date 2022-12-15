@@ -29,10 +29,13 @@
 
 namespace Espo\Tools\Export\Format\Xlsx;
 
+use Espo\Core\Field\Currency;
 use Espo\Core\Field\Date;
 use Espo\Core\Field\DateTime;
+use Espo\Core\Utils\Config;
 use Espo\Core\Utils\DateTime as DateTimeUtil;
 use Espo\Core\Utils\Language;
+use Espo\Core\Utils\Metadata;
 use Espo\ORM\Entity;
 use Espo\Tools\Export\Collection;
 use Espo\Tools\Export\Format\CellValuePreparator;
@@ -68,6 +71,8 @@ class OpenSpoutProcessor implements ProcessorInterface
         private CellValuePreparatorFactory $cellValuePreparatorFactory,
         private Language $language,
         private DateTimeUtil $dateTime,
+        private Config $config,
+        private Metadata $metadata
     ) {}
 
     /**
@@ -162,6 +167,18 @@ class OpenSpoutProcessor implements ProcessorInterface
             return Cell\StringCell::fromValue($value);
         }
 
+        if (is_int($value)) {
+            return Cell\NumericCell::fromValue($value);
+        }
+
+        if (is_float($value)) {
+            return Cell\NumericCell::fromValue($value);
+        }
+
+        if (is_bool($value)) {
+            return Cell\BooleanCell::fromValue($value);
+        }
+
         if ($value instanceof Date) {
             $dateFormat = self::convertDateFormat($this->dateTime->getDateFormat());
 
@@ -178,6 +195,15 @@ class OpenSpoutProcessor implements ProcessorInterface
             $style->setFormat($dateTimeFormat);
 
             return Cell\DateTimeCell::fromValue($value->getDateTime(), $style);
+        }
+
+        if ($value instanceof Currency) {
+            $format = $this->getCurrencyFormat($value->getCode());
+
+            $style = new Style();
+            $style->setFormat($format);
+
+            return Cell\NumericCell::fromValue($value->getAmount(), $style);
         }
 
         return Cell::fromValue('');
@@ -207,7 +233,7 @@ class OpenSpoutProcessor implements ProcessorInterface
         return $this->preparatorsCache[$type];
     }
 
-    public static function convertDateFormat(string $format): string
+    private static function convertDateFormat(string $format): string
     {
         $map = [
             'MM' => 'mm',
@@ -227,4 +253,18 @@ class OpenSpoutProcessor implements ProcessorInterface
             $format
         );
     }
+
+    private function getCurrencyFormat(string $code): string
+    {
+        $currencySymbol = $this->metadata->get(['app', 'currency', 'symbolMap', $code], '');
+
+        $currencyFormat = $this->config->get('currencyFormat') ?? 2;
+
+        if ($currencyFormat === 3) {
+            return '#,##0.00_-"' . $currencySymbol . '"';
+        }
+
+        return '[$' . $currencySymbol . '-409]#,##0.00;-[$' . $currencySymbol . '-409]#,##0.00';
+    }
+
 }
