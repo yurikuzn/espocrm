@@ -43,7 +43,8 @@ class Processor implements ProcessorInterface
     private const PARAM_LITE = 'lite';
 
     public function __construct(
-        private PhpSpreadsheetProcessor $phpSpreadsheetProcessor
+        private PhpSpreadsheetProcessor $phpSpreadsheetProcessor,
+        private OpenSpoutProcessor $openSpoutProcessor,
     ) {}
 
     /**
@@ -75,9 +76,9 @@ class Processor implements ProcessorInterface
     private function processOpenSpout(Params $params, Collection $collection): StreamInterface
     {
         try {
-            return $this->phpSpreadsheetProcessor->process($params, $collection);
+            return $this->openSpoutProcessor->process($params, $collection);
         }
-        catch (SpreadsheetException|WriterException $e) {
+        catch (\Throwable $e) {
             throw new Error($e->getMessage());
         }
     }

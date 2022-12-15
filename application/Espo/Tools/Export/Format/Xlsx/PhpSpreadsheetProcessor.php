@@ -157,21 +157,11 @@ class PhpSpreadsheetProcessor implements ProcessorInterface
 
         foreach ($fieldList as $i => $name) {
             $col = $azRange[$i];
-            $label = $name;
             $type = 'base';
 
+            $label = $this->translateLabel($entityType, $name);
+
             $fieldData = $this->fieldHelper->getData($entityType, $name);
-            $isForeignReference = $this->fieldHelper->isForeignReference($name);
-
-            if ($isForeignReference && $fieldData && $fieldData->getLink()) {
-                $label =
-                    $this->language->translateLabel($fieldData->getLink(), 'links', $entityType) . '.' .
-                    $this->language->translateLabel($fieldData->getField(), 'fields', $fieldData->getEntityType());
-            }
-
-            if (!$isForeignReference) {
-                $label = $this->language->translateLabel($name, 'fields', $entityType);
-            }
 
             if ($fieldData) {
                 $type = $fieldData->getType();
@@ -297,6 +287,26 @@ class PhpSpreadsheetProcessor implements ProcessorInterface
         return $stream;
     }
 
+    private function translateLabel(string $entityType, string $name): string
+    {
+        $label = $name;
+
+        $fieldData = $this->fieldHelper->getData($entityType, $name);
+        $isForeignReference = $this->fieldHelper->isForeignReference($name);
+
+        if ($isForeignReference && $fieldData && $fieldData->getLink()) {
+            $label =
+                $this->language->translateLabel($fieldData->getLink(), 'links', $entityType) . '.' .
+                $this->language->translateLabel($fieldData->getField(), 'fields', $fieldData->getEntityType());
+        }
+
+        if (!$isForeignReference) {
+            $label = $this->language->translateLabel($name, 'fields', $entityType);
+        }
+
+        return $label;
+    }
+
     /**
      * @param string[] $fieldList
      * @return string[]
@@ -369,9 +379,7 @@ class PhpSpreadsheetProcessor implements ProcessorInterface
 
         if (!$type) {
             $fieldData = $this->fieldHelper->getData($entityType, $name);
-
             $type = $fieldData ? $fieldData->getType() : 'base';
-
             $typesCache[$name] = $type;
         }
 
