@@ -137,9 +137,19 @@ define('views/export/modals/export', ['views/modal', 'model'], function (Dep, Mo
             recordView.getFormatParamList(data.format).forEach(param => {
                 let name = recordView.modifyParamName(data.format, param);
 
-                if (recordView.getFieldView(name) && !recordView.getFieldView(name).disabled) {
-                    returnData.params[param] = data[name];
+                let fieldView = recordView.getFieldView(name);
+
+                if (!fieldView || fieldView.disabled) {
+                    return;
                 }
+
+                this.getFieldManager()
+                    .getActualAttributeList(fieldView.type, param)
+                    .forEach(subParam => {
+                        let name = recordView.modifyParamName(data.format, subParam);
+
+                        returnData.params[subParam] = data[name];
+                    });
             });
 
             this.trigger('proceed', returnData);

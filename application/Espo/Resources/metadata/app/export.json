@@ -42,7 +42,7 @@
                 "fields": {
                     "recordLinks": {
                         "type": "bool",
-                        "default": true
+                        "default": false
                     },
                     "titleRow": {
                         "type": "bool",
