@@ -95,8 +95,8 @@ class Service
 
     public function getStatusData(string $id): stdClass
     {
-        /** @var ExportEntity|null $entity */
-        $entity = $this->entityManager->getEntity(ExportEntity::ENTITY_TYPE, $id);
+        /** @var ?ExportEntity $entity */
+        $entity = $this->entityManager->getEntityById(ExportEntity::ENTITY_TYPE, $id);
 
         if (!$entity) {
             throw new NotFoundSilent();
@@ -114,8 +114,8 @@ class Service
 
     public function subscribeToNotificationOnSuccess(string $id): void
     {
-        /** @var ExportEntity|null $entity */
-        $entity = $this->entityManager->getEntity(ExportEntity::ENTITY_TYPE, $id);
+        /** @var ?ExportEntity $entity */
+        $entity = $this->entityManager->getEntityById(ExportEntity::ENTITY_TYPE, $id);
 
         if (!$entity) {
             throw new NotFoundSilent();

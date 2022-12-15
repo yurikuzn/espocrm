@@ -43,12 +43,8 @@ use stdClass;
 
 class Export
 {
-    private $service;
-
-    public function __construct(Service $service)
-    {
-        $this->service = $service;
-    }
+    public function __construct(private Service $service)
+    {}
 
     public function postActionProcess(Request $request): stdClass
     {
