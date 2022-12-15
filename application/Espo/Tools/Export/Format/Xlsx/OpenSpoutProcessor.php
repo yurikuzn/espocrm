@@ -44,6 +44,7 @@ use Espo\Tools\Export\Processor as ProcessorInterface;
 use Espo\Tools\Export\Processor\Params;
 
 use GuzzleHttp\Psr7\Stream;
+use LogicException;
 use OpenSpout\Common\Entity\Cell;
 use OpenSpout\Common\Entity\Style\Style;
 use OpenSpout\Common\Exception\InvalidArgumentException;
@@ -82,6 +83,10 @@ class OpenSpoutProcessor implements ProcessorInterface
      */
     public function process(Params $params, Collection $collection): StreamInterface
     {
+        if (!$params->getFieldList()) {
+            throw new LogicException("No field list.");
+        }
+
         $filePath = tempnam(sys_get_temp_dir(), 'espo-export');
 
         if (!$filePath) {
@@ -149,8 +154,8 @@ class OpenSpoutProcessor implements ProcessorInterface
     {
         $cells = [];
 
-        foreach ($params->getFieldList() as $name) {
-            $cells = $this->prepareCell($params, $entity, $name);
+        foreach ($params->getFieldList() ?? [] as $name) {
+            $cells[] = $this->prepareCell($params, $entity, $name);
         }
 
         $writer->addRow(new Row($cells));
