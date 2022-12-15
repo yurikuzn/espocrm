@@ -29,7 +29,6 @@
 
 namespace Espo\Tools\Export\Format\Xlsx;
 
-use Espo\Core\Exceptions\Error;
 use Espo\Core\Field\Date;
 use Espo\Core\Field\DateTime;
 use Espo\Core\Utils\DateTime as DateTimeUtil;
@@ -53,6 +52,7 @@ use OpenSpout\Writer\XLSX\Options;
 use OpenSpout\Common\Entity\Row;
 
 use Psr\Http\Message\StreamInterface;
+use RuntimeException;
 
 class OpenSpoutProcessor implements ProcessorInterface
 {
@@ -71,7 +71,6 @@ class OpenSpoutProcessor implements ProcessorInterface
     ) {}
 
     /**
-     * @throws Error
      * @throws IOException
      * @throws WriterNotOpenedException
      * @throws InvalidArgumentException
@@ -81,7 +80,7 @@ class OpenSpoutProcessor implements ProcessorInterface
         $filePath = tempnam(sys_get_temp_dir(), 'espo-export');
 
         if (!$filePath) {
-            throw new Error("Could not create a temp file.");
+            throw new RuntimeException("Could not create a temp file.");
         }
 
         $options = new Options();
@@ -109,7 +108,11 @@ class OpenSpoutProcessor implements ProcessorInterface
 
         $writer->close();
 
-        $resource = fopen($filePath, 'r');
+        $resource = fopen($filePath, 'r+');
+
+        if ($resource === false) {
+            throw new RuntimeException("Could not open temp.");
+        }
 
         $stream = new Stream($resource);
         $stream->seek(0);
