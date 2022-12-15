@@ -29,6 +29,7 @@
 
 namespace Espo\Tools\Export\Format\Xlsx;
 
+use Espo\Core\Exceptions\Error;
 use Espo\Core\Field\Date;
 use Espo\Core\Field\DateTime;
 use Espo\Core\Utils\DateTime as DateTimeUtil;
@@ -40,8 +41,12 @@ use Espo\Tools\Export\Format\CellValuePreparatorFactory;
 use Espo\Tools\Export\Processor as ProcessorInterface;
 use Espo\Tools\Export\Processor\Params;
 
+use GuzzleHttp\Psr7\Stream;
 use OpenSpout\Common\Entity\Cell;
 use OpenSpout\Common\Entity\Style\Style;
+use OpenSpout\Common\Exception\InvalidArgumentException;
+use OpenSpout\Common\Exception\IOException;
+use OpenSpout\Writer\Exception\WriterNotOpenedException;
 use OpenSpout\Writer\XLSX\Writer;
 use OpenSpout\Writer\XLSX\Entity\SheetView;
 use OpenSpout\Writer\XLSX\Options;
@@ -65,14 +70,28 @@ class OpenSpoutProcessor implements ProcessorInterface
         private DateTimeUtil $dateTime,
     ) {}
 
+    /**
+     * @throws Error
+     * @throws IOException
+     * @throws WriterNotOpenedException
+     * @throws InvalidArgumentException
+     */
     public function process(Params $params, Collection $collection): StreamInterface
     {
-        $sheetView = new SheetView();
-        $sheetView->setFreezeRow(2);
+        $filePath = tempnam(sys_get_temp_dir(), 'espo-export');
+
+        if (!$filePath) {
+            throw new Error("Could not create a temp file.");
+        }
 
         $options = new Options();
 
         $writer = new Writer($options);
+
+        $writer->openToFile($filePath);
+
+        $sheetView = new SheetView();
+        $sheetView->setFreezeRow(2);
 
         $writer->getCurrentSheet()->setSheetView($sheetView);
 
@@ -87,6 +106,15 @@ class OpenSpoutProcessor implements ProcessorInterface
         foreach ($collection as $entity) {
             $this->processRow($params, $entity, $writer);
         }
+
+        $writer->close();
+
+        $resource = fopen($filePath, 'r');
+
+        $stream = new Stream($resource);
+        $stream->seek(0);
+
+        return $stream;
     }
 
     private function translateLabel(string $entityType, string $name): string
@@ -122,20 +150,10 @@ class OpenSpoutProcessor implements ProcessorInterface
 
     private function prepareCell(Params $params, Entity $entity, mixed $name): Cell
     {
-        $entityType = $entity->getEntityType();
-        $key = $entityType . '-' . $name;
+        $type = $this->getFieldType($params->getEntityType(), $name);
 
-        $type = $this->typesCache[$key] ?? null;
-
-        if (!$type) {
-            $fieldData = $this->fieldHelper->getData($entityType, $name);
-            $type = $fieldData ? $fieldData->getType() : 'base';
-            $this->typesCache[$key] = $type;
-        }
-
-        $preparator = $this->getPreparator($type);
-
-        $value = $preparator->prepare($entity, $name);
+        $value = $this->getPreparator($type)
+            ->prepare($entity, $name);
 
         if (is_string($value)) {
             return Cell\StringCell::fromValue($value);
@@ -158,6 +176,23 @@ class OpenSpoutProcessor implements ProcessorInterface
 
             return Cell\DateTimeCell::fromValue($value->getDateTime(), $style);
         }
+
+        return Cell::fromValue('');
+    }
+
+    private function getFieldType(string $entityType, string $name): string
+    {
+        $key = $entityType . '-' . $name;
+
+        $type = $this->typesCache[$key] ?? null;
+
+        if (!$type) {
+            $fieldData = $this->fieldHelper->getData($entityType, $name);
+            $type = $fieldData ? $fieldData->getType() : 'base';
+            $this->typesCache[$key] = $type;
+        }
+
+        return $type;
     }
 
     private function getPreparator(string $type): CellValuePreparator
