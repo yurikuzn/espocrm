@@ -84,23 +84,20 @@ define('views/export/modals/export', ['views/modal', 'model'], function (Dep, Mo
             });
         },
 
-        /**
-         * @return module:views/export/record/record.Class
-         */
         getRecordView: function () {
             return this.getView('record');
         },
 
         actionExport: function () {
-            let data = this.getRecordView().fetch();
+            let recordView = this.getRecordView();
+
+            let data = recordView.fetch();
 
             this.model.set(data);
 
-            if (this.getRecordView().validate()) {
+            if (recordView.validate()) {
                 return;
             }
-
-
 
             let returnData = {
                 exportAllFields: data.exportAllFields,
@@ -134,6 +131,22 @@ define('views/export/modals/export', ['views/modal', 'model'], function (Dep, Mo
                 returnData.attributeList = attributeList;
                 returnData.fieldList = data.fieldList;
             }
+
+            returnData.params = {};
+
+            console.log(recordView.getFormatParamList(data.format));
+
+            return;
+
+            recordView.getFormatParamList(data.format).forEach(param => {
+                let name = recordView.modifyParamName(data.format, param);
+
+                if (recordView.getFieldView(name) && !recordView.getFieldView(name).disabled) {
+                    returnData.params[param] = data[name];
+                }
+            });
+
+            console.log(returnData);
 
             this.trigger('proceed', returnData);
             this.close();

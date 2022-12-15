@@ -183,7 +183,7 @@ define('views/export/record/record', ['views/record/edit-for-modal'], function (
          * @return {string[]}
          */
         getFormatParamList: function (format) {
-
+            return Object.keys(this.getFormatParamsDefs(format) || {});
         },
 
         /**
