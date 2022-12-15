@@ -134,10 +134,6 @@ define('views/export/modals/export', ['views/modal', 'model'], function (Dep, Mo
 
             returnData.params = {};
 
-            console.log(recordView.getFormatParamList(data.format));
-
-            return;
-
             recordView.getFormatParamList(data.format).forEach(param => {
                 let name = recordView.modifyParamName(data.format, param);
 
@@ -145,8 +141,6 @@ define('views/export/modals/export', ['views/modal', 'model'], function (Dep, Mo
                     returnData.params[param] = data[name];
                 }
             });
-
-            console.log(returnData);
 
             this.trigger('proceed', returnData);
             this.close();
