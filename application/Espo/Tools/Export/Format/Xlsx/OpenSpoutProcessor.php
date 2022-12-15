@@ -94,6 +94,7 @@ class OpenSpoutProcessor implements ProcessorInterface
         }
 
         $options = new Options();
+        $options->setColumnWidthForRange(20, 1, count($params->getFieldList()));
 
         $writer = new Writer($options);
 
@@ -109,7 +110,7 @@ class OpenSpoutProcessor implements ProcessorInterface
         foreach ($params->getFieldList() as $name) {
             $label = $this->translateLabel($params->getEntityType(), $name);
 
-            $headerCells[] = Cell::fromValue($label, (new Style()->setFontBold()));
+            $headerCells[] = Cell::fromValue($label, (new Style())->setFontBold());
         }
 
         $writer->addRow(new Row($headerCells));
