@@ -66,6 +66,8 @@ use RuntimeException;
 class Processor implements ProcessorInterface
 {
     private const FORMAT = 'xlsx';
+    private const PARAM_RECORD_LINKS = 'recordLinks';
+    private const PARAM_TITLE_ROW = 'titleRow';
 
     /** @var array<string, CellValuePreparator> */
     private array $preparatorsCache = [];
