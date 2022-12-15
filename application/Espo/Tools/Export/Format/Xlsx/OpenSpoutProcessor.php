@@ -104,13 +104,15 @@ class OpenSpoutProcessor implements ProcessorInterface
 
         $writer->getCurrentSheet()->setSheetView($sheetView);
 
-        $labelList = [];
+        $headerCells = [];
 
         foreach ($params->getFieldList() as $name) {
-            $labelList[] = $this->translateLabel($params->getEntityType(), $name);
+            $label = $this->translateLabel($params->getEntityType(), $name);
+
+            $headerCells[] = Cell::fromValue($label, (new Style()->setFontBold()));
         }
 
-        $writer->addRow(Row::fromValues($labelList));
+        $writer->addRow(new Row($headerCells));
 
         foreach ($collection as $entity) {
             $this->processRow($params, $entity, $writer);
