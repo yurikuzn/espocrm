@@ -55,9 +55,7 @@ class Export
         $params = $this->fetchRawParamsFromRequest($request);
 
         $serviceParams = ServiceParams::create()
-            ->withIsIdle(
-                $request->getParsedBody()->idle ?? false
-            );
+            ->withIsIdle($request->getParsedBody()->idle ?? false);
 
         $result = $this->service->process($params, $serviceParams);
 
@@ -141,6 +139,14 @@ class Export
             $params['format'] = $data->format;
         }
 
-        return Params::fromRaw($params);
+        $obj = Params::fromRaw($params);
+
+        if (isset($data->params) && $data->params instanceof stdClass) {
+            foreach (get_object_vars($data->params) as $key => $value) {
+                $obj = $obj->withParam($key, $value);
+            }
+        }
+
+        return $obj;
     }
 }
