@@ -70,6 +70,14 @@ class Parser
         '<=' => 'comparison\\lessThanOrEquals',
     ];
 
+    /** @var string[] */
+    private array $whiteSpaceCharList = [
+        "\r",
+        "\n",
+        "\t",
+        ' ',
+    ];
+
     private string $variableNameRegExp = "/^[a-zA-Z0-9_\$]+$/";
     private string $functionNameRegExp = "/^[a-zA-Z0-9_\\\\]+$/";
     private string $attributeNameRegExp = "/^[a-zA-Z0-9.]+$/";
@@ -302,9 +310,15 @@ class Parser
 
                     if (
                         $lastStatement->getState() === IfRef::STATE_THEN_ENDED &&
-                        $parenthesisCounter === 0 &&
-                        $braceCounter === 0 &&
-                        !in_array($char, ["\r", "\n", "\t", ' ']) &&
+                        (
+                            $parenthesisCounter === 0 ||
+                            $parenthesisCounter === 1 && $char === '('
+                        ) &&
+                        (
+                            $braceCounter === 0 ||
+                            $braceCounter === 1 && $char === '{'
+                        ) &&
+                        !in_array($char, $this->whiteSpaceCharList) &&
                         substr($string, $i, 4) !== 'else'
                     ) {
                         $lastStatement->setReady();
@@ -332,7 +346,10 @@ class Parser
                     else if (
                         !$isLast &&
                         substr($string, $i - 1, 2) === 'if' &&
-                        in_array($string[$i + 1], ["\r", "\n", "\t", ' ', '('])
+                        (
+                            in_array($string[$i + 1], $this->whiteSpaceCharList) ||
+                            $string[$i + 1] === '('
+                        )
                     ) {
                         $statementList[] = new IfRef();
                     }
