@@ -242,140 +242,15 @@ class Parser
                     $lastStatement instanceof IfRef &&
                     !$lastStatement->isReady()
                 ) {
-                    if (
-                        $char === '(' &&
-                        !$isLast &&
-                        $parenthesisCounter === 1 &&
-                        $braceCounter === 0 &&
-                        $lastStatement->getState() === IfRef::STATE_EMPTY
-                    ) {
-                        $lastStatement->setConditionStart($i + 1);
+                    $toContinue = $this->processStringIfStatement(
+                        $string,
+                        $i,
+                        $parenthesisCounter,
+                        $braceCounter,
+                        $lastStatement
+                    );
 
-                        continue;
-                    }
-
-                    if (
-                        $char === ')' &&
-                        $parenthesisCounter === 0 &&
-                        $braceCounter === 0 &&
-                        $lastStatement->getState() === IfRef::STATE_CONDITION_STARTED
-                    ) {
-                        $lastStatement->setConditionEnd($i);
-
-                        continue;
-                    }
-
-                    if (
-                        $lastStatement->getState() === IfRef::STATE_CONDITION_ENDED &&
-                        !$isLast &&
-                        $parenthesisCounter === 0 &&
-                        $braceCounter === 1 &&
-                        $char === '{'
-                    ) {
-                        $lastStatement->setThenStart($i + 1);
-
-                        continue;
-                    }
-
-                    if (
-                        $lastStatement->getState() === IfRef::STATE_THEN_STARTED &&
-                        $parenthesisCounter === 0 &&
-                        $braceCounter === 0 &&
-                        $char === '}'
-                    ) {
-                        $lastStatement->setThenEnd($i + 1);
-
-                        if ($isLast) {
-                            $lastStatement->setReady();
-                        }
-
-                        continue;
-                    }
-
-                    if (
-                        $lastStatement->getState() === IfRef::STATE_CONDITION_ENDED &&
-                        $parenthesisCounter === 0 &&
-                        $braceCounter === 0 &&
-                        $char === ';'
-                    ) {
-                        $lastStatement->setThenStart($lastStatement->getConditionEnd() + 1);
-                        $lastStatement->setThenEnd($i + 1);
-
-                        if ($isLast) {
-                            $lastStatement->setReady();
-                        }
-
-                        continue;
-                    }
-
-                    if (
-                        $lastStatement->getState() === IfRef::STATE_THEN_ENDED &&
-                        (
-                            $parenthesisCounter === 0 ||
-                            $parenthesisCounter === 1 && $char === '('
-                        ) &&
-                        (
-                            $braceCounter === 0 ||
-                            $braceCounter === 1 && $char === '{'
-                        ) &&
-                        !$this->isWhiteSpaceChar($char) &&
-                        substr($string, $i, 4) !== 'else'
-                    ) {
-                        $lastStatement->setReady();
-                        // No need to call continue.
-                    }
-
-                    if (
-                        $lastStatement->getState() === IfRef::STATE_THEN_ENDED &&
-                        $parenthesisCounter === 0 &&
-                        $braceCounter === 0 &&
-                        substr($string, $i, 4) !== 'else' &&
-                        (
-                            $this->isWhiteSpaceChar($string[$i + 4] ?? '') ||
-                            ($string[$i + 4] ?? '') === '{'
-                        )
-                    ) {
-                        $lastStatement->setElseMet($i + 4);
-
-                        $i += 3;
-
-                        continue;
-                    }
-
-                    if (
-                        $lastStatement->getState() === IfRef::STATE_ELSE_MET &&
-                        !$isLast &&
-                        $parenthesisCounter === 0 &&
-                        $braceCounter === 1 &&
-                        $char === '{'
-                    ) {
-                        $lastStatement->setElseStart($i + 1);
-
-                        continue;
-                    }
-
-                    if (
-                        $lastStatement->getState() === IfRef::STATE_ELSE_STARTED &&
-                        $parenthesisCounter === 0 &&
-                        $braceCounter === 0 &&
-                        $char === '}'
-                    ) {
-                        $lastStatement->setElseEnd($i + 1);
-                        $lastStatement->setReady();
-
-                        continue;
-                    }
-
-                    if (
-                        $lastStatement->getState() === IfRef::STATE_ELSE_MET &&
-                        $parenthesisCounter === 0 &&
-                        $braceCounter === 0 &&
-                        $char === ';'
-                    ) {
-                        $lastStatement->setElseStart($lastStatement->getElseKeywordEnd() + 1);
-                        $lastStatement->setElseEnd($i + 1);
-                        $lastStatement->setReady();
-
+                    if ($toContinue) {
                         continue;
                     }
                 }
@@ -440,9 +315,157 @@ class Parser
         return $isString;
     }
 
-    private function processStringIfStatement(): bool
-    {
-        
+    private function processStringIfStatement(
+        string $string,
+        int &$i,
+        int $parenthesisCounter,
+        int $braceCounter,
+        IfRef $statement
+    ): bool {
+
+        $char = $string[$i];
+        $isLast = $i === strlen($string) - 1;
+
+        if (
+            $char === '(' &&
+            !$isLast &&
+            $parenthesisCounter === 1 &&
+            $braceCounter === 0 &&
+            $statement->getState() === IfRef::STATE_EMPTY
+        ) {
+            $statement->setConditionStart($i + 1);
+
+            return true;
+        }
+
+        if (
+            $char === ')' &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            $statement->getState() === IfRef::STATE_CONDITION_STARTED
+        ) {
+            $statement->setConditionEnd($i);
+
+            return true;
+        }
+
+        if (
+            $statement->getState() === IfRef::STATE_CONDITION_ENDED &&
+            !$isLast &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 1 &&
+            $char === '{'
+        ) {
+            $statement->setThenStart($i + 1);
+
+            return true;
+        }
+
+        if (
+            $statement->getState() === IfRef::STATE_THEN_STARTED &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            $char === '}'
+        ) {
+            $statement->setThenEnd($i + 1);
+
+            if ($isLast) {
+                $statement->setReady();
+            }
+
+            return true;
+        }
+
+        if (
+            $statement->getState() === IfRef::STATE_CONDITION_ENDED &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            $char === ';'
+        ) {
+            $statement->setThenStart($statement->getConditionEnd() + 1);
+            $statement->setThenEnd($i + 1);
+
+            if ($isLast) {
+                $statement->setReady();
+            }
+
+            return true;
+        }
+
+        if (
+            $statement->getState() === IfRef::STATE_THEN_ENDED &&
+            (
+                $parenthesisCounter === 0 ||
+                $parenthesisCounter === 1 && $char === '('
+            ) &&
+            (
+                $braceCounter === 0 ||
+                $braceCounter === 1 && $char === '{'
+            ) &&
+            !$this->isWhiteSpaceChar($char) &&
+            substr($string, $i, 4) !== 'else'
+        ) {
+            $statement->setReady();
+
+            // No need to call continue.
+            return false;
+        }
+
+        if (
+            $statement->getState() === IfRef::STATE_THEN_ENDED &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            substr($string, $i, 4) !== 'else' &&
+            (
+                $this->isWhiteSpaceChar($string[$i + 4] ?? '') ||
+                ($string[$i + 4] ?? '') === '{'
+            )
+        ) {
+            $statement->setElseMet($i + 4);
+
+            $i += 3;
+
+            return true;
+        }
+
+        if (
+            $statement->getState() === IfRef::STATE_ELSE_MET &&
+            !$isLast &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 1 &&
+            $char === '{'
+        ) {
+            $statement->setElseStart($i + 1);
+
+            return true;
+        }
+
+        if (
+            $statement->getState() === IfRef::STATE_ELSE_STARTED &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            $char === '}'
+        ) {
+            $statement->setElseEnd($i + 1);
+            $statement->setReady();
+
+            return true;
+        }
+
+        if (
+            $statement->getState() === IfRef::STATE_ELSE_MET &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            $char === ';'
+        ) {
+            $statement->setElseStart($statement->getElseKeywordEnd() + 1);
+            $statement->setElseEnd($i + 1);
+            $statement->setReady();
+
+            return true;
+        }
+
+        return false;
     }
 
     private function isWhiteSpaceChar(string $char): bool
