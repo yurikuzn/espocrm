@@ -230,7 +230,10 @@ class Parser
                     $braceCounter--;
                 }
 
-                if ($statementList !== null && $lastStatement instanceof IfRef) {
+                if (
+                    $lastStatement instanceof IfRef &&
+                    !$lastStatement->isReady()
+                ) {
                     if (
                         $char === '(' &&
                         !$isLast &&
@@ -274,6 +277,10 @@ class Parser
                     ) {
                         $lastStatement->setThenEnd($i + 1);
 
+                        if ($isLast) {
+                            $lastStatement->setReady();
+                        }
+
                         continue;
                     }
 
@@ -286,19 +293,38 @@ class Parser
                         $lastStatement->setThenStart($lastStatement->getConditionEnd() + 1);
                         $lastStatement->setThenEnd($i + 1);
 
+                        if ($isLast) {
+                            $lastStatement->setReady();
+                        }
+
                         continue;
+                    }
+
+                    if (
+                        $lastStatement->getState() === IfRef::STATE_THEN_ENDED &&
+                        $parenthesisCounter === 0 &&
+                        $braceCounter === 0 &&
+                        !in_array($char, ["\r", "\n", "\t", ' ']) &&
+                        substr($string, $i, 4) !== 'else'
+                    ) {
+                        $lastStatement->setReady();
+                        // No need to call continue.
                     }
                 }
 
-                if ($parenthesisCounter === 0 && $statementList !== null) {
+                if (
+                    $parenthesisCounter === 0 &&
+                    $braceCounter === 0 &&
+                    $statementList !== null
+                ) {
                     $previousStatementEnd = $lastStatement ?
                         $lastStatement->getEnd() :
                         -1;
 
+                    //$statementCount = count($statementList);
+
                     if ($char === ';') {
                         $statementList[] = new StatementRef($previousStatementEnd + 1, $i);
-
-                        //$splitterIndexList[] = $i;
                     }
                     else if ($isLast && count($statementList)) {
                         $statementList[] = new StatementRef($previousStatementEnd + 1, $i + 1);
@@ -310,6 +336,8 @@ class Parser
                     ) {
                         $statementList[] = new IfRef();
                     }
+
+                    //$isStatementEnd = $statementCount !== count($statementList);
                 }
 
                 if ($parenthesisCounter === 0) {
