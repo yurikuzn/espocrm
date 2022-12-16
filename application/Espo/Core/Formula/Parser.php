@@ -156,10 +156,10 @@ class Parser
         $isSingleQuote = false;
         $isComment = false;
         $isLineComment = false;
+        $parenthesisCounter = 0;
+        $braceCounter = 0;
 
         $modifiedString = $string;
-
-        $parenthesisCounter = 0;
 
         for ($i = 0; $i < strlen($string); $i++) {
             $isStringStart = false;
@@ -172,7 +172,8 @@ class Parser
                         $isString = true;
                         $isSingleQuote = true;
                         $isStringStart = true;
-                    } else if ($isSingleQuote) {
+                    }
+                    else if ($isSingleQuote) {
                         $isString = false;
                     }
                 }
@@ -189,7 +190,7 @@ class Parser
             }
 
             if ($isString) {
-                if ($char === '(' || $char === ')') {
+                if (in_array($char, ['(', ')', '{', '}'])) {
                     $modifiedString[$i] = '_';
                 }
                 else if (!$isStringStart) {
@@ -221,24 +222,72 @@ class Parser
                     $parenthesisCounter--;
                 }
 
-                if (
-                    !$isLast &&
-                    $char === '(' &&
-                    $parenthesisCounter === 1 &&
-                    $lastStatement instanceof IfRef &&
-                    $lastStatement->getState() === IfRef::STATE_EMPTY
-                ) {
-                    $lastStatement->setConditionStart($i + 1);
+                if ($char === '{') {
+                    $braceCounter++;
                 }
 
-                if (
-                    !$isLast &&
-                    $char === ')' &&
-                    $parenthesisCounter === 0 &&
-                    $lastStatement instanceof IfRef &&
-                    $lastStatement->getState() === IfRef::STATE_CONDITION_STARTED
-                ) {
-                    $lastStatement->setConditionEnd($i);
+                if ($char === '}') {
+                    $braceCounter--;
+                }
+
+                if ($statementList !== null && $lastStatement instanceof IfRef) {
+                    if (
+                        $char === '(' &&
+                        !$isLast &&
+                        $parenthesisCounter === 1 &&
+                        $braceCounter === 0 &&
+                        $lastStatement->getState() === IfRef::STATE_EMPTY
+                    ) {
+                        $lastStatement->setConditionStart($i + 1);
+
+                        continue;
+                    }
+
+                    if (
+                        $char === ')' &&
+                        $parenthesisCounter === 0 &&
+                        $braceCounter === 0 &&
+                        $lastStatement->getState() === IfRef::STATE_CONDITION_STARTED
+                    ) {
+                        $lastStatement->setConditionEnd($i);
+
+                        continue;
+                    }
+
+                    if (
+                        $lastStatement->getState() === IfRef::STATE_CONDITION_ENDED &&
+                        !$isLast &&
+                        $parenthesisCounter === 0 &&
+                        $braceCounter === 1 &&
+                        $char === '{'
+                    ) {
+                        $lastStatement->setThenStart($i + 1);
+
+                        continue;
+                    }
+
+                    if (
+                        $lastStatement->getState() === IfRef::STATE_THEN_STARTED &&
+                        $parenthesisCounter === 0 &&
+                        $braceCounter === 0 &&
+                        $char === '}'
+                    ) {
+                        $lastStatement->setThenEnd($i + 1);
+
+                        continue;
+                    }
+
+                    if (
+                        $lastStatement->getState() === IfRef::STATE_CONDITION_ENDED &&
+                        $parenthesisCounter === 0 &&
+                        $braceCounter === 0 &&
+                        $char === ';'
+                    ) {
+                        $lastStatement->setThenStart($lastStatement->getConditionEnd() + 1);
+                        $lastStatement->setThenEnd($i + 1);
+
+                        continue;
+                    }
                 }
 
                 if ($parenthesisCounter === 0 && $statementList !== null) {
