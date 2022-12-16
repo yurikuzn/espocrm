@@ -241,29 +241,29 @@ class Parser
                     $lastStatement->setConditionEnd($i);
                 }
 
-                if ($parenthesisCounter === 0) {
-                    if (!is_null($statementList)) {
-                        $previousStatementEnd = $lastStatement ?
-                            $lastStatement->getEnd() :
-                            -1;
+                if ($parenthesisCounter === 0 && $statementList !== null) {
+                    $previousStatementEnd = $lastStatement ?
+                        $lastStatement->getEnd() :
+                        -1;
 
-                        if ($char === ';') {
-                            $statementList[] = new StatementRef($previousStatementEnd + 1, $i);
+                    if ($char === ';') {
+                        $statementList[] = new StatementRef($previousStatementEnd + 1, $i);
 
-                            //$splitterIndexList[] = $i;
-                        }
-                        else if ($isLast && count($statementList)) {
-                            $statementList[] = new StatementRef($previousStatementEnd + 1, $i + 1);
-                        }
-                        else if (
-                            !$isLast &&
-                            substr($string, $i - 1, 2) === 'if' &&
-                            in_array($string[$i + 1], ["\r", "\n", "\t", ' ', '('])
-                        ) {
-                            $statementList[] = new IfRef();
-                        }
+                        //$splitterIndexList[] = $i;
                     }
+                    else if ($isLast && count($statementList)) {
+                        $statementList[] = new StatementRef($previousStatementEnd + 1, $i + 1);
+                    }
+                    else if (
+                        !$isLast &&
+                        substr($string, $i - 1, 2) === 'if' &&
+                        in_array($string[$i + 1], ["\r", "\n", "\t", ' ', '('])
+                    ) {
+                        $statementList[] = new IfRef();
+                    }
+                }
 
+                if ($parenthesisCounter === 0) {
                     if ($intoOneLine) {
                         if (
                             $char === "\r" ||
