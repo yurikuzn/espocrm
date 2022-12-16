@@ -145,9 +145,13 @@ class IfRef
         return $this->elseEnd;
     }
 
-
     public function getElseKeywordEnd(): ?int
     {
         return $this->elseKeywordEnd;
+    }
+
+    public function getEnd(): ?int
+    {
+        return $this->elseEnd ?? $this->thenEnd;
     }
 }

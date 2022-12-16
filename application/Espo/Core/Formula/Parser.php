@@ -29,6 +29,7 @@
 
 namespace Espo\Core\Formula;
 
+use Espo\Core\Formula\Exceptions\Error;
 use Espo\Core\Formula\Exceptions\SyntaxError;
 
 use Espo\Core\Formula\Parser\Statement\IfRef;
@@ -151,7 +152,8 @@ class Parser
     }
 
     /**
-     * @param ?StatementRef[] $statementList
+     * @param ?((StatementRef|IfRef)[]) $statementList
+     * @throws SyntaxError
      */
     private function processStrings(
         string &$string,
@@ -263,6 +265,10 @@ class Parser
                     $previousStatementEnd = $lastStatement ?
                         $lastStatement->getEnd() :
                         -1;
+
+                    if ($previousStatementEnd === null) {
+                        throw SyntaxError::create("Incorrect statement usage.");
+                    }
 
                     //$statementCount = count($statementList);
 
@@ -481,10 +487,9 @@ class Parser
         $expression = trim($expression);
 
         $parenthesisCounter = 0;
-        //$braceCounter = 0;
+        $braceCounter = 0;
         $hasExcessParenthesis = true;
         $modifiedExpression = '';
-        //$splitterIndexList = [];
         $expressionOutOfParenthesisList = [];
 
         $statementList = [];
@@ -504,7 +509,6 @@ class Parser
                 unset($splitterIndexList[$i]);
             }
         }
-
         $splitterIndexList = array_values($splitterIndexList);
         */
 
@@ -519,12 +523,12 @@ class Parser
             else if ($value === ')') {
                 $parenthesisCounter--;
             }
-            /*else if ($value === '{') {
+            else if ($value === '{') {
                 $braceCounter++;
             }
             else if ($value === '}') {
                 $braceCounter--;
-            }*/
+            }
 
             if ($parenthesisCounter === 0 && $i < $expressionLength - 1) {
                 $hasExcessParenthesis = false;
@@ -535,17 +539,17 @@ class Parser
 
         if ($parenthesisCounter !== 0) {
             throw SyntaxError::create(
-                'Incorrect usage of parentheses in expression ' . $expression . '.',
+                'Incorrect parentheses usage in expression ' . $expression . '.',
                 'Incorrect parentheses.'
             );
         }
 
-        /*if ($braceCounter !== 0) {
+        if ($braceCounter !== 0) {
             throw SyntaxError::create(
-                'Incorrect usage of braces in expression ' . $expression . '.',
+                'Incorrect braces usage in expression ' . $expression . '.',
                 'Incorrect braces.'
             );
-        }*/
+        }
 
         if (
             strlen($expression) > 1 &&
@@ -566,17 +570,66 @@ class Parser
             $parsedPartList = [];
 
             foreach ($statementList as $statement) {
+                $parsedPart = null;
+
                 if ($statement instanceof StatementRef) {
-                    $part = trim(
-                        substr(
-                            $expression,
-                            $statement->getStart(),
-                            $statement->getEnd() - $statement->getStart()
-                        )
+                    $part = self::sliceByStartEnd($expression, $statement->getStart(), $statement->getEnd());
+
+                    $parsedPart = $this->parse($part);
+                }
+                else if ($statement instanceof IfRef) {
+                    if (!$statement->isReady()) {
+                        throw SyntaxError::create(
+                            'Incorrect if statement usage in expression ' . $expression . '.',
+                            'Incorrect if statement.'
+                        );
+                    }
+
+                    $conditionPart = self::sliceByStartEnd(
+                        $expression,
+                        $statement->getConditionStart(),
+                        $statement->getConditionEnd()
                     );
 
-                    $parsedPartList[] = $this->parse($part);
+                    $thenPart = self::sliceByStartEnd(
+                        $expression,
+                        $statement->getThenStart(),
+                        $statement->getThenEnd()
+                    );
+
+                    $elsePart = $statement->getElseKeywordEnd() ?
+                        self::sliceByStartEnd(
+                            $expression,
+                            $statement->getElseStart(),
+                            $statement->getElseEnd()
+                        ) : null;
+
+                    return $statement->getElseKeywordEnd() ?
+                        (object) [
+                            'type' => 'ifThenElse',
+                            'value' => [
+                                $conditionPart,
+                                $thenPart,
+                                $elsePart
+                            ]
+                        ] :
+                        (object) [
+                            'type' => 'ifThen',
+                            'value' => [
+                                $conditionPart,
+                                $thenPart
+                            ]
+                        ];
                 }
+
+                if (!$parsedPart) {
+                    throw SyntaxError::create(
+                        'Unknown syntax error in expression ' . $expression . '.',
+                        'Unknown syntax error.'
+                    );
+                }
+
+                $parsedPartList[] = $parsedPart;
             }
 
             /*for ($i = 0; $i < count($splitterIndexList); $i++) {
@@ -830,6 +883,17 @@ class Parser
             'type' => 'attribute',
             'value' => $expression,
         ];
+    }
+
+    private static function sliceByStartEnd(string $expression, int $start, int $end): string
+    {
+        return trim(
+            substr(
+                $expression,
+                $start,
+                $end - $start
+            )
+        );
     }
 
     private function stripComments(string &$expression, string &$modifiedExpression): void
