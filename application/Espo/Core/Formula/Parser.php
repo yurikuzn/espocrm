@@ -31,6 +31,7 @@ namespace Espo\Core\Formula;
 
 use Espo\Core\Formula\Exceptions\SyntaxError;
 
+use Espo\Core\Formula\Parser\Statement\IfRef;
 use Espo\Core\Formula\Parser\Statement\StatementRef;
 use stdClass;
 
@@ -162,6 +163,8 @@ class Parser
 
         for ($i = 0; $i < strlen($string); $i++) {
             $isStringStart = false;
+            $char = $string[$i];
+            $isLast = $i === strlen($string) - 1;
 
             if (!$isLineComment && !$isComment) {
                 if ($string[$i] === "'" && ($i === 0 || $string[$i - 1] !== "\\")) {
@@ -169,10 +172,8 @@ class Parser
                         $isString = true;
                         $isSingleQuote = true;
                         $isStringStart = true;
-                    } else {
-                        if ($isSingleQuote) {
-                            $isString = false;
-                        }
+                    } else if ($isSingleQuote) {
+                        $isString = false;
                     }
                 }
                 else if ($string[$i] === "\"" && ($i === 0 || $string[$i - 1] !== "\\")) {
@@ -180,16 +181,15 @@ class Parser
                         $isString = true;
                         $isStringStart = true;
                         $isSingleQuote = false;
-                    } else {
-                        if (!$isSingleQuote) {
-                            $isString = false;
-                        }
+                    }
+                    else if (!$isSingleQuote) {
+                        $isString = false;
                     }
                 }
             }
 
             if ($isString) {
-                if ($string[$i] === '(' || $string[$i] === ')') {
+                if ($char === '(' || $char === ')') {
                     $modifiedString[$i] = '_';
                 }
                 else if (!$isStringStart) {
@@ -210,33 +210,66 @@ class Parser
                     }
                 }
 
-                if ($string[$i] === '(') {
+                $lastStatement = $statementList !== null && count($statementList) ?
+                    end($statementList) : null;
+
+                if ($char === '(') {
                     $parenthesisCounter++;
                 }
 
-                if ($string[$i] === ')') {
+                if ($char === ')') {
                     $parenthesisCounter--;
+                }
+
+                if (
+                    !$isLast &&
+                    $char === '(' &&
+                    $parenthesisCounter === 1 &&
+                    $lastStatement instanceof IfRef &&
+                    $lastStatement->getState() === IfRef::STATE_EMPTY
+                ) {
+                    $lastStatement->setConditionStart($i + 1);
+                }
+
+                if (
+                    !$isLast &&
+                    $char === ')' &&
+                    $parenthesisCounter === 0 &&
+                    $lastStatement instanceof IfRef &&
+                    $lastStatement->getState() === IfRef::STATE_CONDITION_STARTED
+                ) {
+                    $lastStatement->setConditionEnd($i);
                 }
 
                 if ($parenthesisCounter === 0) {
                     if (!is_null($statementList)) {
-                        $previousStatementEnd = count($statementList) ?
-                            end($statementList)->getEnd() : -1;
+                        $previousStatementEnd = $lastStatement ?
+                            $lastStatement->getEnd() :
+                            -1;
 
-                        if ($string[$i] === ';') {
+                        if ($char === ';') {
                             $statementList[] = new StatementRef($previousStatementEnd + 1, $i);
-
-                            //echo "\n--" . substr($string, $previousStatementEnd + 1, $i) . "\n";
 
                             //$splitterIndexList[] = $i;
                         }
-                        else if ($i === strlen($string) - 1 && count($statementList)) {
+                        else if ($isLast && count($statementList)) {
                             $statementList[] = new StatementRef($previousStatementEnd + 1, $i + 1);
+                        }
+                        else if (
+                            !$isLast &&
+                            substr($string, $i - 1, 2) === 'if' &&
+                            in_array($string[$i + 1], ["\r", "\n", "\t", ' ', '('])
+                        ) {
+                            $statementList[] = new IfRef();
                         }
                     }
 
                     if ($intoOneLine) {
-                        if ($string[$i] === "\r" || $string[$i] === "\n" || $string[$i] === "\t") {
+                        if (
+                            $char === "\r" ||
+                            $char === "\n" ||
+                            $char === "\t"
+                        ) {
                             $string[$i] = ' ';
                         }
                     }
