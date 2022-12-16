@@ -34,6 +34,7 @@ use Espo\Core\Formula\Exceptions\SyntaxError;
 
 use Espo\Core\Formula\Parser\Statement\IfRef;
 use Espo\Core\Formula\Parser\Statement\StatementRef;
+use LogicException;
 use stdClass;
 
 /**
@@ -585,24 +586,26 @@ class Parser
                         );
                     }
 
-                    $conditionPart = self::sliceByStartEnd(
-                        $expression,
-                        $statement->getConditionStart(),
-                        $statement->getConditionEnd()
-                    );
+                    $conditionStart = $statement->getConditionStart();
+                    $conditionEnd = $statement->getConditionEnd();
+                    $thenStart = $statement->getThenStart();
+                    $thenEnd = $statement->getThenEnd();
+                    $elseStart = $statement->getElseStart();
+                    $elseEnd = $statement->getElseEnd();
 
-                    $thenPart = self::sliceByStartEnd(
-                        $expression,
-                        $statement->getThenStart(),
-                        $statement->getThenEnd()
-                    );
+                    if (
+                        $conditionStart === null ||
+                        $conditionEnd === null ||
+                        $thenStart === null ||
+                        $thenEnd === null
+                    ) {
+                        throw new LogicException()
+                    }
 
-                    $elsePart = $statement->getElseKeywordEnd() ?
-                        self::sliceByStartEnd(
-                            $expression,
-                            $statement->getElseStart(),
-                            $statement->getElseEnd()
-                        ) : null;
+                    $conditionPart = self::sliceByStartEnd($expression, $conditionStart, $conditionEnd);
+                    $thenPart = self::sliceByStartEnd($expression, $thenStart, $thenEnd);
+                    $elsePart = $elseStart !== null && $elseEnd !== null ?
+                        self::sliceByStartEnd($expression, $elseStart, $elseEnd) : null;
 
                     return $statement->getElseKeywordEnd() ?
                         (object) [
