@@ -31,6 +31,7 @@ namespace Espo\Core\Formula;
 
 use Espo\Core\Formula\Exceptions\SyntaxError;
 
+use Espo\Core\Formula\Parser\Statement\StatementRef;
 use stdClass;
 
 /**
@@ -141,12 +142,12 @@ class Parser
     }
 
     /**
-     * @param ?int[] $splitterIndexList
+     * @param ?StatementRef[] $statementList
      */
     private function processStrings(
         string &$string,
         string &$modifiedString,
-        ?array &$splitterIndexList = null,
+        ?array &$statementList = null,
         bool $intoOneLine = false
     ): bool {
 
@@ -218,9 +219,19 @@ class Parser
                 }
 
                 if ($parenthesisCounter === 0) {
-                    if (!is_null($splitterIndexList)) {
+                    if (!is_null($statementList)) {
+                        $previousStatementEnd = count($statementList) ?
+                            end($statementList)->getEnd() : -1;
+
                         if ($string[$i] === ';') {
-                            $splitterIndexList[] = $i;
+                            $statementList[] = new StatementRef($previousStatementEnd + 1, $i);
+
+                            //echo "\n--" . substr($string, $previousStatementEnd + 1, $i) . "\n";
+
+                            //$splitterIndexList[] = $i;
+                        }
+                        else if ($i === strlen($string) - 1 && count($statementList)) {
+                            $statementList[] = new StatementRef($previousStatementEnd + 1, $i + 1);
                         }
                     }
 
@@ -259,10 +270,12 @@ class Parser
         //$braceCounter = 0;
         $hasExcessParenthesis = true;
         $modifiedExpression = '';
-        $splitterIndexList = [];
+        //$splitterIndexList = [];
         $expressionOutOfParenthesisList = [];
 
-        $isStringNotClosed = $this->processStrings($expression, $modifiedExpression, $splitterIndexList, true);
+        $statementList = [];
+
+        $isStringNotClosed = $this->processStrings($expression, $modifiedExpression, $statementList, true);
 
         if ($isStringNotClosed) {
             throw SyntaxError::create('String is not closed.');
@@ -270,6 +283,8 @@ class Parser
 
         $this->stripComments($expression, $modifiedExpression);
 
+        // @todo Revise.
+        /*
         foreach ($splitterIndexList as $i => $index) {
             if ($expression[$index] !== ';') {
                 unset($splitterIndexList[$i]);
@@ -277,6 +292,7 @@ class Parser
         }
 
         $splitterIndexList = array_values($splitterIndexList);
+        */
 
         $expressionLength = strlen($modifiedExpression);
 
@@ -328,14 +344,28 @@ class Parser
             return $this->split($expression);
         }
 
-        if (count($splitterIndexList)) {
-            if ($expression[strlen($expression) - 1] !== ';') {
+        if (count($statementList)) {
+            /*if ($expression[strlen($expression) - 1] !== ';') {
                 $splitterIndexList[] = strlen($expression);
-            }
+            }*/
 
             $parsedPartList = [];
 
-            for ($i = 0; $i < count($splitterIndexList); $i++) {
+            foreach ($statementList as $statement) {
+                if ($statement instanceof StatementRef) {
+                    $part = trim(
+                        substr(
+                            $expression,
+                            $statement->getStart(),
+                            $statement->getEnd() - $statement->getStart()
+                        )
+                    );
+
+                    $parsedPartList[] = $this->parse($part);
+                }
+            }
+
+            /*for ($i = 0; $i < count($splitterIndexList); $i++) {
                 $previousSplitterIndex = $i > 0 ?
                     $splitterIndexList[$i - 1] + 1 :
                     0;
@@ -349,7 +379,7 @@ class Parser
                 );
 
                 $parsedPartList[] = $this->parse($part);
-            }
+            }*/
 
             return (object) [
                 'type' => 'bundle',
