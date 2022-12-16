@@ -36,9 +36,10 @@ class IfRef
     public const STATE_CONDITION_ENDED = 2;
     public const STATE_THEN_STARTED = 3;
     public const STATE_THEN_ENDED = 4;
-    public const STATE_ELSE_STARTED = 5;
-    public const STATE_ELSE_ENDED = 6;
-    public const STATE_READY = 7;
+    public const STATE_ELSE_MET = 5;
+    public const STATE_ELSE_STARTED = 6;
+    public const STATE_ELSE_ENDED = 7;
+    public const STATE_READY = 8;
 
     private ?int $conditionStart = null;
     private ?int $conditionEnd = null;
@@ -46,6 +47,7 @@ class IfRef
     private ?int $thenEnd = null;
     private ?int $elseStart = null;
     private ?int $elseEnd = null;
+    private ?int $elseKeywordEnd = null;
     private int $state = self::STATE_EMPTY;
 
     public function __construct()
@@ -78,6 +80,12 @@ class IfRef
     {
         $this->thenEnd = $thenEnd;
         $this->state = self::STATE_THEN_ENDED;
+    }
+
+    public function setElseMet(int $elseKeywordEnd): void
+    {
+        $this->state = self::STATE_ELSE_MET;
+        $this->elseKeywordEnd = $elseKeywordEnd;
     }
 
     public function setElseStart(int $elseStart): void
@@ -135,5 +143,11 @@ class IfRef
     public function getElseEnd(): ?int
     {
         return $this->elseEnd;
+    }
+
+
+    public function getElseKeywordEnd(): ?int
+    {
+        return $this->elseKeywordEnd;
     }
 }

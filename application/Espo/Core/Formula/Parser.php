@@ -318,11 +318,65 @@ class Parser
                             $braceCounter === 0 ||
                             $braceCounter === 1 && $char === '{'
                         ) &&
-                        !in_array($char, $this->whiteSpaceCharList) &&
+                        !$this->isWhiteSpaceChar($char) &&
                         substr($string, $i, 4) !== 'else'
                     ) {
                         $lastStatement->setReady();
                         // No need to call continue.
+                    }
+
+                    if (
+                        $lastStatement->getState() === IfRef::STATE_THEN_ENDED &&
+                        $parenthesisCounter === 0 &&
+                        $braceCounter === 0 &&
+                        substr($string, $i, 4) !== 'else' &&
+                        (
+                            $this->isWhiteSpaceChar($string[$i + 4] ?? '') ||
+                            ($string[$i + 4] ?? '') === '{'
+                        )
+                    ) {
+                        $lastStatement->setElseMet($i + 4);
+
+                        $i += 3;
+
+                        continue;
+                    }
+
+                    if (
+                        $lastStatement->getState() === IfRef::STATE_ELSE_MET &&
+                        !$isLast &&
+                        $parenthesisCounter === 0 &&
+                        $braceCounter === 1 &&
+                        $char === '{'
+                    ) {
+                        $lastStatement->setElseStart($i + 1);
+
+                        continue;
+                    }
+
+                    if (
+                        $lastStatement->getState() === IfRef::STATE_ELSE_STARTED &&
+                        $parenthesisCounter === 0 &&
+                        $braceCounter === 0 &&
+                        $char === '}'
+                    ) {
+                        $lastStatement->setElseEnd($i + 1);
+                        $lastStatement->setReady();
+
+                        continue;
+                    }
+
+                    if (
+                        $lastStatement->getState() === IfRef::STATE_ELSE_MET &&
+                        $parenthesisCounter === 0 &&
+                        $braceCounter === 0 &&
+                        $char === ';'
+                    ) {
+                        $lastStatement->setElseStart($lastStatement->getElseKeywordEnd() + 1);
+                        $lastStatement->setElseEnd($i + 1);
+                        $lastStatement->setReady();
+
+                        continue;
                     }
                 }
 
@@ -347,7 +401,7 @@ class Parser
                         !$isLast &&
                         substr($string, $i - 1, 2) === 'if' &&
                         (
-                            in_array($string[$i + 1], $this->whiteSpaceCharList) ||
+                            $this->isWhiteSpaceChar($string[$i + 1]) ||
                             $string[$i + 1] === '('
                         )
                     ) {
@@ -384,6 +438,11 @@ class Parser
         }
 
         return $isString;
+    }
+
+    private function isWhiteSpaceChar(string $char): bool
+    {
+        return in_array($char, $this->whiteSpaceCharList);
     }
 
     /**
