@@ -440,6 +440,11 @@ class Parser
         return $isString;
     }
 
+    private function processStringIfStatement(): bool
+    {
+        
+    }
+
     private function isWhiteSpaceChar(string $char): bool
     {
         return in_array($char, $this->whiteSpaceCharList);
