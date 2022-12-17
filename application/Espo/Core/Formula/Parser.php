@@ -29,11 +29,10 @@
 
 namespace Espo\Core\Formula;
 
-use Espo\Core\Formula\Exceptions\Error;
 use Espo\Core\Formula\Exceptions\SyntaxError;
-
 use Espo\Core\Formula\Parser\Statement\IfRef;
 use Espo\Core\Formula\Parser\Statement\StatementRef;
+
 use LogicException;
 use stdClass;
 
@@ -267,11 +266,16 @@ class Parser
                         $lastStatement->getEnd() :
                         -1;
 
+                    if (
+                        $lastStatement instanceof IfRef &&
+                        !$lastStatement->isReady()
+                    ) {
+                        continue;
+                    }
+
                     if ($previousStatementEnd === null) {
                         throw SyntaxError::create("Incorrect statement usage.");
                     }
-
-                    //$statementCount = count($statementList);
 
                     if ($char === ';') {
                         $statementList[] = new StatementRef($previousStatementEnd + 1, $i);
@@ -283,23 +287,30 @@ class Parser
                         !$isLast &&
                         substr($string, $i - 1, 2) === 'if' &&
                         (
-                            $this->isWhiteSpaceChar($string[$i + 1]) ||
+                            $i === 1 ||
+                            $this->isWhiteSpace($string[$i - 2]) ||
+                            $string[$i - 2] === ';'
+                        ) &&
+                        (
+                            $this->isWhiteSpace($string[$i + 1]) ||
                             $string[$i + 1] === '('
                         )
                     ) {
+                        /*if (
+                            $i >= 2 &&
+                            !$lastStatement instanceof IfRef
+                        ) {
+
+                            $statementList[] = new StatementRef($previousStatementEnd + 1, $i - 2);
+                        }*/
+
                         $statementList[] = new IfRef();
                     }
-
-                    //$isStatementEnd = $statementCount !== count($statementList);
                 }
 
                 if ($intoOneLine) {
                     if ($parenthesisCounter === 0) {
-                        if (
-                            $char === "\r" ||
-                            $char === "\n" ||
-                            $char === "\t"
-                        ) {
+                        if ($this->isWhiteSpace($char) && $char !== ' ') {
                             $string[$i] = ' ';
                         }
                     }
@@ -374,23 +385,7 @@ class Parser
             $braceCounter === 0 &&
             $char === '}'
         ) {
-            $statement->setThenEnd($i + 1);
-
-            if ($isLast) {
-                $statement->setReady();
-            }
-
-            return true;
-        }
-
-        if (
-            $statement->getState() === IfRef::STATE_CONDITION_ENDED &&
-            $parenthesisCounter === 0 &&
-            $braceCounter === 0 &&
-            $char === ';'
-        ) {
-            $statement->setThenStart($statement->getConditionEnd() + 1);
-            $statement->setThenEnd($i + 1);
+            $statement->setThenEnd($i);
 
             if ($isLast) {
                 $statement->setReady();
@@ -401,16 +396,10 @@ class Parser
 
         if (
             $statement->getState() === IfRef::STATE_THEN_ENDED &&
-            (
-                $parenthesisCounter === 0 ||
-                $parenthesisCounter === 1 && $char === '('
-            ) &&
-            (
-                $braceCounter === 0 ||
-                $braceCounter === 1 && $char === '{'
-            ) &&
-            !$this->isWhiteSpaceChar($char) &&
-            substr($string, $i, 4) !== 'else'
+            !$this->isWhiteSpace($char) &&
+            !$this->isOnElse($string, $i)
+            /*!$this->isWhiteSpaceChar($char) &&
+            substr($string, $i, 4) !== 'else'*/
         ) {
             $statement->setReady();
 
@@ -422,11 +411,12 @@ class Parser
             $statement->getState() === IfRef::STATE_THEN_ENDED &&
             $parenthesisCounter === 0 &&
             $braceCounter === 0 &&
-            substr($string, $i, 4) !== 'else' &&
+            $this->isOnElse($string, $i)
+            /*substr($string, $i, 4) === 'else' &&
             (
                 $this->isWhiteSpaceChar($string[$i + 4] ?? '') ||
                 ($string[$i + 4] ?? '') === '{'
-            )
+            )*/
         ) {
             $statement->setElseMet($i + 4);
 
@@ -448,22 +438,85 @@ class Parser
         }
 
         if (
-            $statement->getState() === IfRef::STATE_ELSE_STARTED &&
+            $statement->getState() === IfRef::STATE_ELSE_MET &&
+            !$isLast &&
             $parenthesisCounter === 0 &&
             $braceCounter === 0 &&
-            $char === '}'
+            $this->isWhiteSpace($string[$i - 1]) &&
+            substr($string, $i, 2) === 'if' &&
+            (
+                $this->isWhiteSpace($string[$i + 2] ?? '') ||
+                ($string[$i + 2] ?? '') === '('
+            )
         ) {
-            $statement->setElseEnd($i + 1);
-            $statement->setReady();
+            $statement->setElseStart($i, true);
+
+            $i += 1;
 
             return true;
         }
 
         if (
+            $statement->getState() === IfRef::STATE_ELSE_STARTED &&
+            $statement->hasInlineElse() &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            $char === '}'
+        ) {
+            $elseFound = false;
+            $j = $i + 1;
+
+            while ($j < strlen($string)) {
+                if ($this->isWhiteSpace($string[$j])) {
+                    $j++;
+
+                    continue;
+                }
+
+                $elseFound = $this->isOnElse($string, $j);
+
+                break;
+            }
+
+            if (!$elseFound) {
+                $statement->setElseEnd($i + 1);
+                $statement->setReady();
+            }
+
+            return true;
+        }
+
+        if (
+            $statement->getState() === IfRef::STATE_ELSE_STARTED &&
+            !$statement->hasInlineElse() &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            $char === '}'
+        ) {
+            $statement->setElseEnd($i);
+            $statement->setReady();
+
+            return true;
+        }
+
+        /*if (
             $statement->getState() === IfRef::STATE_ELSE_MET &&
             $parenthesisCounter === 0 &&
             $braceCounter === 0 &&
             $char === ';'
+        ) {
+            $statement->setElseStart($statement->getElseKeywordEnd() + 1);
+            $statement->setElseEnd($i + 1);
+            $statement->setReady();
+
+            return true;
+        }*/
+
+        if (
+            $statement->getState() === IfRef::STATE_ELSE_MET &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            $char === '}'
         ) {
             $statement->setElseStart($statement->getElseKeywordEnd() + 1);
             $statement->setElseEnd($i + 1);
@@ -475,7 +528,25 @@ class Parser
         return false;
     }
 
-    private function isWhiteSpaceChar(string $char): bool
+    private function isOnElse(string $string, int $i): bool
+    {
+        return substr($string, $i, 4) === 'else' &&
+            $this->isWhiteSpaceCharOrBraceOpen(substr($string, $i + 4, 1)) &&
+            $this->isWhiteSpaceCharOrBraceClose(substr($string, $i - 1, 1));
+
+    }
+
+    private function isWhiteSpaceCharOrBraceOpen(string $char): bool
+    {
+        return $char === '{' || in_array($char, $this->whiteSpaceCharList);
+    }
+
+    private function isWhiteSpaceCharOrBraceClose(string $char): bool
+    {
+        return $char === '}' || in_array($char, $this->whiteSpaceCharList);
+    }
+
+    private function isWhiteSpace(string $char): bool
     {
         return in_array($char, $this->whiteSpaceCharList);
     }
@@ -607,20 +678,20 @@ class Parser
                     $elsePart = $elseStart !== null && $elseEnd !== null ?
                         self::sliceByStartEnd($expression, $elseStart, $elseEnd) : null;
 
-                    return $statement->getElseKeywordEnd() ?
+                    $parsedPart = $statement->getElseKeywordEnd() ?
                         (object) [
                             'type' => 'ifThenElse',
                             'value' => [
-                                $conditionPart,
-                                $thenPart,
-                                $elsePart
+                                $this->parse($conditionPart),
+                                $this->parse($thenPart),
+                                $this->parse($elsePart)
                             ]
                         ] :
                         (object) [
                             'type' => 'ifThen',
                             'value' => [
-                                $conditionPart,
-                                $thenPart
+                                $this->parse($conditionPart),
+                                $this->parse($thenPart)
                             ]
                         ];
                 }
@@ -635,21 +706,9 @@ class Parser
                 $parsedPartList[] = $parsedPart;
             }
 
-            /*for ($i = 0; $i < count($splitterIndexList); $i++) {
-                $previousSplitterIndex = $i > 0 ?
-                    $splitterIndexList[$i - 1] + 1 :
-                    0;
-
-                $part = trim(
-                    substr(
-                        $expression,
-                        $previousSplitterIndex,
-                        $splitterIndexList[$i] - $previousSplitterIndex
-                    )
-                );
-
-                $parsedPartList[] = $this->parse($part);
-            }*/
+            if (count($parsedPartList) === 1) {
+                return $parsedPartList[0];
+            }
 
             return (object) [
                 'type' => 'bundle',

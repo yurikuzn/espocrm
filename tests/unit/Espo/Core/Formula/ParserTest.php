@@ -816,20 +816,25 @@ class ParserTest extends \PHPUnit\Framework\TestCase
     {
         $tab = '';
         $tabElement = '    ';
+
         for ($i = 0; $i <= $level; $i++) {
             $tab .= $tabElement;
         }
+
         $prevTab = substr($tab, 0, strlen($tab) - strlen($tabElement));
 
-        if ($variable instanceof \StdClass) {
+        if ($variable instanceof \stdClass) {
             $result = "(object) " . $this->varExport(get_object_vars($variable), $level);
-        } else if (is_array($variable)) {
-            $array = array();
+        }
+        else if (is_array($variable)) {
+            $array = [];
+
             foreach ($variable as $key => $value) {
                 $array[] = var_export($key, true) . " => " . $this->varExport($value, $level + 1);
             }
             $result = "[\n" . $tab . implode(",\n" . $tab, $array) . "\n" . $prevTab . "]";
-        } else {
+        }
+        else {
             $result = var_export($variable, true);
         }
 
@@ -902,6 +907,434 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             }
         ";
 
+        $expected = (object) [
+            'type' => 'ifThen',
+            'value' => [
+                (object) [
+                    'type' => 'value',
+                    'value' => true
+                ],
+                (object) [
+                    'type' => 'assign',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => 'test'
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => 1
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
         $actual = $this->parser->parse($expression);
+
+        $this->assertEquals($expected, $actual);
     }
+
+    public function testIfStatement2(): void
+    {
+        $expression = "
+            if (test() == 1) {
+                \$test1 = 1;
+                \$test2 = 2;
+            }
+        ";
+
+        $expected = (object) [
+            'type' => 'ifThen',
+            'value' => [
+                (object) [
+                    'type' => 'comparison\\equals',
+                    'value' => [
+                        (object) [
+                            'type' => 'test',
+                            'value' => []
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => 1
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'bundle',
+                    'value' => [
+                        (object) [
+                            'type' => 'assign',
+                            'value' => [
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 'test1'
+                                ],
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 1
+                                ]
+                            ]
+                        ],
+                        (object) [
+                            'type' => 'assign',
+                            'value' => [
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 'test2'
+                                ],
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 2
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $actual = $this->parser->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testIfStatement3(): void
+    {
+        $expression = "
+            if (true) {
+                if (true) {
+                    \$test = 1;
+                }
+            }
+        ";
+
+        $expected = (object) [
+            'type' => 'ifThen',
+            'value' => [
+                (object) [
+                    'type' => 'value',
+                    'value' => true
+                ],
+                (object) [
+                    'type' => 'ifThen',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => true
+                        ],
+                        (object) [
+                            'type' => 'assign',
+                            'value' => [
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 'test'
+                                ],
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 1
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $actual = $this->parser->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testIfStatement4(): void
+    {
+        $expression = "
+            aif(true);
+
+            if (true) {
+                \$test = 1;
+            }
+
+            if (true) {
+                \$test = 2;
+            }
+        ";
+
+        $expected = (object) [
+            'type' => 'bundle',
+            'value' => [
+                (object) [
+                    'type' => 'aif',
+                    'value' => [
+                        0 => (object) [
+                            'type' => 'value',
+                            'value' => true
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'ifThen',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => true
+                        ],
+                        (object) [
+                            'type' => 'assign',
+                            'value' => [
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 'test'
+                                ],
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 1
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'ifThen',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => true
+                        ],
+                        (object) [
+                            'type' => 'assign',
+                            'value' => [
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 'test'
+                                ],
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 2
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $actual = $this->parser->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testIfStatement5(): void
+    {
+        $expression = "
+            if (true) {
+                \$test = 1;
+            } else {
+                \$test = 2;
+            }
+        ";
+
+        $expected = (object) [
+            'type' => 'ifThenElse',
+            'value' => [
+                (object) [
+                    'type' => 'value',
+                    'value' => true
+                ],
+                (object) [
+                    'type' => 'assign',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => 'test'
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => 1
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'assign',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => 'test'
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => 2
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $actual = $this->parser->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testIfStatement6(): void
+    {
+        $expression = "
+            \$a = 1;
+
+            if (true) {
+                \$test = 1;
+            } else {
+                if (true) {
+                    \$test = 2;
+                }
+                else {
+                    \$test = 3;
+                }
+
+                \$test = 4;
+            }
+
+            \$b = 1;
+        ";
+
+        $expected = (object) [
+            'type' => 'bundle',
+            'value' => [
+                (object) [
+                    'type' => 'assign',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => 'a'
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => 1
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'ifThenElse',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => true
+                        ],
+                        (object) [
+                            'type' => 'assign',
+                            'value' => [
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 'test'
+                                ],
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 1
+                                ]
+                            ]
+                        ],
+                        (object) [
+                            'type' => 'bundle',
+                            'value' => [
+                                (object) [
+                                    'type' => 'ifThenElse',
+                                    'value' => [
+                                        (object) [
+                                            'type' => 'value',
+                                            'value' => true
+                                        ],
+                                        (object) [
+                                            'type' => 'assign',
+                                            'value' => [
+                                                (object) [
+                                                    'type' => 'value',
+                                                    'value' => 'test'
+                                                ],
+                                                (object) [
+                                                    'type' => 'value',
+                                                    'value' => 2
+                                                ]
+                                            ]
+                                        ],
+                                        (object) [
+                                            'type' => 'assign',
+                                            'value' => [
+                                                (object) [
+                                                    'type' => 'value',
+                                                    'value' => 'test'
+                                                ],
+                                                (object) [
+                                                    'type' => 'value',
+                                                    'value' => 3
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ],
+                                (object) [
+                                    'type' => 'assign',
+                                    'value' => [
+                                        (object) [
+                                            'type' => 'value',
+                                            'value' => 'test'
+                                        ],
+                                        (object) [
+                                            'type' => 'value',
+                                            'value' => 4
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'assign',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => 'b'
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => 1
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $actual = $this->parser->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testIfStatement7(): void
+    {
+        $expression = "
+            if (1) {
+                \$test = 1;
+            } else if (2) {
+                \$test = 2;
+            } else {
+                \$test = 3;
+            }
+        ";
+
+        $actual = $this->parser->parse($expression);
+
+        echo $this->varExport($actual);
+    }
+
+    /*public function testIfStatement8(): void
+    {
+        $expression = "
+            if (1) {}
+            else if (2) {}
+            else {}
+        ";
+
+        $actual = $this->parser->parse($expression);
+
+        echo $this->varExport($actual);
+    }*/
 }

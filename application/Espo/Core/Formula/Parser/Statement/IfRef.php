@@ -48,6 +48,7 @@ class IfRef
     private ?int $elseStart = null;
     private ?int $elseEnd = null;
     private ?int $elseKeywordEnd = null;
+    private bool $hasInlineElse = false;
     private int $state = self::STATE_EMPTY;
 
     public function __construct()
@@ -88,10 +89,11 @@ class IfRef
         $this->elseKeywordEnd = $elseKeywordEnd;
     }
 
-    public function setElseStart(int $elseStart): void
+    public function setElseStart(int $elseStart, bool $isInlineElse = false): void
     {
         $this->elseStart = $elseStart;
         $this->state = self::STATE_ELSE_STARTED;
+        $this->hasInlineElse = $isInlineElse;
     }
 
     public function setElseEnd(int $elseEnd): void
@@ -153,5 +155,10 @@ class IfRef
     public function getEnd(): ?int
     {
         return $this->elseEnd ?? $this->thenEnd;
+    }
+
+    public function hasInlineElse(): bool
+    {
+        return $this->hasInlineElse;
     }
 }
