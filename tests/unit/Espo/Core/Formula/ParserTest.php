@@ -30,6 +30,11 @@
 namespace tests\unit\Espo\Core\Formula;
 
 use Espo\Core\Formula\Exceptions\SyntaxError;
+use Espo\Core\Formula\Parser\Ast\Attribute;
+use Espo\Core\Formula\Parser\Ast\Node;
+use Espo\Core\Formula\Parser\Ast\Value;
+use Espo\Core\Formula\Parser\Ast\Variable;
+use stdClass;
 
 class ParserTest extends \PHPUnit\Framework\TestCase
 {
@@ -38,15 +43,52 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->parser = new \Espo\Core\Formula\Parser();
     }
 
-    protected function tearDown() : void
+    private function parse(string $expression): stdClass
     {
-        $this->parser = null;
+        $node = $this->parser->parse($expression);
+
+        return self::toStdClass($node);
+    }
+
+    private static function toStdClass(mixed $node): stdClass
+    {
+        if ($node instanceof Node) {
+            $nodes = $node->getChildNodes();
+
+            return (object) [
+                'type' => $node->getType(),
+                'value' => array_map(fn ($item) => self::toStdClass($item), $nodes),
+            ];
+        }
+
+        if ($node instanceof Variable) {
+            return (object) [
+                'type' => 'variable',
+                'value' => $node->getName(),
+            ];
+        }
+
+        if ($node instanceof Attribute) {
+            return (object) [
+                'type' => 'attribute',
+                'value' => $node->getName(),
+            ];
+        }
+
+        if ($node instanceof Value) {
+            return (object) [
+                'type' => 'value',
+                'value' => $node->getValue(),
+            ];
+        }
+
+        throw new \RuntimeException();
     }
 
     function testValue()
     {
         $expression = "isActive = true";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'setAttribute',
             'value' => [
@@ -63,7 +105,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
 
         $expression = "isActive == false";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'comparison\\equals',
             'value' => [
@@ -83,7 +125,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
     function testNotEquals()
     {
         $expression = "isActive != false";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'comparison\\notEquals',
             'value' => [
@@ -103,7 +145,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
     function testSplit()
     {
         $expression = "name == 'test';\nvalue > 0.5\n;";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'bundle',
             'value' => [
@@ -138,7 +180,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
 
         $expression = "name == 'test'; value > 0.5";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'bundle',
             'value' => [
@@ -177,7 +219,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
     {
         $expression = "((amountConverted + 10) * (0.1 + (10 / amountConverted + 1)))";
 
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $expected = (object) [
             'type' => 'numeric\\multiplication',
@@ -236,7 +278,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
     {
         $expression = "(name == 'test' || value > 0.5)";
 
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $expected = (object) [
             'type' => 'logical\\or',
@@ -276,30 +318,36 @@ class ParserTest extends \PHPUnit\Framework\TestCase
     function testParse3()
     {
         $expression = "!(name == 'test' || !isActive)";
-        $actual = $this->parser->parse($expression);
+
+        $actual = $this->parse($expression);
+
         $expected = (object) [
             'type' => 'logical\\not',
-            'value' => (object) [
-                'type' => 'logical\\or',
-                'value' => [
-                    (object) [
-                        'type' => 'comparison\\equals',
-                        'value' => [
-                            (object) [
-                                'type' => 'attribute',
-                                'value' => 'name'
-                            ],
-                            (object) [
-                                'type' => 'value',
-                                'value' => 'test'
+            'value' => [
+                (object) [
+                    'type' => 'logical\\or',
+                    'value' => [
+                        (object) [
+                            'type' => 'comparison\\equals',
+                            'value' => [
+                                (object) [
+                                    'type' => 'attribute',
+                                    'value' => 'name'
+                                ],
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 'test'
+                                ]
                             ]
-                        ]
-                    ],
-                    (object) [
-                        'type' => 'logical\\not',
-                        'value' => (object) [
-                            'type' => 'attribute',
-                            'value' => 'isActive'
+                        ],
+                        (object) [
+                            'type' => 'logical\\not',
+                            'value' => [
+                                (object) [
+                                    'type' => 'attribute',
+                                    'value' => 'isActive'
+                                ]
+                            ],
                         ]
                     ]
                 ]
@@ -309,15 +357,17 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
 
         $expression = "!value * 10";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'numeric\\multiplication',
             'value' => [
                 (object) [
                     'type' => 'logical\\not',
-                    'value' => (object) [
-                        'type' => 'attribute',
-                        'value' => 'value'
+                    'value' => [
+                        (object) [
+                            'type' => 'attribute',
+                            'value' => 'value'
+                        ]
                     ]
                 ],
                 (object) [
@@ -329,26 +379,29 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
 
         $expression = "!functionName(10)";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'logical\\not',
-            'value' => (object) [
-                'type' => 'functionName',
-                'value' => [
-                    (object) [
-                        'type' => 'value',
-                        'value' => 10
+            'value' => [
+                (object) [
+                    'type' => 'functionName',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => 10
+                        ]
                     ]
                 ]
             ]
         ];
+
         $this->assertEquals($expected, $actual);
     }
 
     function testParse4()
     {
         $expression = "-(value - 10)";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'numeric\\subtraction',
             'value' => [
@@ -374,7 +427,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
 
         $expression = "- value - 10";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'numeric\\subtraction',
             'value' => [
@@ -400,7 +453,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
 
         $expression = "- value - (-10)";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'numeric\\subtraction',
             'value' => [
@@ -438,7 +491,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
     function testParse5()
     {
         $expression = "'test + test'";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'value',
             'value' => 'test + test'
@@ -446,7 +499,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
 
         $expression = "\"test\\\" + \\\"test\"";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'value',
             'value' => 'test\" + \"test'
@@ -454,7 +507,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
 
         $expression = "\"test' + 'test\"";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'value',
             'value' => "test' + 'test"
@@ -462,7 +515,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
 
         $expression = "numeric\\summation('test + test')";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'numeric\\summation',
             'value' => [
@@ -478,7 +531,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
     function testParse6()
     {
         $expression = "numeric\\summation(')')";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'numeric\\summation',
             'value' => [
@@ -498,7 +551,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             'type' => 'value',
             'value' => 'test'
         ];
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $this->assertEquals($expected, $actual);
 
         $expression = " \"test\" ";
@@ -506,7 +559,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             'type' => 'value',
             'value' => 'test'
         ];
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $this->assertEquals($expected, $actual);
     }
 
@@ -517,7 +570,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             'type' => 'value',
             'value' => "test\n\thello"
         ];
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $this->assertEquals($expected, $actual);
     }
 
@@ -528,7 +581,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             'type' => 'value',
             'value' => "//test"
         ];
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $this->assertEquals($expected, $actual);
     }
 
@@ -539,7 +592,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             'type' => 'value',
             'value' => "test",
         ];
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $this->assertEquals($expected, $actual);
     }
 
@@ -550,7 +603,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             'type' => 'value',
             'value' => "test",
         ];
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $this->assertEquals($expected, $actual);
     }
 
@@ -561,7 +614,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             'type' => 'value',
             'value' => "/*test*/",
         ];
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $this->assertEquals($expected, $actual);
     }
 
@@ -572,7 +625,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             'type' => 'value',
             'value' => "test",
         ];
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $this->assertEquals($expected, $actual);
     }
 
@@ -628,14 +681,14 @@ class ParserTest extends \PHPUnit\Framework\TestCase
                 ],
             ],
         ];
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $this->assertEquals($expected, $actual);
     }
 
     function testParseFunction()
     {
         $expression = "numeric\\summation (10, parent.amountConverted, 0.1)";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'numeric\\summation',
             'value' => [
@@ -656,7 +709,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
 
         $expression = "numeric\\summation(10, numeric\\subtraction(5, 2) + 1, 0.1)";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'numeric\\summation',
             'value' => [
@@ -695,7 +748,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
 
         $expression = "numeric\\summation(10)";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'numeric\\summation',
             'value' => [
@@ -708,7 +761,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
 
         $expression = "numeric\\summation()";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'numeric\\summation',
             'value' => []
@@ -720,7 +773,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
     function testParseVariable()
     {
         $expression = "10 + \$counter";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'numeric\\summation',
             'value' => [
@@ -741,7 +794,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
     function testAssign()
     {
         $expression = "\$counter = 10 + \$counter";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'assign',
             'value' => [
@@ -770,7 +823,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
     function testSetAttribute()
     {
         $expression = "amount = 10 + \$counter";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
         $expected = (object) [
             'type' => 'setAttribute',
             'value' => [
@@ -809,7 +862,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
                 assignedUserName = 'Will Manager'
             );
         ";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $this->assertNotEmpty($actual);
     }
@@ -825,7 +878,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
 
         $prevTab = substr($tab, 0, strlen($tab) - strlen($tabElement));
 
-        if ($variable instanceof \stdClass) {
+        if ($variable instanceof stdClass) {
             $result = "(object) " . $this->varExport(get_object_vars($variable), $level);
         }
         else if (is_array($variable)) {
@@ -850,7 +903,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
                 lastName, ', ', firstName
             )
         ";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $expected = (object) [
             'type' => 'string\concatenate',
@@ -879,7 +932,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
                 lastName, '(,)(\"test\")', firstName
             )
         ";
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $expected = (object) [
             'type' => 'string\concatenate',
@@ -932,7 +985,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             ]
         ];
 
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $this->assertEquals($expected, $actual);
     }
@@ -996,7 +1049,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             ]
         ];
 
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $this->assertEquals($expected, $actual);
     }
@@ -1043,7 +1096,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             ]
         ];
 
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $this->assertEquals($expected, $actual);
     }
@@ -1121,7 +1174,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             ]
         ];
 
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $this->assertEquals($expected, $actual);
     }
@@ -1172,7 +1225,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             ]
         ];
 
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $this->assertEquals($expected, $actual);
     }
@@ -1305,7 +1358,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             ]
         ];
 
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $this->assertEquals($expected, $actual);
     }
@@ -1380,7 +1433,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             ]
         ];
 
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $this->assertEquals($expected, $actual);
     }
@@ -1424,7 +1477,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             ]
         ];
 
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $this->assertEquals($expected, $actual);
     }
@@ -1482,7 +1535,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             ]
         ];
 
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $this->assertEquals($expected, $actual);
     }
@@ -1499,8 +1552,8 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             if(1){}else if(2){}else{}
         ";
 
-        $actual1 = $this->parser->parse($expression1);
-        $actual2 = $this->parser->parse($expression2);
+        $actual1 = $this->parse($expression1);
+        $actual2 = $this->parse($expression2);
 
         $this->assertEquals($actual1, $actual2);
     }
@@ -1519,8 +1572,8 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             if(1){}else if(2){}else{}
         ";
 
-        $actual1 = $this->parser->parse($expression1);
-        $actual2 = $this->parser->parse($expression2);
+        $actual1 = $this->parse($expression1);
+        $actual2 = $this->parse($expression2);
 
         $this->assertEquals($actual1, $actual2);
     }
@@ -1579,7 +1632,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             ]
         ];
 
-        $actual = $this->parser->parse($expression);
+        $actual = $this->parse($expression);
 
         $this->assertEquals($expected, $actual);
     }
@@ -1594,7 +1647,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
 
         $this->expectException(SyntaxError::class);
 
-        $this->parser->parse($expression);
+        $this->parse($expression);
     }
 
     public function testIfStatement13(): void
@@ -1607,6 +1660,6 @@ class ParserTest extends \PHPUnit\Framework\TestCase
 
         $this->expectException(SyntaxError::class);
 
-        $this->parser->parse($expression);
+        $this->parse($expression);
     }
 }

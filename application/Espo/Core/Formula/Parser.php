@@ -30,14 +30,17 @@
 namespace Espo\Core\Formula;
 
 use Espo\Core\Formula\Exceptions\SyntaxError;
+use Espo\Core\Formula\Parser\Ast\Attribute;
+use Espo\Core\Formula\Parser\Ast\Node;
+use Espo\Core\Formula\Parser\Ast\Value;
+use Espo\Core\Formula\Parser\Ast\Variable;
 use Espo\Core\Formula\Parser\Statement\IfRef;
 use Espo\Core\Formula\Parser\Statement\StatementRef;
 
 use LogicException;
-use stdClass;
 
 /**
- * Parses a formula script into AST. Returns a RAW data object that represents a tree of functions.
+ * Parses a formula-script into AST.
  */
 class Parser
 {
@@ -86,7 +89,7 @@ class Parser
     /**
      * @throws SyntaxError
      */
-    public function parse(string $expression): stdClass
+    public function parse(string $expression): Node|Attribute|Variable|Value
     {
         return $this->split($expression, true);
     }
@@ -94,7 +97,7 @@ class Parser
     /**
      * @throws SyntaxError
      */
-    private function applyOperator(string $operator, string $firstPart, string $secondPart): stdClass
+    private function applyOperator(string $operator, string $firstPart, string $secondPart): Node
     {
         if ($operator === '=') {
             if (!strlen($firstPart)) {
@@ -108,32 +111,20 @@ class Parser
                     throw new SyntaxError("Bad variable name `{$variable}`.");
                 }
 
-                return (object) [
-                    'type' => 'assign',
-                    'value' => [
-                        (object) [
-                            'type' => 'value',
-                            'value' => $variable,
-                        ],
-                        $this->split($secondPart),
-                    ]
-                ];
+                return new Node('assign', [
+                    new Value($variable),
+                    $this->split($secondPart)
+                ]);
             }
 
             if ($secondPart === '') {
                 throw SyntaxError::create("Bad assignment usage.");
             }
 
-            return (object) [
-                'type' => 'setAttribute',
-                'value' => [
-                    (object) [
-                        'type' => 'value',
-                        'value' => $firstPart,
-                    ],
-                    $this->split($secondPart)
-                ]
-            ];
+            return new Node('setAttribute', [
+                new Value($firstPart),
+                $this->split($secondPart)
+            ]);
         }
 
         $functionName = $this->operatorMap[$operator];
@@ -142,13 +133,10 @@ class Parser
             throw new SyntaxError("Bad function name `{$functionName}`.");
         }
 
-        return (object) [
-            'type' => $functionName,
-            'value' => [
-                $this->split($firstPart),
-                $this->split($secondPart),
-            ]
-        ];
+        return new Node($functionName, [
+            $this->split($firstPart),
+            $this->split($secondPart),
+        ]);
     }
 
     /**
@@ -527,7 +515,7 @@ class Parser
     /**
      * @throws SyntaxError
      */
-    private function split(string $expression, bool $isRoot = false): stdClass
+    private function split(string $expression, bool $isRoot = false): Node|Attribute|Variable|Value
     {
         $expression = trim($expression);
 
@@ -615,10 +603,7 @@ class Parser
         $minIndex = null;
 
         if (trim($expression) === '') {
-            return (object) [
-                'type' => 'value',
-                'value' => null,
-            ];
+            return new Value(null);
         }
 
         foreach ($this->priorityList as $operationList) {
@@ -720,40 +705,32 @@ class Parser
         $expression = trim($expression);
 
         if ($expression[0] === '!') {
-            return (object) [
-                'type' => 'logical\\not',
-                'value' => $this->split(substr($expression, 1))
-            ];
+            return new Node('logical\\not', [
+                $this->split(substr($expression, 1))
+            ]);
         }
 
         if ($expression[0] === '-') {
-            return (object) [
-                'type' => 'numeric\\subtraction',
-                'value' => [
-                    $this->split('0'),
-                    $this->split(substr($expression, 1))
-                ]
-            ];
+            return new Node('numeric\\subtraction', [
+                $this->split('0'), // @todo Change to `new Value(0)`;
+                $this->split(substr($expression, 1))
+            ]);
         }
 
         if ($expression[0] === '+') {
-            return (object) [
-                'type' => 'numeric\\summation',
-                'value' => [
-                    $this->split('0'),
-                    $this->split(substr($expression, 1))
-                ]
-            ];
+            return new Node('numeric\\summation', [
+                $this->split('0'), // @todo Change to `new Value(0)`;
+                $this->split(substr($expression, 1))
+            ]);
         }
 
         if (
             $expression[0] === "'" && $expression[strlen($expression) - 1] === "'" ||
             $expression[0] === "\"" && $expression[strlen($expression) - 1] === "\""
         ) {
-            return (object) [
-                'type' => 'value',
-                'value' => substr($expression, 1, strlen($expression) - 2)
-            ];
+            $subExpression = substr($expression, 1, strlen($expression) - 2);
+
+            return new Value($subExpression);
         }
 
         if ($expression[0] === "$") {
@@ -763,10 +740,7 @@ class Parser
                 throw new SyntaxError("Bad variable name `{$value}`.");
             }
 
-            return (object) [
-                'type' => 'variable',
-                'value' => $value,
-            ];
+            return new Variable($value);
         }
 
         if (is_numeric($expression)) {
@@ -774,31 +748,19 @@ class Parser
                 (int) $expression :
                 (float) $expression;
 
-            return (object) [
-                'type' => 'value',
-                'value' => $value,
-            ];
+            return new Value($value);
         }
 
         if ($expression === 'true') {
-            return (object) [
-                'type' => 'value',
-                'value' => true,
-            ];
+            return new Value(true);
         }
 
         if ($expression === 'false') {
-            return (object) [
-                'type' => 'value',
-                'value' => false,
-            ];
+            return new Value(false);
         }
 
         if ($expression === 'null') {
-            return (object) [
-                'type' => 'value',
-                'value' => null,
-            ];
+            return new Value(null);
         }
 
         if ($expression[strlen($expression) - 1] === ')') {
@@ -820,10 +782,7 @@ class Parser
                     throw new SyntaxError("Bad function name `{$functionName}`.");
                 }
 
-                return (object) [
-                    'type' => $functionName,
-                    'value' => $argumentSplitList,
-                ];
+                return new Node($functionName, $argumentSplitList);
             }
         }
 
@@ -835,18 +794,19 @@ class Parser
             throw SyntaxError::create("Attribute ends with dot.");
         }
 
-        return (object) [
-            'type' => 'attribute',
-            'value' => $expression,
-        ];
+        return new Attribute($expression);
     }
 
     /**
-     * @param ?((StatementRef|IfRef)[]) $statementList
+     * @param (StatementRef|IfRef)[] $statementList
      * @throws SyntaxError
      */
-    private function processStatementList(string $expression, array $statementList, bool $isRoot): stdClass
-    {
+    private function processStatementList(
+        string $expression,
+        array $statementList,
+        bool $isRoot
+    ): Node|Value|Attribute|Variable {
+
         $parsedPartList = [];
 
         foreach ($statementList as $statement) {
@@ -887,21 +847,15 @@ class Parser
                     self::sliceByStartEnd($expression, $elseStart, $elseEnd) : null;
 
                 $parsedPart = $statement->getElseKeywordEnd() ?
-                    (object) [
-                        'type' => 'ifThenElse',
-                        'value' => [
-                            $this->split($conditionPart),
-                            $this->parse($thenPart),
-                            $this->parse($elsePart)
-                        ]
-                    ] :
-                    (object) [
-                        'type' => 'ifThen',
-                        'value' => [
-                            $this->split($conditionPart),
-                            $this->parse($thenPart)
-                        ]
-                    ];
+                    new Node('ifThenElse', [
+                        $this->split($conditionPart),
+                        $this->parse($thenPart),
+                        $this->parse($elsePart ?? '')
+                    ]) :
+                    new Node('ifThen', [
+                        $this->split($conditionPart),
+                        $this->parse($thenPart)
+                    ]);
             }
 
             if (!$parsedPart) {
@@ -918,10 +872,7 @@ class Parser
             return $parsedPartList[0];
         }
 
-        return (object) [
-            'type' => 'bundle',
-            'value' => $parsedPartList,
-        ];
+        return new Node('bundle', $parsedPartList);
     }
 
     private static function sliceByStartEnd(string $expression, int $start, int $end): string
