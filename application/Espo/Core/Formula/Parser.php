@@ -293,8 +293,8 @@ class Parser
                     //$isStatementEnd = $statementCount !== count($statementList);
                 }
 
-                if ($parenthesisCounter === 0) {
-                    if ($intoOneLine) {
+                if ($intoOneLine) {
+                    if ($parenthesisCounter === 0) {
                         if (
                             $char === "\r" ||
                             $char === "\n" ||
@@ -599,7 +599,7 @@ class Parser
                         $thenStart === null ||
                         $thenEnd === null
                     ) {
-                        throw new LogicException()
+                        throw new LogicException();
                     }
 
                     $conditionPart = self::sliceByStartEnd($expression, $conditionStart, $conditionEnd);
