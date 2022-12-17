@@ -88,7 +88,7 @@ class Parser
      */
     public function parse(string $expression): stdClass
     {
-        return $this->split($expression);
+        return $this->split($expression, true);
     }
 
     /**
@@ -527,7 +527,7 @@ class Parser
     /**
      * @throws SyntaxError
      */
-    private function split(string $expression): stdClass
+    private function split(string $expression, bool $isRoot = false): stdClass
     {
         $expression = trim($expression);
 
@@ -604,11 +604,11 @@ class Parser
         ) {
             $expression = substr($expression, 1, strlen($expression) - 2);
 
-            return $this->split($expression);
+            return $this->split($expression, true);
         }
 
         if (count($statementList)) {
-            return $this->processStatementList($expression, $statementList);
+            return $this->processStatementList($expression, $statementList, $isRoot);
         }
 
         $firstOperator = null;
@@ -845,7 +845,7 @@ class Parser
      * @param ?((StatementRef|IfRef)[]) $statementList
      * @throws SyntaxError
      */
-    private function processStatementList(string $expression, array $statementList): stdClass
+    private function processStatementList(string $expression, array $statementList, bool $isRoot): stdClass
     {
         $parsedPartList = [];
 
@@ -855,10 +855,10 @@ class Parser
             if ($statement instanceof StatementRef) {
                 $part = self::sliceByStartEnd($expression, $statement->getStart(), $statement->getEnd());
 
-                $parsedPart = $this->parse($part);
+                $parsedPart = $this->split($part);
             }
             else if ($statement instanceof IfRef) {
-                if (!$statement->isReady()) {
+                if (!$isRoot || !$statement->isReady()) {
                     throw SyntaxError::create(
                         'Incorrect if statement usage in expression ' . $expression . '.',
                         'Incorrect if statement.'
@@ -890,7 +890,7 @@ class Parser
                     (object) [
                         'type' => 'ifThenElse',
                         'value' => [
-                            $this->parse($conditionPart),
+                            $this->split($conditionPart),
                             $this->parse($thenPart),
                             $this->parse($elsePart)
                         ]
@@ -898,7 +898,7 @@ class Parser
                     (object) [
                         'type' => 'ifThen',
                         'value' => [
-                            $this->parse($conditionPart),
+                            $this->split($conditionPart),
                             $this->parse($thenPart)
                         ]
                     ];

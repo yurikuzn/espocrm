@@ -29,6 +29,8 @@
 
 namespace tests\unit\Espo\Core\Formula;
 
+use Espo\Core\Formula\Exceptions\SyntaxError;
+
 class ParserTest extends \PHPUnit\Framework\TestCase
 {
     protected function setUp() : void
@@ -1485,10 +1487,30 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
     }
 
-    public function testIfStatement10(): void
+    public function testIfStatement10a(): void
     {
         $expression1 = "
             if (1) {}
+            else if (2) {}
+            else {}
+        ";
+
+        $expression2 = "
+            if(1){}else if(2){}else{}
+        ";
+
+        $actual1 = $this->parser->parse($expression1);
+        $actual2 = $this->parser->parse($expression2);
+
+        $this->assertEquals($actual1, $actual2);
+    }
+
+    public function testIfStatement10b(): void
+    {
+        $expression1 = "
+            if (
+                1
+            ) {}
             else if (2) {}
             else {}
         ";
@@ -1560,5 +1582,31 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $actual = $this->parser->parse($expression);
 
         $this->assertEquals($expected, $actual);
+    }
+
+    public function testIfStatement12(): void
+    {
+        $expression = "
+            if (
+                if () {1}
+            ) {}
+        ";
+
+        $this->expectException(SyntaxError::class);
+
+        $this->parser->parse($expression);
+    }
+
+    public function testIfStatement13(): void
+    {
+        $expression = "
+            test(
+                if () {}
+            );
+        ";
+
+        $this->expectException(SyntaxError::class);
+
+        $this->parser->parse($expression);
     }
 }
