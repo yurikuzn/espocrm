@@ -283,27 +283,7 @@ class Parser
                     else if ($isLast && count($statementList)) {
                         $statementList[] = new StatementRef($previousStatementEnd + 1, $i + 1);
                     }
-                    else if (
-                        !$isLast &&
-                        substr($string, $i - 1, 2) === 'if' &&
-                        (
-                            $i === 1 ||
-                            $this->isWhiteSpace($string[$i - 2]) ||
-                            $string[$i - 2] === ';'
-                        ) &&
-                        (
-                            $this->isWhiteSpace($string[$i + 1]) ||
-                            $string[$i + 1] === '('
-                        )
-                    ) {
-                        /*if (
-                            $i >= 2 &&
-                            !$lastStatement instanceof IfRef
-                        ) {
-
-                            $statementList[] = new StatementRef($previousStatementEnd + 1, $i - 2);
-                        }*/
-
+                    else if ($this->isOnIf($string, $i - 1)) {
                         $statementList[] = new IfRef();
                     }
                 }
@@ -398,8 +378,6 @@ class Parser
             $statement->getState() === IfRef::STATE_THEN_ENDED &&
             !$this->isWhiteSpace($char) &&
             !$this->isOnElse($string, $i)
-            /*!$this->isWhiteSpaceChar($char) &&
-            substr($string, $i, 4) !== 'else'*/
         ) {
             $statement->setReady();
 
@@ -412,11 +390,6 @@ class Parser
             $parenthesisCounter === 0 &&
             $braceCounter === 0 &&
             $this->isOnElse($string, $i)
-            /*substr($string, $i, 4) === 'else' &&
-            (
-                $this->isWhiteSpaceChar($string[$i + 4] ?? '') ||
-                ($string[$i + 4] ?? '') === '{'
-            )*/
         ) {
             $statement->setElseMet($i + 4);
 
@@ -443,11 +416,7 @@ class Parser
             $parenthesisCounter === 0 &&
             $braceCounter === 0 &&
             $this->isWhiteSpace($string[$i - 1]) &&
-            substr($string, $i, 2) === 'if' &&
-            (
-                $this->isWhiteSpace($string[$i + 2] ?? '') ||
-                ($string[$i + 2] ?? '') === '('
-            )
+            $this->isOnIf($string, $i)
         ) {
             $statement->setElseStart($i, true);
 
@@ -499,19 +468,6 @@ class Parser
             return true;
         }
 
-        /*if (
-            $statement->getState() === IfRef::STATE_ELSE_MET &&
-            $parenthesisCounter === 0 &&
-            $braceCounter === 0 &&
-            $char === ';'
-        ) {
-            $statement->setElseStart($statement->getElseKeywordEnd() + 1);
-            $statement->setElseEnd($i + 1);
-            $statement->setReady();
-
-            return true;
-        }*/
-
         if (
             $statement->getState() === IfRef::STATE_ELSE_MET &&
             $parenthesisCounter === 0 &&
@@ -528,12 +484,29 @@ class Parser
         return false;
     }
 
+    private function isOnIf(string $string, int $i): bool
+    {
+        $before = substr($string, $i - 1, 1);
+        $after = substr($string, $i + 2, 1);
+
+        return
+            substr($string, $i, 2) === 'if' &&
+            (
+                $i === 0 ||
+                $this->isWhiteSpace($before) ||
+                $before === ';'
+            ) &&
+            (
+                $this->isWhiteSpace($after) ||
+                $after === '('
+            );
+    }
+
     private function isOnElse(string $string, int $i): bool
     {
         return substr($string, $i, 4) === 'else' &&
             $this->isWhiteSpaceCharOrBraceOpen(substr($string, $i + 4, 1)) &&
             $this->isWhiteSpaceCharOrBraceClose(substr($string, $i - 1, 1));
-
     }
 
     private function isWhiteSpaceCharOrBraceOpen(string $char): bool
@@ -635,85 +608,7 @@ class Parser
         }
 
         if (count($statementList)) {
-            /*if ($expression[strlen($expression) - 1] !== ';') {
-                $splitterIndexList[] = strlen($expression);
-            }*/
-
-            $parsedPartList = [];
-
-            foreach ($statementList as $statement) {
-                $parsedPart = null;
-
-                if ($statement instanceof StatementRef) {
-                    $part = self::sliceByStartEnd($expression, $statement->getStart(), $statement->getEnd());
-
-                    $parsedPart = $this->parse($part);
-                }
-                else if ($statement instanceof IfRef) {
-                    if (!$statement->isReady()) {
-                        throw SyntaxError::create(
-                            'Incorrect if statement usage in expression ' . $expression . '.',
-                            'Incorrect if statement.'
-                        );
-                    }
-
-                    $conditionStart = $statement->getConditionStart();
-                    $conditionEnd = $statement->getConditionEnd();
-                    $thenStart = $statement->getThenStart();
-                    $thenEnd = $statement->getThenEnd();
-                    $elseStart = $statement->getElseStart();
-                    $elseEnd = $statement->getElseEnd();
-
-                    if (
-                        $conditionStart === null ||
-                        $conditionEnd === null ||
-                        $thenStart === null ||
-                        $thenEnd === null
-                    ) {
-                        throw new LogicException();
-                    }
-
-                    $conditionPart = self::sliceByStartEnd($expression, $conditionStart, $conditionEnd);
-                    $thenPart = self::sliceByStartEnd($expression, $thenStart, $thenEnd);
-                    $elsePart = $elseStart !== null && $elseEnd !== null ?
-                        self::sliceByStartEnd($expression, $elseStart, $elseEnd) : null;
-
-                    $parsedPart = $statement->getElseKeywordEnd() ?
-                        (object) [
-                            'type' => 'ifThenElse',
-                            'value' => [
-                                $this->parse($conditionPart),
-                                $this->parse($thenPart),
-                                $this->parse($elsePart)
-                            ]
-                        ] :
-                        (object) [
-                            'type' => 'ifThen',
-                            'value' => [
-                                $this->parse($conditionPart),
-                                $this->parse($thenPart)
-                            ]
-                        ];
-                }
-
-                if (!$parsedPart) {
-                    throw SyntaxError::create(
-                        'Unknown syntax error in expression ' . $expression . '.',
-                        'Unknown syntax error.'
-                    );
-                }
-
-                $parsedPartList[] = $parsedPart;
-            }
-
-            if (count($parsedPartList) === 1) {
-                return $parsedPartList[0];
-            }
-
-            return (object) [
-                'type' => 'bundle',
-                'value' => $parsedPartList,
-            ];
+            return $this->processStatementList($expression, $statementList);
         }
 
         $firstOperator = null;
@@ -852,8 +747,7 @@ class Parser
         }
 
         if (
-            $expression[0] === "'" && $expression[strlen($expression) - 1] === "'"
-            ||
+            $expression[0] === "'" && $expression[strlen($expression) - 1] === "'" ||
             $expression[0] === "\"" && $expression[strlen($expression) - 1] === "\""
         ) {
             return (object) [
@@ -916,10 +810,10 @@ class Parser
 
                 $argumentList = $this->parseArgumentListFromFunctionContent($functionContent);
 
-                $argumentSplittedList = [];
+                $argumentSplitList = [];
 
                 foreach ($argumentList as $argument) {
-                    $argumentSplittedList[] = $this->split($argument);
+                    $argumentSplitList[] = $this->split($argument);
                 }
 
                 if ($functionName === '' || !preg_match($this->functionNameRegExp, $functionName)) {
@@ -928,7 +822,7 @@ class Parser
 
                 return (object) [
                     'type' => $functionName,
-                    'value' => $argumentSplittedList,
+                    'value' => $argumentSplitList,
                 ];
             }
         }
@@ -944,6 +838,89 @@ class Parser
         return (object) [
             'type' => 'attribute',
             'value' => $expression,
+        ];
+    }
+
+    /**
+     * @param ?((StatementRef|IfRef)[]) $statementList
+     * @throws SyntaxError
+     */
+    private function processStatementList(string $expression, array $statementList): stdClass
+    {
+        $parsedPartList = [];
+
+        foreach ($statementList as $statement) {
+            $parsedPart = null;
+
+            if ($statement instanceof StatementRef) {
+                $part = self::sliceByStartEnd($expression, $statement->getStart(), $statement->getEnd());
+
+                $parsedPart = $this->parse($part);
+            }
+            else if ($statement instanceof IfRef) {
+                if (!$statement->isReady()) {
+                    throw SyntaxError::create(
+                        'Incorrect if statement usage in expression ' . $expression . '.',
+                        'Incorrect if statement.'
+                    );
+                }
+
+                $conditionStart = $statement->getConditionStart();
+                $conditionEnd = $statement->getConditionEnd();
+                $thenStart = $statement->getThenStart();
+                $thenEnd = $statement->getThenEnd();
+                $elseStart = $statement->getElseStart();
+                $elseEnd = $statement->getElseEnd();
+
+                if (
+                    $conditionStart === null ||
+                    $conditionEnd === null ||
+                    $thenStart === null ||
+                    $thenEnd === null
+                ) {
+                    throw new LogicException();
+                }
+
+                $conditionPart = self::sliceByStartEnd($expression, $conditionStart, $conditionEnd);
+                $thenPart = self::sliceByStartEnd($expression, $thenStart, $thenEnd);
+                $elsePart = $elseStart !== null && $elseEnd !== null ?
+                    self::sliceByStartEnd($expression, $elseStart, $elseEnd) : null;
+
+                $parsedPart = $statement->getElseKeywordEnd() ?
+                    (object) [
+                        'type' => 'ifThenElse',
+                        'value' => [
+                            $this->parse($conditionPart),
+                            $this->parse($thenPart),
+                            $this->parse($elsePart)
+                        ]
+                    ] :
+                    (object) [
+                        'type' => 'ifThen',
+                        'value' => [
+                            $this->parse($conditionPart),
+                            $this->parse($thenPart)
+                        ]
+                    ];
+            }
+
+            if (!$parsedPart) {
+                throw SyntaxError::create(
+                    'Unknown syntax error in expression ' . $expression . '.',
+                    'Unknown syntax error.'
+                );
+            }
+
+            $parsedPartList[] = $parsedPart;
+        }
+
+        if (count($parsedPartList) === 1) {
+            return $parsedPartList[0];
+        }
+
+        return (object) [
+            'type' => 'bundle',
+            'value' => $parsedPartList,
         ];
     }
 
