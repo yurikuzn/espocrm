@@ -37,6 +37,7 @@ use Espo\Core\Formula\Parser\Ast\Variable;
 use Espo\Core\Formula\Parser\Statement\IfRef;
 use Espo\Core\Formula\Parser\Statement\StatementRef;
 
+use Espo\Core\Formula\Parser\Statement\WhileRef;
 use LogicException;
 
 /**
@@ -140,7 +141,7 @@ class Parser
     }
 
     /**
-     * @param ?((StatementRef|IfRef)[]) $statementList
+     * @param ?((StatementRef|IfRef|WhileRef)[]) $statementList
      * @throws SyntaxError
      */
     private function processStrings(
@@ -246,6 +247,29 @@ class Parser
                 }
 
                 if (
+                    $lastStatement instanceof WhileRef &&
+                    !$lastStatement->isReady()
+                ) {
+                    $toContinue = $this->processStringWhileStatement(
+                        $string,
+                        $i,
+                        $parenthesisCounter,
+                        $braceCounter,
+                        $lastStatement
+                    );
+
+                    if ($toContinue === null) {
+                        array_pop($statementList);
+
+                        $lastStatement = end($statementList) ?: null;
+                    }
+
+                    if ($toContinue) {
+                        continue;
+                    }
+                }
+
+                if (
                     $parenthesisCounter === 0 &&
                     $braceCounter === 0 &&
                     $statementList !== null
@@ -255,7 +279,10 @@ class Parser
                         -1;
 
                     if (
-                        $lastStatement instanceof IfRef &&
+                        (
+                            $lastStatement instanceof IfRef ||
+                            $lastStatement instanceof WhileRef
+                        ) &&
                         !$lastStatement->isReady()
                     ) {
                         continue;
@@ -273,6 +300,9 @@ class Parser
                     }
                     else if ($this->isOnIf($string, $i - 1)) {
                         $statementList[] = new IfRef();
+                    }
+                    else if ($this->isOnWhile($string, $i - 4)) {
+                        $statementList[] = new WhileRef();
                     }
                 }
 
@@ -472,6 +502,89 @@ class Parser
         return false;
     }
 
+    private function processStringWhileStatement(
+        string $string,
+        int $i,
+        int $parenthesisCounter,
+        int $braceCounter,
+        WhileRef $statement
+    ): ?bool {
+
+        $char = $string[$i];
+        $isLast = $i === strlen($string) - 1;
+
+        if (
+            $char === '(' &&
+            !$isLast &&
+            $parenthesisCounter === 1 &&
+            $braceCounter === 0 &&
+            $statement->getState() === WhileRef::STATE_EMPTY
+        ) {
+            $statement->setConditionStart($i + 1);
+
+            return true;
+        }
+
+        if (
+            $char === ')' &&
+            !$isLast &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            $statement->getState() === WhileRef::STATE_CONDITION_STARTED
+        ) {
+            $statement->setConditionEnd($i);
+
+            return true;
+        }
+
+        if (
+            $statement->getState() === WhileRef::STATE_CONDITION_ENDED &&
+            !$isLast &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 1 &&
+            $char === '{'
+        ) {
+            $statement->setBodyStart($i + 1);
+
+            return true;
+        }
+
+        if (
+            $statement->getState() === WhileRef::STATE_CONDITION_STARTED &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            $char === ')' &&
+            $isLast
+        ) {
+            return null;
+        }
+
+        if (
+            $statement->getState() === WhileRef::STATE_CONDITION_ENDED &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            (
+                $isLast ||
+                !$this->isWhiteSpace($char)
+            )
+        ) {
+            return null;
+        }
+
+        if (
+            $statement->getState() === WhileRef::STATE_BODY_STARTED &&
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0 &&
+            $char === '}'
+        ) {
+            $statement->setBodyEnd($i);
+
+            return true;
+        }
+
+        return false;
+    }
+
     private function isOnIf(string $string, int $i): bool
     {
         $before = substr($string, $i - 1, 1);
@@ -495,6 +608,24 @@ class Parser
         return substr($string, $i, 4) === 'else' &&
             $this->isWhiteSpaceCharOrBraceOpen(substr($string, $i + 4, 1)) &&
             $this->isWhiteSpaceCharOrBraceClose(substr($string, $i - 1, 1));
+    }
+
+    private function isOnWhile(string $string, int $i): bool
+    {
+        $before = substr($string, $i - 1, 1);
+        $after = substr($string, $i + 5, 1);
+
+        return
+            substr($string, $i, 5) === 'while' &&
+            (
+                $i === 0 ||
+                $this->isWhiteSpace($before) ||
+                $before === ';'
+            ) &&
+            (
+                $this->isWhiteSpace($after) ||
+                $after === '('
+            );
     }
 
     private function isWhiteSpaceCharOrBraceOpen(string $char): bool
@@ -798,7 +929,7 @@ class Parser
     }
 
     /**
-     * @param (StatementRef|IfRef)[] $statementList
+     * @param (StatementRef|IfRef|WhileRef)[] $statementList
      * @throws SyntaxError
      */
     private function processStatementList(
@@ -849,13 +980,43 @@ class Parser
                 $parsedPart = $statement->getElseKeywordEnd() ?
                     new Node('ifThenElse', [
                         $this->split($conditionPart),
-                        $this->parse($thenPart),
-                        $this->parse($elsePart ?? '')
+                        $this->split($thenPart, true),
+                        $this->split($elsePart ?? '', true)
                     ]) :
                     new Node('ifThen', [
                         $this->split($conditionPart),
-                        $this->parse($thenPart)
+                        $this->split($thenPart, true)
                     ]);
+            }
+            else if ($statement instanceof WhileRef) {
+                if (!$isRoot || !$statement->isReady()) {
+                    throw SyntaxError::create(
+                        'Incorrect while statement usage in expression ' . $expression . '.',
+                        'Incorrect while statement.'
+                    );
+                }
+
+                $conditionStart = $statement->getConditionStart();
+                $conditionEnd = $statement->getConditionEnd();
+                $bodyStart = $statement->getBodyStart();
+                $bodyEnd = $statement->getBodyEnd();
+
+                if (
+                    $conditionStart === null ||
+                    $conditionEnd === null ||
+                    $bodyStart === null ||
+                    $bodyEnd === null
+                ) {
+                    throw new LogicException();
+                }
+
+                $conditionPart = self::sliceByStartEnd($expression, $conditionStart, $conditionEnd);
+                $bodyPart = self::sliceByStartEnd($expression, $bodyStart, $bodyEnd);
+
+                $parsedPart = new Node('while', [
+                    $this->split($conditionPart),
+                    $this->split($bodyPart, true)
+                ]);
             }
 
             if (!$parsedPart) {

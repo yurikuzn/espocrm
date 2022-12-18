@@ -1662,4 +1662,351 @@ class ParserTest extends \PHPUnit\Framework\TestCase
 
         $this->parse($expression);
     }
+
+    public function testWhileStatement(): void
+    {
+        $expression = "
+            while (\$i < 1) {
+                \$i = \$i + 1;
+            }
+        ";
+
+        $expected = (object) [
+            'type' => 'while',
+            'value' => [
+                (object) [
+                    'type' => 'comparison\\lessThan',
+                    'value' => [
+                        (object) [
+                            'type' => 'variable',
+                            'value' => 'i'
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => 1
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'assign',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => 'i'
+                        ],
+                        (object) [
+                            'type' => 'numeric\\summation',
+                            'value' => [
+                                (object) [
+                                    'type' => 'variable',
+                                    'value' => 'i'
+                                ],
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 1
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $actual = $this->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testWhileStatement2(): void
+    {
+        $expression1 = "
+            while (\$i < 1) {
+                \$i = \$i + 1;
+            }
+        ";
+
+        $expression2 = "
+            while(\$i < 1){\$i = \$i + 1;}
+        ";
+
+        $actual1 = $this->parse($expression1);
+        $actual2 = $this->parse($expression2);
+
+        $this->assertEquals($actual1, $actual2);
+    }
+
+    public function testWhileStatement3(): void
+    {
+        $expression = "
+            \$i + 1;
+            while (false) {}
+        ";
+
+        $expected = (object) [
+            'type' => 'bundle',
+            'value' => [
+                (object) [
+                    'type' => 'numeric\\summation',
+                    'value' => [
+                        (object) [
+                            'type' => 'variable',
+                            'value' => 'i'
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => 1
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'while',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => false
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => NULL
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $actual = $this->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testWhileStatement4(): void
+    {
+        $expression = "
+            \$i + 1;
+            while (false) {}
+            \$i + 1;
+        ";
+
+        $expected = (object) [
+            'type' => 'bundle',
+            'value' => [
+                (object) [
+                    'type' => 'numeric\\summation',
+                    'value' => [
+                        (object) [
+                            'type' => 'variable',
+                            'value' => 'i'
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => 1
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'while',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => false
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => NULL
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'numeric\\summation',
+                    'value' => [
+                        (object) [
+                            'type' => 'variable',
+                            'value' => 'i'
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => 1
+                        ]
+                    ]
+                ],
+            ]
+        ];
+
+        $actual = $this->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testWhileStatement5(): void
+    {
+        $expression = "
+            while (false) {}
+            while (false) {}
+            while (false) {}
+        ";
+
+        $expected = (object) [
+            'type' => 'bundle',
+            'value' => [
+                (object) [
+                    'type' => 'while',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => false
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => NULL
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'while',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => false
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => NULL
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'while',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => false
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => NULL
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $actual = $this->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testWhileStatement6(): void
+    {
+        $expression = "
+            while (false) {
+            };
+            while (false) {}
+            while (false) {}
+        ";
+
+        $expected = (object) [
+            'type' => 'bundle',
+            'value' => [
+                (object) [
+                    'type' => 'while',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => false
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => NULL
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'value',
+                    'value' => NULL
+                ],
+                (object) [
+                    'type' => 'while',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => false
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => NULL
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'while',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => false
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => NULL
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $actual = $this->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testWhileStatement7(): void
+    {
+        $expression = "
+            if (
+                while () {1}
+            ) {}
+        ";
+
+        $this->expectException(SyntaxError::class);
+
+        $this->parse($expression);
+    }
+
+    public function testWhileStatement8(): void
+    {
+        $expression = "
+            while (true) {
+                while (true) {
+                }
+            }
+        ";
+
+        $expected = (object) [
+            'type' => 'while',
+            'value' => [
+                (object) [
+                    'type' => 'value',
+                    'value' => true
+                ],
+                (object) [
+                    'type' => 'while',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => true
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => NULL
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $this->parse($expression);
+
+        $actual = $this->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
 }
