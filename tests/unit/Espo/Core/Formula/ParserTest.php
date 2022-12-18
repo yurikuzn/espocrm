@@ -682,6 +682,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             ],
         ];
         $actual = $this->parse($expression);
+
         $this->assertEquals($expected, $actual);
     }
 
@@ -1921,10 +1922,6 @@ class ParserTest extends \PHPUnit\Framework\TestCase
                     ]
                 ],
                 (object) [
-                    'type' => 'value',
-                    'value' => NULL
-                ],
-                (object) [
                     'type' => 'while',
                     'value' => [
                         (object) [
@@ -2008,14 +2005,76 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $actual);
     }
 
+    public function testWhileStatement9(): void
+    {
+        $expression = "
+            while (false) {
+            };
+        ";
+
+        $expected = (object) [
+            'type' => 'while',
+            'value' => [
+                (object) [
+                    'type' => 'value',
+                    'value' => false
+                ],
+                (object) [
+                    'type' => 'value',
+                    'value' => NULL
+                ]
+            ]
+        ];
+
+        $actual = $this->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    public function testWhileStatement10(): void
+    {
+        $expression1 = "
+            while(false) {
+                while(false) {
+
+                }
+            }
+        ";
+
+        $expression2 = "
+            while(false){while(false){}}
+        ";
+
+        $actual1 = $this->parse($expression1);
+        $actual2 = $this->parse($expression2);
+
+        $this->assertEquals($actual1, $actual2);
+    }
+
     public function testStatementAfterExpression1(): void
     {
         $expression = "
             1 + 1 if () then {}
         ";
 
-        $actual = $this->parse($expression);;
+        $this->expectException(SyntaxError::class);
 
-        echo $this->varExport($actual);
+        $this->parse($expression);
+    }
+
+    public function testComment1(): void
+    {
+        $expression = "
+            /*if (1) {}*/
+        ";
+
+        $expected = (object) [
+            'type' => 'value',
+            'value' => NULL
+        ];
+
+        $actual = $this->parse($expression);
+
+        $this->assertEquals($expected, $actual);
     }
 }

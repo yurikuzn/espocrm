@@ -230,6 +230,28 @@ class Parser
                 }
 
                 if (
+                    $lastStatement instanceof StatementRef &&
+                    !$lastStatement->isReady()
+                ) {
+                    if (
+                        $parenthesisCounter === 0 &&
+                        $braceCounter === 0
+                    ) {
+                        if ($char === ';') {
+                            $lastStatement->setEnd($i, true);
+
+                            continue;
+                        }
+
+                        if ($isLast) {
+                            $lastStatement->setEnd($i + 1);
+
+                            continue;
+                        }
+                    }
+                }
+
+                if (
                     $lastStatement instanceof IfRef &&
                     !$lastStatement->isReady()
                 ) {
@@ -247,6 +269,7 @@ class Parser
                 }
 
                 if (
+                    $statementList !== null &&
                     $lastStatement instanceof WhileRef &&
                     !$lastStatement->isReady()
                 ) {
@@ -259,9 +282,17 @@ class Parser
                     );
 
                     if ($toContinue === null) {
+                        // Not a `while` statement, but likely a `while` function.
                         array_pop($statementList);
 
-                        $lastStatement = end($statementList) ?: null;
+                        $lastStatement = new StatementRef($lastStatement->getStart());
+                        $statementList[] = $lastStatement;
+
+                        if ($char === ';') {
+                            $lastStatement->setEnd($i, true);
+
+                            continue;
+                        }
                     }
 
                     if ($toContinue) {
@@ -274,6 +305,10 @@ class Parser
                     $parenthesisCounter === 0 &&
                     $braceCounter === 0
                 ) {
+                    if ($isLineComment || $isComment) {
+                        continue;
+                    }
+
                     $previousStatementEnd = $lastStatement ?
                         $lastStatement->getEnd() :
                         -1;
@@ -281,7 +316,8 @@ class Parser
                     if (
                         (
                             $lastStatement instanceof IfRef ||
-                            $lastStatement instanceof WhileRef
+                            $lastStatement instanceof WhileRef ||
+                            $lastStatement instanceof StatementRef
                         ) &&
                         !$lastStatement->isReady()
                     ) {
@@ -292,28 +328,39 @@ class Parser
                         throw SyntaxError::create("Incorrect statement usage.");
                     }
 
-                    if ($char === ';') {
-                        $statementList[] = new StatementRef($previousStatementEnd + 1, $i);
+                    /*if (
+                        $lastStatement &&
+                        !$this->isWhiteSpace($char) &&
+                        $char !== '/' &&
+                        $char !== '*' &&
+                        !$lastStatement->isReady()
+                    ) {
+                        throw SyntaxError::create("Not ended statement.");
+                    }*/
 
-                        continue;
-                    }
-
-                    if ($isLast && count($statementList)) {
-                        $statementList[] = new StatementRef($previousStatementEnd + 1, $i + 1);
-
-                        continue;
-                    }
-
-                    if ($this->isOnIf($string, $i - 1)) {
+                    if ($this->isOnIf($string, $i)) {
                         $statementList[] = new IfRef();
 
+                        $i += 1;
+
                         continue;
                     }
 
-                    if ($this->isOnWhile($string, $i - 4)) {
-                        $statementList[] = new WhileRef();
+                    if ($this->isOnWhile($string, $i)) {
+                        $statementList[] = new WhileRef($i);
+
+                        $i += 4;
 
                         continue;
+                    }
+
+                    if (
+                        !$this->isWhiteSpace($char) &&
+                        $char !== ';' &&
+                        $char !== '/' &&
+                        $char !== '*'
+                    ) {
+                        $statementList[] = new StatementRef($i);
                     }
 
                     continue;
@@ -340,6 +387,18 @@ class Parser
                 if ($string[$i - 1] === "*" && $string[$i] === "/") {
                     $isComment = false;
                 }
+            }
+        }
+
+        if ($statementList !== null) {
+            $lastStatement = end($statementList);
+
+            if (
+                $lastStatement instanceof StatementRef &&
+                count($statementList) === 1 &&
+                !$lastStatement->isEndedWithSemicolon()
+            ) {
+                array_pop($statementList);
             }
         }
 
@@ -681,16 +740,6 @@ class Parser
 
         $this->stripComments($expression, $modifiedExpression);
 
-        // @todo Revise.
-        /*
-        foreach ($splitterIndexList as $i => $index) {
-            if ($expression[$index] !== ';') {
-                unset($splitterIndexList[$i]);
-            }
-        }
-        $splitterIndexList = array_values($splitterIndexList);
-        */
-
         $expressionLength = strlen($modifiedExpression);
 
         for ($i = 0; $i < $expressionLength; $i++) {
@@ -858,14 +907,14 @@ class Parser
 
         if ($expression[0] === '-') {
             return new Node('numeric\\subtraction', [
-                $this->split('0'), // @todo Change to `new Value(0)`;
+                new Value(0),
                 $this->split(substr($expression, 1))
             ]);
         }
 
         if ($expression[0] === '+') {
             return new Node('numeric\\summation', [
-                $this->split('0'), // @todo Change to `new Value(0)`;
+                new Value(0),
                 $this->split(substr($expression, 1))
             ]);
         }
@@ -932,6 +981,10 @@ class Parser
             }
         }
 
+        if (str_contains($expression, ' ')) {
+            throw SyntaxError::create("Could not parse.");
+        }
+
         if (!preg_match($this->attributeNameRegExp, $expression)) {
             throw SyntaxError::create("Attribute name `$expression` contains not allowed characters.");
         }
@@ -959,7 +1012,14 @@ class Parser
             $parsedPart = null;
 
             if ($statement instanceof StatementRef) {
-                $part = self::sliceByStartEnd($expression, $statement->getStart(), $statement->getEnd());
+                $start = $statement->getStart();
+                $end = $statement->getEnd();
+
+                if ($end === null) {
+                    throw new LogicException();
+                }
+
+                $part = self::sliceByStartEnd($expression, $start, $end);
 
                 $parsedPart = $this->split($part);
             }

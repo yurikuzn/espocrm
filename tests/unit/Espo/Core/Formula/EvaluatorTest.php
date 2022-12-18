@@ -320,7 +320,7 @@ class EvaluatorTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(['0', '1'], $actual);
     }
 
-    public function testWhile()
+    public function testWhileFunction()
     {
         $expression = "
             \$source = list(0, 1, 2);
@@ -1074,12 +1074,21 @@ class EvaluatorTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(5, $vars->i);
     }
 
-    /*public function testIfBeforeNoSemicolon(): void
+    public function testPlus1(): void
     {
-        $expression = "
-            1 + 1 if () then {}
-        ";
+        $expression = "+2";
 
-        $this->evaluator->process($expression);
-    }*/
+        $value = $this->evaluator->process($expression);
+
+        $this->assertEquals(2, $value);
+    }
+
+    public function testPlus2(): void
+    {
+        $expression = "+ 2";
+
+        $value = $this->evaluator->process($expression);
+
+        $this->assertEquals(2, $value);
+    }
 }
