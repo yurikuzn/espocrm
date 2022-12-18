@@ -270,9 +270,9 @@ class Parser
                 }
 
                 if (
+                    $statementList !== null &&
                     $parenthesisCounter === 0 &&
-                    $braceCounter === 0 &&
-                    $statementList !== null
+                    $braceCounter === 0
                 ) {
                     $previousStatementEnd = $lastStatement ?
                         $lastStatement->getEnd() :
@@ -294,23 +294,38 @@ class Parser
 
                     if ($char === ';') {
                         $statementList[] = new StatementRef($previousStatementEnd + 1, $i);
+
+                        continue;
                     }
-                    else if ($isLast && count($statementList)) {
+
+                    if ($isLast && count($statementList)) {
                         $statementList[] = new StatementRef($previousStatementEnd + 1, $i + 1);
+
+                        continue;
                     }
-                    else if ($this->isOnIf($string, $i - 1)) {
+
+                    if ($this->isOnIf($string, $i - 1)) {
                         $statementList[] = new IfRef();
+
+                        continue;
                     }
-                    else if ($this->isOnWhile($string, $i - 4)) {
+
+                    if ($this->isOnWhile($string, $i - 4)) {
                         $statementList[] = new WhileRef();
+
+                        continue;
                     }
+
+                    continue;
                 }
 
                 if ($intoOneLine) {
-                    if ($parenthesisCounter === 0) {
-                        if ($this->isWhiteSpace($char) && $char !== ' ') {
-                            $string[$i] = ' ';
-                        }
+                    if (
+                        $parenthesisCounter === 0 &&
+                        $this->isWhiteSpace($char) &&
+                        $char !== ' '
+                    ) {
+                        $string[$i] = ' ';
                     }
                 }
             }

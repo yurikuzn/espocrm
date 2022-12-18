@@ -2003,10 +2003,19 @@ class ParserTest extends \PHPUnit\Framework\TestCase
             ]
         ];
 
-        $this->parse($expression);
-
         $actual = $this->parse($expression);
 
         $this->assertEquals($expected, $actual);
+    }
+
+    public function testStatementAfterExpression1(): void
+    {
+        $expression = "
+            1 + 1 if () then {}
+        ";
+
+        $actual = $this->parse($expression);;
+
+        echo $this->varExport($actual);
     }
 }
