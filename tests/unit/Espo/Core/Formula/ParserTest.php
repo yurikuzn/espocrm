@@ -1582,7 +1582,8 @@ class ParserTest extends \PHPUnit\Framework\TestCase
     public function testIfStatement11(): void
     {
         $expression = "
-            if (1) {}
+            if (1)
+            {}
             else if (2) {
                 if (21) {} else {}
             }

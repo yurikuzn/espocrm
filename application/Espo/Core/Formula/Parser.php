@@ -200,34 +200,31 @@ class Parser
             }
 
             if (!$isLineComment && !$isComment) {
-                if ($i && $string[$i] === '/' && $string[$i - 1] === '/') {
+                if (!$isLast && $string[$i] === '/' && $string[$i + 1] === '/') {
                     $isLineComment = true;
                 }
 
                 if (!$isLineComment) {
-                    if ($i && $string[$i] === '*' && $string[$i - 1] === '/') {
+                    if (!$isLast && $string[$i] === '/' && $string[$i + 1] === '*') {
                         $isComment = true;
                     }
                 }
 
-                $lastStatement = $statementList !== null && count($statementList) ?
-                    end($statementList) : null;
-
                 if ($char === '(') {
                     $parenthesisCounter++;
                 }
-
-                if ($char === ')') {
+                else if ($char === ')') {
                     $parenthesisCounter--;
                 }
-
-                if ($char === '{') {
+                else if ($char === '{') {
                     $braceCounter++;
                 }
-
-                if ($char === '}') {
+                else if ($char === '}') {
                     $braceCounter--;
                 }
+
+                $lastStatement = $statementList !== null && count($statementList) ?
+                    end($statementList) : null;
 
                 if (
                     $lastStatement instanceof StatementRef &&
@@ -314,11 +311,7 @@ class Parser
                         -1;
 
                     if (
-                        (
-                            $lastStatement instanceof IfRef ||
-                            $lastStatement instanceof WhileRef ||
-                            $lastStatement instanceof StatementRef
-                        ) &&
+                        $lastStatement &&
                         !$lastStatement->isReady()
                     ) {
                         continue;
@@ -327,16 +320,6 @@ class Parser
                     if ($previousStatementEnd === null) {
                         throw SyntaxError::create("Incorrect statement usage.");
                     }
-
-                    /*if (
-                        $lastStatement &&
-                        !$this->isWhiteSpace($char) &&
-                        $char !== '/' &&
-                        $char !== '*' &&
-                        !$lastStatement->isReady()
-                    ) {
-                        throw SyntaxError::create("Not ended statement.");
-                    }*/
 
                     if ($this->isOnIf($string, $i)) {
                         $statementList[] = new IfRef();
@@ -356,9 +339,9 @@ class Parser
 
                     if (
                         !$this->isWhiteSpace($char) &&
-                        $char !== ';' &&
+                        $char !== ';' /*&&
                         $char !== '/' &&
-                        $char !== '*'
+                        $char !== '*'*/
                     ) {
                         $statementList[] = new StatementRef($i);
                     }
