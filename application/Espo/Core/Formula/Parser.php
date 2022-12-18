@@ -223,130 +223,16 @@ class Parser
                     $braceCounter--;
                 }
 
-                $lastStatement = $statementList !== null && count($statementList) ?
-                    end($statementList) : null;
-
-                if (
-                    $lastStatement instanceof StatementRef &&
-                    !$lastStatement->isReady()
-                ) {
-                    if (
-                        $parenthesisCounter === 0 &&
-                        $braceCounter === 0
-                    ) {
-                        if ($char === ';') {
-                            $lastStatement->setEnd($i, true);
-
-                            continue;
-                        }
-
-                        if ($isLast) {
-                            $lastStatement->setEnd($i + 1);
-
-                            continue;
-                        }
-                    }
-                }
-
-                if (
-                    $lastStatement instanceof IfRef &&
-                    !$lastStatement->isReady()
-                ) {
-                    $toContinue = $this->processStringIfStatement(
+                if ($statementList !== null) {
+                    $this->processStringIteration(
                         $string,
                         $i,
+                        $statementList,
                         $parenthesisCounter,
                         $braceCounter,
-                        $lastStatement
+                        $isLineComment,
+                        $isComment
                     );
-
-                    if ($toContinue) {
-                        continue;
-                    }
-                }
-
-                if (
-                    $statementList !== null &&
-                    $lastStatement instanceof WhileRef &&
-                    !$lastStatement->isReady()
-                ) {
-                    $toContinue = $this->processStringWhileStatement(
-                        $string,
-                        $i,
-                        $parenthesisCounter,
-                        $braceCounter,
-                        $lastStatement
-                    );
-
-                    if ($toContinue === null) {
-                        // Not a `while` statement, but likely a `while` function.
-                        array_pop($statementList);
-
-                        $lastStatement = new StatementRef($lastStatement->getStart());
-                        $statementList[] = $lastStatement;
-
-                        if ($char === ';') {
-                            $lastStatement->setEnd($i, true);
-
-                            continue;
-                        }
-                    }
-
-                    if ($toContinue) {
-                        continue;
-                    }
-                }
-
-                if (
-                    $statementList !== null &&
-                    $parenthesisCounter === 0 &&
-                    $braceCounter === 0
-                ) {
-                    if ($isLineComment || $isComment) {
-                        continue;
-                    }
-
-                    $previousStatementEnd = $lastStatement ?
-                        $lastStatement->getEnd() :
-                        -1;
-
-                    if (
-                        $lastStatement &&
-                        !$lastStatement->isReady()
-                    ) {
-                        continue;
-                    }
-
-                    if ($previousStatementEnd === null) {
-                        throw SyntaxError::create("Incorrect statement usage.");
-                    }
-
-                    if ($this->isOnIf($string, $i)) {
-                        $statementList[] = new IfRef();
-
-                        $i += 1;
-
-                        continue;
-                    }
-
-                    if ($this->isOnWhile($string, $i)) {
-                        $statementList[] = new WhileRef($i);
-
-                        $i += 4;
-
-                        continue;
-                    }
-
-                    if (
-                        !$this->isWhiteSpace($char) &&
-                        $char !== ';' /*&&
-                        $char !== '/' &&
-                        $char !== '*'*/
-                    ) {
-                        $statementList[] = new StatementRef($i);
-                    }
-
-                    continue;
                 }
 
                 if ($intoOneLine) {
@@ -386,6 +272,145 @@ class Parser
         }
 
         return $isString;
+    }
+
+    /**
+     * @param (StatementRef|IfRef|WhileRef)[] $statementList
+     * @throws SyntaxError
+     */
+    private function processStringIteration(
+        string $string,
+        int &$i,
+        array &$statementList,
+        int $parenthesisCounter,
+        int $braceCounter,
+        bool $isLineComment,
+        bool $isComment
+    ): void {
+
+        $char = $string[$i];
+        $isLast = $i === strlen($string) - 1;
+
+        $lastStatement = count($statementList) ?
+            end($statementList) : null;
+
+        if (
+            $lastStatement instanceof StatementRef &&
+            !$lastStatement->isReady()
+        ) {
+            if (
+                $parenthesisCounter === 0 &&
+                $braceCounter === 0
+            ) {
+                if ($char === ';') {
+                    $lastStatement->setEnd($i, true);
+
+                    return;
+                }
+
+                if ($isLast) {
+                    $lastStatement->setEnd($i + 1);
+
+                    return;
+                }
+            }
+        }
+
+        if (
+            $lastStatement instanceof IfRef &&
+            !$lastStatement->isReady()
+        ) {
+            $toContinue = $this->processStringIfStatement(
+                $string,
+                $i,
+                $parenthesisCounter,
+                $braceCounter,
+                $lastStatement
+            );
+
+            if ($toContinue) {
+                return;
+            }
+        }
+
+        if (
+            $lastStatement instanceof WhileRef &&
+            !$lastStatement->isReady()
+        ) {
+            $toContinue = $this->processStringWhileStatement(
+                $string,
+                $i,
+                $parenthesisCounter,
+                $braceCounter,
+                $lastStatement
+            );
+
+            if ($toContinue === null) {
+                // Not a `while` statement, but likely a `while` function.
+                array_pop($statementList);
+
+                $lastStatement = new StatementRef($lastStatement->getStart());
+                $statementList[] = $lastStatement;
+
+                if ($char === ';') {
+                    $lastStatement->setEnd($i, true);
+
+                    return;
+                }
+            }
+
+            if ($toContinue) {
+                return;
+            }
+        }
+
+        if (
+            $parenthesisCounter === 0 &&
+            $braceCounter === 0
+        ) {
+            if ($isLineComment || $isComment) {
+                return;
+            }
+
+            $previousStatementEnd = $lastStatement ?
+                $lastStatement->getEnd() :
+                -1;
+
+            if (
+                $lastStatement &&
+                !$lastStatement->isReady()
+            ) {
+                return;
+            }
+
+            if ($previousStatementEnd === null) {
+                throw SyntaxError::create("Incorrect statement usage.");
+            }
+
+            if ($this->isOnIf($string, $i)) {
+                $statementList[] = new IfRef();
+
+                $i += 1;
+
+                return;
+            }
+
+            if ($this->isOnWhile($string, $i)) {
+                $statementList[] = new WhileRef($i);
+
+                $i += 4;
+
+                return;
+            }
+
+            if (
+                !$this->isWhiteSpace($char) &&
+                $char !== ';' &&
+                $char !== '/'
+            ) {
+                $statementList[] = new StatementRef($i);
+            }
+        }
     }
 
     private function processStringIfStatement(
