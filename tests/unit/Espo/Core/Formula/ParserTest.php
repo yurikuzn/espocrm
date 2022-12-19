@@ -1665,6 +1665,66 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->parse($expression);
     }
 
+    public function testIfStatement14(): void
+    {
+        $expression = "
+            if (1) {
+                \$test = 1;
+            }else if (2) {
+                \$test = 2;
+            }
+        ";
+
+        $expected = (object) [
+            'type' => 'ifThenElse',
+            'value' => [
+                (object) [
+                    'type' => 'value',
+                    'value' => 1
+                ],
+                (object) [
+                    'type' => 'assign',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => 'test'
+                        ],
+                        (object) [
+                            'type' => 'value',
+                            'value' => 1
+                        ]
+                    ]
+                ],
+                (object) [
+                    'type' => 'ifThen',
+                    'value' => [
+                        (object) [
+                            'type' => 'value',
+                            'value' => 2
+                        ],
+                        (object) [
+                            'type' => 'assign',
+                            'value' => [
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 'test'
+                                ],
+                                (object) [
+                                    'type' => 'value',
+                                    'value' => 2
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $actual = $this->parse($expression);
+
+        $this->assertEquals($expected, $actual);
+    }
+
     public function testWhileStatement(): void
     {
         $expression = "
