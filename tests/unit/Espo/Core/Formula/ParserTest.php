@@ -2123,7 +2123,7 @@ class ParserTest extends \PHPUnit\Framework\TestCase
         $this->parse($expression);
     }
 
-    public function testComment1(): void
+    public function testCommentIf1(): void
     {
         $expression = "
             /*if (1) {}*/

@@ -141,10 +141,12 @@ class Parser
     }
 
     /**
-     * @param ?((StatementRef|IfRef|WhileRef)[]) $statementList
+     * @param string $string An expression. Comments will be stripped by the method.
+     * @param string $modifiedString A modified expression with removed parentheses and braces inside strings.
+     * @param ?((StatementRef|IfRef|WhileRef)[]) $statementList Statements will be added if there are multiple.
      * @throws SyntaxError
      */
-    private function processStrings(
+    private function processString(
         string &$string,
         string &$modifiedString,
         ?array &$statementList = null,
@@ -199,54 +201,82 @@ class Parser
                 continue;
             }
 
+            $isLineCommentEnding = $isLineComment && ($string[$i] === "\n" || $isLast);
+            $isCommentEnding = $isComment && $string[$i] === "*" && $string[$i + 1] === "/";
+
+            if ($isCommentEnding) {
+                $string[$i + 1] = ' ';
+                $modifiedString[$i + 1] = ' ';
+            }
+
+            if ($isLineComment || $isComment) {
+                $string[$i] = ' ';
+                $modifiedString[$i] = ' ';
+            }
+
             if (!$isLineComment && !$isComment) {
                 if (!$isLast && $string[$i] === '/' && $string[$i + 1] === '/') {
                     $isLineComment = true;
+
+                    $string[$i] = ' ';
+                    $string[$i + 1] = ' ';
+                    $modifiedString[$i] = ' ';
+                    $modifiedString[$i + 1] = ' ';
                 }
 
                 if (!$isLineComment) {
                     if (!$isLast && $string[$i] === '/' && $string[$i + 1] === '*') {
                         $isComment = true;
+
+                        $string[$i] = ' ';
+                        $string[$i + 1] = ' ';
+                        $modifiedString[$i] = ' ';
+                        $modifiedString[$i + 1] = ' ';
                     }
                 }
 
                 if ($char === '(') {
                     $parenthesisCounter++;
-                }
-                else if ($char === ')') {
+                } else if ($char === ')') {
                     $parenthesisCounter--;
-                }
-                else if ($char === '{') {
+                } else if ($char === '{') {
                     $braceCounter++;
-                }
-                else if ($char === '}') {
+                } else if ($char === '}') {
                     $braceCounter--;
-                }
-
-                if ($statementList !== null) {
-                    $this->processStringIteration(
-                        $string,
-                        $i,
-                        $statementList,
-                        $parenthesisCounter,
-                        $braceCounter,
-                        $isLineComment,
-                        $isComment
-                    );
-                }
-
-                if ($intoOneLine) {
-                    if (
-                        $parenthesisCounter === 0 &&
-                        $this->isWhiteSpace($char) &&
-                        $char !== ' '
-                    ) {
-                        $string[$i] = ' ';
-                    }
                 }
             }
 
-            if ($isLineComment) {
+            if ($statementList !== null) {
+                $this->processStringIteration(
+                    $string,
+                    $i,
+                    $statementList,
+                    $parenthesisCounter,
+                    $braceCounter,
+                    $isLineComment,
+                    $isComment
+                );
+            }
+
+            if ($intoOneLine) {
+                if (
+                    $parenthesisCounter === 0 &&
+                    $this->isWhiteSpace($char) &&
+                    $char !== ' '
+                ) {
+                    $string[$i] = ' ';
+                }
+            }
+
+            if ($isLineCommentEnding) {
+                $isLineComment = false;
+            }
+
+            if ($isCommentEnding) {
+                $isComment = false;
+            }
+
+            /*if ($isLineComment) {
                 if ($string[$i] === "\n") {
                     $isLineComment = false;
                 }
@@ -256,7 +286,7 @@ class Parser
                 if ($string[$i - 1] === "*" && $string[$i] === "/") {
                     $isComment = false;
                 }
-            }
+            }*/
         }
 
         if ($statementList !== null) {
@@ -472,6 +502,17 @@ class Parser
             }
 
             return true;
+        }
+
+        if (
+            $statement->getState() === IfRef::STATE_THEN_ENDED &&
+            $this->isWhiteSpace($char) &&
+            $isLast
+        ) {
+            $statement->setReady();
+
+            // No need to call continue.
+            return false;
         }
 
         if (
@@ -740,13 +781,11 @@ class Parser
 
         $statementList = [];
 
-        $isStringNotClosed = $this->processStrings($expression, $modifiedExpression, $statementList, true);
+        $isStringNotClosed = $this->processString($expression, $modifiedExpression, $statementList, true);
 
         if ($isStringNotClosed) {
             throw SyntaxError::create('String is not closed.');
         }
-
-        $this->stripComments($expression, $modifiedExpression);
 
         $expressionLength = strlen($modifiedExpression);
 
@@ -865,9 +904,9 @@ class Parser
 
                     $modifiedFirstPart = $modifiedSecondPart = '';
 
-                    $isString = $this->processStrings($firstPart, $modifiedFirstPart);
+                    $isString = $this->processString($firstPart, $modifiedFirstPart);
 
-                    $this->processStrings($secondPart, $modifiedSecondPart);
+                    $this->processString($secondPart, $modifiedSecondPart);
 
                     if (
                         substr_count($modifiedFirstPart, '(') === substr_count($modifiedFirstPart, ')') &&
@@ -1128,51 +1167,6 @@ class Parser
                 $end - $start
             )
         );
-    }
-
-    private function stripComments(string &$expression, string &$modifiedExpression): void
-    {
-        $commentIndexStart = null;
-
-        for ($i = 0; $i < strlen($modifiedExpression); $i++) {
-            if (is_null($commentIndexStart)) {
-                if (
-                    $modifiedExpression[$i] === '/' &&
-                    $i < strlen($modifiedExpression) - 1 &&
-                    $modifiedExpression[$i + 1] === '/'
-                ) {
-                    $commentIndexStart = $i;
-                }
-            }
-            else {
-                if ($modifiedExpression[$i] === "\n" || $i === strlen($modifiedExpression) - 1) {
-                    for ($j = $commentIndexStart; $j <= $i; $j++) {
-                        $modifiedExpression[$j] = ' ';
-                        $expression[$j] = ' ';
-                    }
-
-                    $commentIndexStart = null;
-                }
-            }
-        }
-
-        for ($i = 0; $i < strlen($modifiedExpression) - 1; $i++) {
-            if (is_null($commentIndexStart)) {
-                if ($modifiedExpression[$i] === '/' && $modifiedExpression[$i + 1] === '*') {
-                    $commentIndexStart = $i;
-                }
-            }
-            else {
-                if ($modifiedExpression[$i] === '*' && $modifiedExpression[$i + 1] === '/') {
-                    for ($j = $commentIndexStart; $j <= $i + 1; $j++) {
-                        $modifiedExpression[$j] = ' ';
-                        $expression[$j] = ' ';
-                    }
-
-                    $commentIndexStart = null;
-                }
-            }
-        }
     }
 
     /**

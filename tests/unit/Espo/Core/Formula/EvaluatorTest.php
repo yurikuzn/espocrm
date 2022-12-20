@@ -1024,7 +1024,7 @@ class EvaluatorTest extends \PHPUnit\Framework\TestCase
 
     public function testIfWithComment2(): void
     {
-        $expression = "if (true) {\$a = '1';} // test";
+        $expression = "if (true) {\$a = '1';} ";
 
         $vars = (object) [
             'a' => '0'
@@ -1055,6 +1055,26 @@ class EvaluatorTest extends \PHPUnit\Framework\TestCase
         $this->evaluator->process($expression, null, $vars);
 
         $this->assertEquals('1', $vars->a);
+    }
+
+    public function testIfWithComment4(): void
+    {
+        $expression = "
+            if (0)
+            {}//
+            else if (1) {
+                \$a = 1;
+            }
+            else {}
+        ";
+
+        $vars = (object) [
+            'a' => '0',
+        ];
+
+        $this->evaluator->process($expression, null, $vars);
+
+        $this->assertEquals(1, $vars->a);
     }
 
     public function testWhileStatement1(): void
