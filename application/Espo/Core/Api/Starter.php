@@ -84,7 +84,7 @@ class Starter
     {
         $slim->map(
             [$item->getMethod()],
-            $item->getRoute(),
+            $item->getAdjustedRoute(),
             function (Psr7Request $request, Psr7Response $response, array $args) use ($slim, $item)
             {
                 $routeParams = $this->routeParamsFetcher->fetch($item, $args);
