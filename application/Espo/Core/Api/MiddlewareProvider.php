@@ -43,11 +43,11 @@ class MiddlewareProvider
     /**
      * @return MiddlewareInterface[]
      */
-    public function getMiddlewareList(): array
+    public function getGlobalMiddlewareList(): array
     {
         $list = [];
 
-        foreach ($this->getMiddlewareClassNameList() as $className) {
+        foreach ($this->getGlobalMiddlewareClassNameList() as $className) {
             $list[] = $this->injectableFactory->create($className);
         }
 
@@ -57,8 +57,8 @@ class MiddlewareProvider
     /**
      * @return class-string<MiddlewareInterface>[]
      */
-    private function getMiddlewareClassNameList(): array
+    private function getGlobalMiddlewareClassNameList(): array
     {
-        return $this->metadata->get(['app', 'api', 'middlewareClassNameList']) ?? [];
+        return $this->metadata->get(['app', 'api', 'globalMiddlewareClassNameList']) ?? [];
     }
 }

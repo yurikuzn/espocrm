@@ -57,16 +57,16 @@ class Starter
         $slim = SlimAppFactory::create();
 
         $slim->setBasePath(RouteUtil::detectBasePath());
-        $this->addMiddlewares($slim);
+        $this->addGlobalMiddlewares($slim);
         $slim->addRoutingMiddleware();
         $this->addRoutes($slim);
         $slim->addErrorMiddleware(false, true, true, $this->log);
         $slim->run();
     }
 
-    private function addMiddlewares(SlimApp $slim): void
+    private function addGlobalMiddlewares(SlimApp $slim): void
     {
-        foreach ($this->middlewareProvider->getMiddlewareList() as $middleware) {
+        foreach ($this->middlewareProvider->getGlobalMiddlewareList() as $middleware) {
             $slim->add($middleware);
         }
     }
