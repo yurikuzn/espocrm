@@ -48,6 +48,7 @@ class Starter
         private RequestProcessor $requestProcessor,
         private RouteUtil $routeUtil,
         private RouteParamsFetcher $routeParamsFetcher,
+        private MiddlewareProvider $middlewareProvider,
         private Log $log
     ) {}
 
@@ -56,10 +57,18 @@ class Starter
         $slim = SlimAppFactory::create();
 
         $slim->setBasePath(RouteUtil::detectBasePath());
+        $this->addMiddlewares($slim);
         $slim->addRoutingMiddleware();
         $this->addRoutes($slim);
         $slim->addErrorMiddleware(false, true, true, $this->log);
         $slim->run();
+    }
+
+    private function addMiddlewares(SlimApp $slim): void
+    {
+        foreach ($this->middlewareProvider->getMiddlewareList() as $middleware) {
+            $slim->add($middleware);
+        }
     }
 
     private function addRoutes(SlimApp $slim): void

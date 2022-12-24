@@ -27,30 +27,38 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Core\Portal\Api;
+namespace Espo\Core\Api;
 
-use Espo\Core\Api\MiddlewareProvider;
-use Espo\Core\Api\Starter as StarterBase;
-use Espo\Core\Portal\Utils\Route as RouteUtil;
-use Espo\Core\Api\RequestProcessor;
-use Espo\Core\Api\Route\RouteParamsFetcher;
-use Espo\Core\Utils\Log;
+use Espo\Core\InjectableFactory;
+use Espo\Core\Utils\Metadata;
+use Psr\Http\Server\MiddlewareInterface;
 
-class Starter extends StarterBase
+class MiddlewareProvider
 {
     public function __construct(
-        RequestProcessor $requestProcessor,
-        RouteUtil $routeUtil,
-        RouteParamsFetcher $routeParamsFetcher,
-        MiddlewareProvider $middlewareProvider,
-        Log $log
-    ) {
-        parent::__construct(
-            $requestProcessor,
-            $routeUtil,
-            $routeParamsFetcher,
-            $middlewareProvider,
-            $log
-        );
+        private Metadata $metadata,
+        private InjectableFactory $injectableFactory
+    ) {}
+
+    /**
+     * @return MiddlewareInterface[]
+     */
+    public function getMiddlewareList(): array
+    {
+        $list = [];
+
+        foreach ($this->getMiddlewareClassNameList() as $className) {
+            $list[] = $this->injectableFactory->create($className);
+        }
+
+        return $list;
+    }
+
+    /**
+     * @return class-string<MiddlewareInterface>[]
+     */
+    private function getMiddlewareClassNameList(): array
+    {
+        return $this->metadata->get(['app', 'api', 'middlewareClassNameList']) ?? [];
     }
 }
