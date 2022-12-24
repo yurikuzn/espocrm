@@ -69,7 +69,7 @@ class Metadata
     private $changedData = [];
 
     /**
-     * @var array<int,string[]>
+     * @var array<int, string[]>
      */
     private $forceAppendPathList = [
         ['app', 'rebuild', 'actionClassNameList'],
@@ -77,6 +77,8 @@ class Metadata
         ['app', 'fieldProcessing', 'listLoaderClassNameList'],
         ['app', 'fieldProcessing', 'saverClassNameList'],
         ['app', 'hook', 'suppressClassNameList'],
+        ['app', 'api', 'globalMiddlewareClassNameList'],
+        ['app', 'api', 'routeMiddlewareClassNameListMap', self::ANY_KEY],
         ['recordDefs', self::ANY_KEY, 'readLoaderClassNameList'],
         ['recordDefs', self::ANY_KEY, 'listLoaderClassNameList'],
         ['recordDefs', self::ANY_KEY, 'saverClassNameList'],
