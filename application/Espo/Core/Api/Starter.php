@@ -82,8 +82,6 @@ class Starter
 
     private function addRoute(SlimApp $slim, Route $item): void
     {
-
-
         $slim->map(
             [$item->getMethod()],
             $item->getRoute(),
