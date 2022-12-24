@@ -45,13 +45,20 @@ class MiddlewareProvider
      */
     public function getGlobalMiddlewareList(): array
     {
-        $list = [];
+        return $this->createFromClassNameList($this->getGlobalMiddlewareClassNameList());
+    }
 
-        foreach ($this->getGlobalMiddlewareClassNameList() as $className) {
-            $list[] = $this->injectableFactory->create($className);
-        }
+    /**
+     * @return MiddlewareInterface[]
+     */
+    public function getRouteMiddlewareList(Route $route): array
+    {
+        $key = strtolower($route->getMethod()) . '_' . $route->getRoute();
 
-        return $list;
+        /** @var class-string<MiddlewareInterface>[] $classNameList */
+        $classNameList = $this->metadata->get(['app', 'api', 'routeMiddlewareClassNameListMap', $key]) ?? [];
+
+        return $this->createFromClassNameList($classNameList);
     }
 
     /**
@@ -60,5 +67,20 @@ class MiddlewareProvider
     private function getGlobalMiddlewareClassNameList(): array
     {
         return $this->metadata->get(['app', 'api', 'globalMiddlewareClassNameList']) ?? [];
+    }
+
+    /**
+     * @param class-string<MiddlewareInterface>[] $classNameList
+     * @return MiddlewareInterface[]
+     */
+    private function createFromClassNameList(array $classNameList): array
+    {
+        $list = [];
+
+        foreach ($classNameList as $className) {
+            $list[] = $this->injectableFactory->create($className);
+        }
+
+        return $list;
     }
 }

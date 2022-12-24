@@ -82,7 +82,7 @@ class Starter
 
     private function addRoute(SlimApp $slim, Route $item): void
     {
-        $slim->map(
+        $slimRoute = $slim->map(
             [$item->getMethod()],
             $item->getAdjustedRoute(),
             function (Psr7Request $request, Psr7Response $response, array $args) use ($slim, $item)
@@ -97,5 +97,11 @@ class Starter
                 return $responseWrapped->getResponse();
             }
         );
+
+        $middlewareList = $this->middlewareProvider->getRouteMiddlewareList($item);
+
+        foreach ($middlewareList as $middleware) {
+            $slimRoute->addMiddleware($middleware);
+        }
     }
 }
