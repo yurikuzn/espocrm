@@ -1,4 +1,6 @@
 {
     "globalMiddlewareClassNameList": [],
-    "routeMiddlewareClassNameListMap": {}
+    "routeMiddlewareClassNameListMap": {},
+    "controllerMiddlewareClassNameListMap": {},
+    "controllerActionMiddlewareClassNameListMap": {}
 }

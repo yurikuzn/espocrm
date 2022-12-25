@@ -62,6 +62,32 @@ class MiddlewareProvider
     }
 
     /**
+     * @return MiddlewareInterface[]
+     */
+    public function getControllerMiddlewareList(string $controller): array
+    {
+        /** @var class-string<MiddlewareInterface>[] $classNameList */
+        $classNameList = $this->metadata
+            ->get(['app', 'api', 'controllerMiddlewareClassNameListMap', $controller]) ?? [];
+
+        return $this->createFromClassNameList($classNameList);
+    }
+
+    /**
+     * @return MiddlewareInterface[]
+     */
+    public function getControllerActionMiddlewareList(string $method, string $controller, string $action): array
+    {
+        $key = $controller . '_' . strtolower($method) . '_' . $action;
+
+        /** @var class-string<MiddlewareInterface>[] $classNameList */
+        $classNameList = $this->metadata
+            ->get(['app', 'api', 'controllerActionMiddlewareClassNameListMap', $key]) ?? [];
+
+        return $this->createFromClassNameList($classNameList);
+    }
+
+    /**
      * @return class-string<MiddlewareInterface>[]
      */
     private function getGlobalMiddlewareClassNameList(): array

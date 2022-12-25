@@ -38,6 +38,7 @@ use Slim\Factory\AppFactory as SlimAppFactory;
 
 use Psr\Http\Message\ResponseInterface as Psr7Response;
 use Psr\Http\Message\ServerRequestInterface as Psr7Request;
+use Slim\MiddlewareDispatcher;
 
 /**
  * API request processing entry point.
@@ -89,12 +90,19 @@ class Starter
             {
                 $routeParams = $this->routeParamsFetcher->fetch($item, $args);
 
-                $requestWrapped = new RequestWrapper($request, $slim->getBasePath(), $routeParams);
-                $responseWrapped = new ResponseWrapper($response);
+                $routeHandler = new RouteHandler(
+                    $item,
+                    $routeParams,
+                    $slim->getBasePath(),
+                    $response,
+                    $this->requestProcessor
+                );
 
-                $this->requestProcessor->process($item, $requestWrapped, $responseWrapped);
+                $dispatcher = new MiddlewareDispatcher($routeHandler);
 
-                return $responseWrapped->getResponse();
+                $this->addControllerMiddlewares($dispatcher, $item, $routeParams);
+
+                return $dispatcher->handle($request);
             }
         );
 
@@ -102,6 +110,35 @@ class Starter
 
         foreach ($middlewareList as $middleware) {
             $slimRoute->addMiddleware($middleware);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $routeParams
+     */
+    private function addControllerMiddlewares(MiddlewareDispatcher $dispatcher, Route $route, array $routeParams): void
+    {
+        $controller = $routeParams['controller'] ?? null;
+        $action = $routeParams['action'] ?? null;
+
+        if (!$controller) {
+            return;
+        }
+
+        if ($action) {
+            $controllerActionMiddlewareList = $this->middlewareProvider
+                ->getControllerActionMiddlewareList($route->getMethod(), $controller, $action);
+
+            foreach ($controllerActionMiddlewareList as $middleware) {
+                $dispatcher->addMiddleware($middleware);
+            }
+        }
+
+        $controllerMiddlewareList = $this->middlewareProvider
+            ->getControllerMiddlewareList($controller);
+
+        foreach ($controllerMiddlewareList as $middleware) {
+            $dispatcher->addMiddleware($middleware);
         }
     }
 }

@@ -79,6 +79,8 @@ class Metadata
         ['app', 'hook', 'suppressClassNameList'],
         ['app', 'api', 'globalMiddlewareClassNameList'],
         ['app', 'api', 'routeMiddlewareClassNameListMap', self::ANY_KEY],
+        ['app', 'api', 'controllerMiddlewareClassNameListMap', self::ANY_KEY],
+        ['app', 'api', 'controllerActionMiddlewareClassNameListMap', self::ANY_KEY],
         ['recordDefs', self::ANY_KEY, 'readLoaderClassNameList'],
         ['recordDefs', self::ANY_KEY, 'listLoaderClassNameList'],
         ['recordDefs', self::ANY_KEY, 'saverClassNameList'],
