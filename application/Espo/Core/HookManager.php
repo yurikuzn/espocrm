@@ -29,6 +29,7 @@
 
 namespace Espo\Core;
 
+use Espo\Core\Hook\GeneralInvoker;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\DataCache;
 use Espo\Core\Utils\File\Manager as FileManager;
@@ -68,18 +69,21 @@ class HookManager
         private Config $config,
         private DataCache $dataCache,
         private Log $log,
-        private PathProvider $pathProvider
+        private PathProvider $pathProvider,
+        private GeneralInvoker $generalInvoker
     ) {}
 
     /**
-     * @param mixed $injection
-     * @param array<string,mixed> $options
-     * @param array<string,mixed> $hookData
+     * @param string $scope A scope (entity type).
+     * @param string $hookName A hook name.
+     * @param mixed $injection A subject (usually an entity).
+     * @param array<string, mixed> $options Options.
+     * @param array<string, mixed> $hookData Additional hook data.
      */
     public function process(
         string $scope,
         string $hookName,
-        $injection = null,
+        mixed $injection = null,
         array $options = [],
         array $hookData = []
     ): void {
@@ -105,7 +109,13 @@ class HookManager
 
             $hook = $this->hooks[$className];
 
-            $hook->$hookName($injection, $options, $hookData);
+            $this->generalInvoker->invoke(
+                $hook,
+                $hookName,
+                $injection,
+                $options,
+                $hookData
+            );
         }
     }
 
