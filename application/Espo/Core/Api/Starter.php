@@ -38,7 +38,6 @@ use Slim\Factory\AppFactory as SlimAppFactory;
 
 use Psr\Http\Message\ResponseInterface as Psr7Response;
 use Psr\Http\Message\ServerRequestInterface as Psr7Request;
-use Slim\MiddlewareDispatcher;
 
 /**
  * API request processing entry point.
