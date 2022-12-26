@@ -37,6 +37,9 @@ use Espo\Core\Utils\Log;
 use Espo\Core\ApplicationUser;
 
 use Exception;
+use Psr\Http\Message\ResponseInterface as Psr7Response;
+use Psr\Http\Message\ServerRequestInterface as Psr7Request;
+use Slim\MiddlewareDispatcher;
 use Throwable;
 use LogicException;
 
@@ -48,21 +51,41 @@ class RequestProcessor
 {
     public function __construct(
         private AuthenticationFactory $authenticationFactory,
-        private ActionProcessor $actionProcessor,
         private AuthBuilderFactory $authBuilderFactory,
         private ErrorOutput $errorOutput,
         private Config $config,
         private Log $log,
-        private ApplicationUser $applicationUser
+        private ApplicationUser $applicationUser,
+        private ActionProcessor $actionProcessor,
+        private MiddlewareProvider $middlewareProvider
     ) {}
 
-    public function process(Route $route, Request $request, Response $response): void
-    {
+    public function process(
+        ProcessData $processData,
+        Psr7Request $request,
+        Psr7Response $response
+    ): Psr7Response {
+
+        $requestWrapped = new RequestWrapper($request, $processData->getBasePath(), $processData->getRouteParams());
+        $responseWrapped = new ResponseWrapper($response);
+
         try {
-            $this->processInternal($route, $request, $response);
+            return $this->processInternal(
+                $processData,
+                $request,
+                $requestWrapped,
+                $responseWrapped
+            );
         }
         catch (Exception $exception) {
-            $this->handleException($exception, $request, $response, $route->getAdjustedRoute());
+            $this->handleException(
+                $exception,
+                $requestWrapped,
+                $responseWrapped,
+                $processData->getRoute()->getAdjustedRoute()
+            );
+
+            return $responseWrapped->getResponse();
         }
     }
 
@@ -70,9 +93,14 @@ class RequestProcessor
      * @throws BadRequest
      * @throws NotFound
      */
-    private function processInternal(Route $route, Request $request, Response $response): void
-    {
-        $authRequired = !$route->noAuth();
+    private function processInternal(
+        ProcessData $processData,
+        Psr7Request $psrRequest,
+        RequestWrapper $request,
+        ResponseWrapper $response
+    ): Psr7Response {
+
+        $authRequired = !$processData->getRoute()->noAuth();
 
         $apiAuth = $this->authBuilderFactory
             ->create()
@@ -83,7 +111,7 @@ class RequestProcessor
         $authResult = $apiAuth->process($request, $response);
 
         if (!$authResult->isResolved()) {
-            return;
+            return $response->getResponse();
         }
 
         if ($authResult->isResolvedUseNoAuth()) {
@@ -92,38 +120,53 @@ class RequestProcessor
 
         ob_start();
 
-        $this->proceed($request, $response);
+        $response = $this->proceed($processData, $psrRequest, $request, $response);
 
         ob_clean();
+
+        return $response;
     }
 
     /**
-     * @throws NotFound
      * @throws BadRequest
      */
-    private function proceed(Request $request, Response $response): void
-    {
-        $this->beforeProceed($response);
+    private function proceed(
+        ProcessData $processData,
+        Psr7Request $psrRequest,
+        Request $request,
+        ResponseWrapper $response
+    ): Psr7Response {
 
         $controllerName = $this->getControllerName($request);
         $actionName = $request->getRouteParam('action');
         $requestMethod = $request->getMethod();
 
         if (!$actionName) {
-            $httpMethod = strtolower($requestMethod);
+            $method = strtolower($requestMethod);
 
             $crudList = $this->config->get('crud') ?? [];
 
-            $actionName = $crudList[$httpMethod] ?? null;
+            $actionName = $crudList[$method] ?? null;
 
             if (!$actionName) {
-                throw new BadRequest("No action for method {$httpMethod}.");
+                throw new BadRequest("No action for method {$method}.");
             }
         }
 
-        $this->actionProcessor->process($controllerName, $actionName, $request, $response);
+        $handler = new ControllerActionHandler(
+            controllerName: $controllerName,
+            actionName: $actionName,
+            processData: $processData,
+            responseWrapped: $response,
+            actionProcessor: $this->actionProcessor,
+            config: $this->config,
+        );
 
-        $this->afterProceed($response);
+        $dispatcher = new MiddlewareDispatcher($handler);
+
+        $this->addControllerMiddlewares($dispatcher, $requestMethod, $controllerName, $actionName);
+
+        return $dispatcher->handle($psrRequest);
     }
 
     private function getControllerName(Request $request): string
@@ -136,6 +179,7 @@ class RequestProcessor
 
         return ucfirst($controllerName);
     }
+
 
     private function handleException(
         Exception $exception,
@@ -154,18 +198,25 @@ class RequestProcessor
         }
     }
 
-    private function beforeProceed(Response $response): void
-    {
-        $response->setHeader('Content-Type', 'application/json');
-    }
+    private function addControllerMiddlewares(
+        MiddlewareDispatcher $dispatcher,
+        string $method,
+        string $controller,
+        string $action
+    ): void {
 
-    private function afterProceed(Response $response): void
-    {
-        $response
-            ->setHeader('X-App-Timestamp', (string) ($this->config->get('appTimestamp') ?? '0'))
-            ->setHeader('Expires', '0')
-            ->setHeader('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT')
-            ->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0')
-            ->setHeader('Pragma', 'no-cache');
+        $controllerActionMiddlewareList = $this->middlewareProvider
+            ->getControllerActionMiddlewareList($method, $controller, $action);
+
+        foreach ($controllerActionMiddlewareList as $middleware) {
+            $dispatcher->addMiddleware($middleware);
+        }
+
+        $controllerMiddlewareList = $this->middlewareProvider
+            ->getControllerMiddlewareList($controller);
+
+        foreach ($controllerMiddlewareList as $middleware) {
+            $dispatcher->addMiddleware($middleware);
+        }
     }
 }
