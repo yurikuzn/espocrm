@@ -31,7 +31,6 @@ namespace Espo\Core\Api;
 
 use Espo\Core\Exceptions\BadRequest;
 use Espo\Core\Authentication\AuthenticationFactory;
-use Espo\Core\Exceptions\NotFound;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Log;
 use Espo\Core\ApplicationUser;
@@ -119,7 +118,7 @@ class RequestProcessor
 
         ob_start();
 
-        $response = $this->proceed($processData, $psrRequest, $request, $response);
+        $response = $this->proceed($processData, $psrRequest, $response);
 
         ob_clean();
 
@@ -131,46 +130,42 @@ class RequestProcessor
      */
     private function proceed(
         ProcessData $processData,
-        Psr7Request $psrRequest,
-        Request $request,
-        ResponseWrapper $response
+        Psr7Request $request,
+        ResponseWrapper $responseWrapped
     ): Psr7Response {
 
-        $controllerName = $this->getControllerName($request);
-        $actionName = $request->getRouteParam('action');
-        $requestMethod = $request->getMethod();
+        $controller = $this->getControllerName($processData);
+        $action = $processData->getRouteParams()['action'] ?? null;
+        $method = $request->getMethod();
 
-        if (!$actionName) {
-            $method = strtolower($requestMethod);
+        if (!$action) {
+            $crudMethodActionMap = $this->config->get('crud') ?? [];
+            $action = $crudMethodActionMap[strtolower($method)] ?? null;
 
-            $crudList = $this->config->get('crud') ?? [];
-
-            $actionName = $crudList[$method] ?? null;
-
-            if (!$actionName) {
-                throw new BadRequest("No action for method {$method}.");
+            if (!$action) {
+                throw new BadRequest("No action for method `{$method}`.");
             }
         }
 
         $handler = new ControllerActionHandler(
-            controllerName: $controllerName,
-            actionName: $actionName,
+            controllerName: $controller,
+            actionName: $action,
             processData: $processData,
-            responseWrapped: $response,
+            responseWrapped: $responseWrapped,
             actionProcessor: $this->actionProcessor,
             config: $this->config,
         );
 
         $dispatcher = new MiddlewareDispatcher($handler);
 
-        $this->addControllerMiddlewares($dispatcher, $requestMethod, $controllerName, $actionName);
+        $this->addControllerMiddlewares($dispatcher, $method, $controller, $action);
 
-        return $dispatcher->handle($psrRequest);
+        return $dispatcher->handle($request);
     }
 
-    private function getControllerName(Request $request): string
+    private function getControllerName(ProcessData $processData): string
     {
-        $controllerName = $request->getRouteParam('controller');
+        $controllerName = $processData->getRouteParams()['controller'] ?? null;
 
         if (!$controllerName) {
             throw new LogicException("Route doesn't have specified controller.");
@@ -178,7 +173,6 @@ class RequestProcessor
 
         return ucfirst($controllerName);
     }
-
 
     private function handleException(
         Exception $exception,
