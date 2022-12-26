@@ -91,7 +91,6 @@ class RequestProcessor
 
     /**
      * @throws BadRequest
-     * @throws NotFound
      */
     private function processInternal(
         ProcessData $processData,
