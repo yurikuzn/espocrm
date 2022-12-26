@@ -27,74 +27,23 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\ORM\Repository\Option\Traits;
+namespace Espo\Core\Hook\Hook;
 
-trait Options
+use Espo\ORM\Entity;
+use Espo\ORM\Repository\Option\RemoveOptions;
+
+/**
+ * An afterRemove hook.
+ *
+ * @template TEntity of Entity
+ */
+interface AfterRemove
 {
-    /** @var array<string, mixed> */
-    private array $options;
-
     /**
-     * @param array<string, mixed> $options
-     */
-    private function __construct(array $options)
-    {
-        $this->options = $options;
-    }
-
-    /**
-     * Create from an associative array.
+     * Processed after an entity is remove from within a repository.
      *
-     * @param array<string, mixed> $options
+     * @param TEntity $entity An entity.
+     * @param RemoveOptions $options Options.
      */
-    public static function fromAssoc(array $options): self
-    {
-        return new self($options);
-    }
-
-    /**
-     * Get an option value. Returns `null` if not set.
-     */
-    public function get(string $option): mixed
-    {
-        return $this->options[$option] ?? null;
-    }
-
-    /**
-     * Whether an option is set.
-     */
-    public function has(string $option): bool
-    {
-        return array_key_exists($option, $this->options);
-    }
-
-    /**
-     * Clone with an option value.
-     */
-    public function with(string $option, mixed $value): self
-    {
-        $obj = clone $this;
-        $obj->options[$option] = $value;
-
-        return $obj;
-    }
-
-    /**
-     * Clone with an option removed.
-     */
-    public function without(string $option): self
-    {
-        $obj = clone $this;
-        unset($obj->options[$option]);
-
-        return $obj;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function toAssoc(): array
-    {
-        return $this->options;
-    }
+    public function afterRemove(Entity $entity, RemoveOptions $options): void;
 }
