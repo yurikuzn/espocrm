@@ -103,7 +103,8 @@ class RouteTest extends \PHPUnit\Framework\TestCase
 
         $expected = array (
           array (
-            'route' => '/Custom/{scope}/{id}/{name}',
+            'adjustedRoute' => '/Custom/{scope}/{id}/{name}',
+            'route' => '/Custom/:scope/:id/:name',
             'method' => 'get',
             'params' =>
             array (
@@ -115,7 +116,8 @@ class RouteTest extends \PHPUnit\Framework\TestCase
             ),
           ),
           array (
-            'route' => '/Activities/{scope}/{id}/{name}',
+            'adjustedRoute' => '/Activities/{scope}/{id}/{name}',
+            'route' => '/Activities/:scope/:id/:name',
             'method' => 'get',
             'params' =>
             array (
@@ -127,7 +129,8 @@ class RouteTest extends \PHPUnit\Framework\TestCase
             ),
           ),
           array (
-            'route' => '/Activities',
+            'adjustedRoute' => '/Activities',
+              'route' => '/Activities',
             'method' => 'get',
             'params' =>
             array (
@@ -136,7 +139,8 @@ class RouteTest extends \PHPUnit\Framework\TestCase
             ),
           ),
           array (
-            'route' => '/App/user',
+            'adjustedRoute' => '/App/user',
+              'route' => '/App/user',
             'method' => 'get',
             'params' =>
             array (
@@ -145,7 +149,8 @@ class RouteTest extends \PHPUnit\Framework\TestCase
             ),
           ),
           array (
-            'route' => '/Metadata',
+            'adjustedRoute' => '/Metadata',
+              'route' => '/Metadata',
             'method' => 'get',
             'params' =>
             array (
@@ -153,7 +158,8 @@ class RouteTest extends \PHPUnit\Framework\TestCase
             ),
           ),
           array (
-            'route' => '/{controller}/action/{action}',
+            'adjustedRoute' => '/{controller}/action/{action}',
+              'route' => '/:controller/action/:action',
             'method' => 'post',
             'params' =>
             array (
@@ -162,7 +168,8 @@ class RouteTest extends \PHPUnit\Framework\TestCase
             ),
           ),
           array (
-            'route' => '/{controller}/action/{action}',
+            'adjustedRoute' => '/{controller}/action/{action}',
+            'route' => '/:controller/action/:action',
             'method' => 'get',
             'params' =>
             array (
@@ -177,6 +184,7 @@ class RouteTest extends \PHPUnit\Framework\TestCase
                 return new RouteItem(
                     $item['method'],
                     $item['route'],
+                    $item['adjustedRoute'],
                     $item['params'] ?? [],
                     $item['noAuth'] ?? false
                 );
