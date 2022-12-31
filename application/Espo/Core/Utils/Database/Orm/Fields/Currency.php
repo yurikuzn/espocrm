@@ -29,6 +29,7 @@
 
 namespace Espo\Core\Utils\Database\Orm\Fields;
 
+use Espo\ORM\Entity;
 use Espo\ORM\Query\Part\Expression as Expr;
 
 class Currency extends Base
@@ -51,6 +52,22 @@ class Currency extends Base
         ];
 
         $params = $this->getFieldParams($fieldName);
+
+        if (!empty($params['decimal'])) {
+            if (empty($params['dbType'])) {
+                $defs[$entityType]['fields'][$fieldName]['dbType'] = 'decimal';
+            }
+
+            if (!isset($params['precision'])) {
+                $defs[$entityType]['fields'][$fieldName]['precision'] = 13;
+            }
+
+            if (!isset($params['scale'])) {
+                $defs[$entityType]['fields'][$fieldName]['scale'] = 4;
+            }
+
+            $defs[$entityType]['fields'][$fieldName]['type'] = Entity::VARCHAR;
+        }
 
         if (!empty($params['notStorable'])) {
             $defs[$entityType]['fields'][$fieldName]['notStorable'] = true;
