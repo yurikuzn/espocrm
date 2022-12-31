@@ -206,6 +206,23 @@ function (Dep, /** module:ui/select*/Select) {
             return '';
         },
 
+        parse: function (value) {
+            value = (value !== '') ? value : null;
+
+            if (value === null) {
+                return null;
+            }
+
+            value = value.split(this.thousandSeparator).join('');
+            value = value.split(this.decimalMark).join('.');
+
+            if (!this.params.decimal) {
+                value = parseFloat(value);
+            }
+
+            return value;
+        },
+
         afterRender: function () {
             Dep.prototype.afterRender.call(this);
 

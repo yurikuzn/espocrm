@@ -35,6 +35,21 @@
         {
             "name": "readOnly",
             "type": "bool"
+        },
+        {
+            "name": "decimal",
+            "type": "bool",
+            "hidden": true
+        },
+        {
+            "name": "precision",
+            "type": "int",
+            "hidden": true
+        },
+        {
+            "name": "scale",
+            "type": "int",
+            "hidden": true
         }
     ],
     "actualFields": [
