@@ -86,8 +86,9 @@
         "max"
     ],
     "mandatoryValidationList": [
+        "valid",
         "validCurrency",
-        "permitted"
+        "inPermittedRange"
     ],
     "filter": true,
     "personalData": true,

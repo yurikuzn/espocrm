@@ -52,6 +52,12 @@ function (Dep, /** module:ui/select*/Select) {
 
         maxDecimalPlaces: 3,
 
+        validations: [
+            'required',
+            'number',
+            'range',
+        ],
+
         /**
          * @inheritDoc
          */
@@ -258,8 +264,24 @@ function (Dep, /** module:ui/select*/Select) {
             }
         },
 
+        validateNumber: function () {
+            if (!this.params.decimal) {
+                return this.validateFloat();
+            }
+
+            let value = this.model.get(this.name);
+
+            if (Number.isNaN(Number(value))) {
+                let msg = this.translate('fieldShouldBeNumber', 'messages').replace('{field}', this.getLabelText());
+
+                this.showValidationMessage(msg);
+
+                return true;
+            }
+        },
+
         fetch: function () {
-            let value = this.$element.val();
+            let value = this.$element.val().trim();
 
             value = this.parse(value);
 

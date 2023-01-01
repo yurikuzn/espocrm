@@ -49,7 +49,23 @@ class CurrencyType extends FloatType
             $entity->get($field . 'Currency') !== '';
     }
 
-    public function checkPermitted(Entity $entity, string $field): bool
+    public function checkValid(Entity $entity, string $field): bool
+    {
+        if (!$this->isNotEmpty($entity, $field)) {
+            return true;
+        }
+
+        if ($entity->getAttributeType($field) !== Entity::VARCHAR) {
+            return true;
+        }
+
+        /** @var string $value */
+        $value = $entity->get($field);
+
+        
+    }
+
+    public function checkInPermittedRange(Entity $entity, string $field): bool
     {
         if (!$this->isNotEmpty($entity, $field)) {
             return true;
