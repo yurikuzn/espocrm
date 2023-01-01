@@ -62,7 +62,11 @@ class CurrencyType extends FloatType
         /** @var string $value */
         $value = $entity->get($field);
 
-        
+        if (preg_match('/-?[0-9]+\\.?[0-9]*/', $value)) {
+            return true;
+        }
+
+        return false;
     }
 
     public function checkInPermittedRange(Entity $entity, string $field): bool
