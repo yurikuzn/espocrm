@@ -34,6 +34,9 @@ use Espo\ORM\Query\Part\Expression as Expr;
 
 class Currency extends Base
 {
+    private const DEFAULT_PRECISION = 13;
+    private const DEFAULT_SCALE = 4;
+
     /**
      * @param string $fieldName
      * @param string $entityType
@@ -59,11 +62,11 @@ class Currency extends Base
             }
 
             if (!isset($params['precision'])) {
-                $defs[$entityType]['fields'][$fieldName]['precision'] = 13;
+                $defs[$entityType]['fields'][$fieldName]['precision'] = self::DEFAULT_PRECISION;
             }
 
             if (!isset($params['scale'])) {
-                $defs[$entityType]['fields'][$fieldName]['scale'] = 4;
+                $defs[$entityType]['fields'][$fieldName]['scale'] = self::DEFAULT_SCALE;
             }
 
             $defs[$entityType]['fields'][$fieldName]['type'] = Entity::VARCHAR;
