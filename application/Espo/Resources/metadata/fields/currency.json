@@ -29,17 +29,18 @@
             "tooltip": true
         },
         {
+            "name": "decimal",
+            "type": "bool",
+            "readOnlyNotNew": true,
+            "tooltip": "currencyDecimal"
+        },
+        {
             "name": "audited",
             "type": "bool"
         },
         {
             "name": "readOnly",
             "type": "bool"
-        },
-        {
-            "name": "decimal",
-            "type": "bool",
-            "hidden": true
         },
         {
             "name": "precision",
