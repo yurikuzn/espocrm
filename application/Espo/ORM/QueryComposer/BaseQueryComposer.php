@@ -175,6 +175,16 @@ abstract class BaseQueryComposer implements QueryComposer
         $this->helper = new Helper($metadata);
     }
 
+    protected function quoteIdentifier(string $string): string
+    {
+        return $this->identifierQuoteCharacter . $string . $this->identifierQuoteCharacter;
+    }
+
+    protected function quoteColumn(string $column): string
+    {
+        return $column;
+    }
+
     protected function getSeed(?string $entityType): Entity
     {
         if (!$entityType) {
@@ -1371,7 +1381,7 @@ abstract class BaseQueryComposer implements QueryComposer
         }
 
         if ($relName) {
-            $part = $relName . '.' . $part;
+            $part = $this->quoteColumn($relName . '.' . $part);
 
             $foreignEntityType = $this->getRelationParam($entity, $relName, 'entity');
 
@@ -1394,6 +1404,8 @@ abstract class BaseQueryComposer implements QueryComposer
 
         if ($part !== '') {
             $part = $this->getFromAlias($params, $entityType) . '.' . $part;
+
+            $part = $this->quoteColumn($part);
         }
 
         return $part;
@@ -1446,7 +1458,7 @@ abstract class BaseQueryComposer implements QueryComposer
         }
 
         if (is_string($this->getAttributeParam($entity, $attribute, 'order'))) {
-            $defs = [];
+            // @deprecated
 
             $part = $this->getAttributeParam($entity, $attribute, 'order');
 
@@ -1456,6 +1468,7 @@ abstract class BaseQueryComposer implements QueryComposer
         }
 
         if (!empty($defs['sql'])) {
+            // @deprecated
             $part = $defs['sql'];
 
             $part = str_replace('{direction}', $order, $part);
@@ -1464,8 +1477,6 @@ abstract class BaseQueryComposer implements QueryComposer
         }
 
         if (!empty($defs['order'])) {
-            $list = [];
-
             if (!is_array($defs['order'])) {
                 throw new LogicException("Bad custom order definition.");
             }
@@ -1494,10 +1505,10 @@ abstract class BaseQueryComposer implements QueryComposer
             return $part;
         }
 
-        $part = $this->getFromAlias(
-            $params,
-            $entity->getEntityType()) . '.' . $this->toDb($this->sanitize($attribute)
-        );
+        $part = $this->getFromAlias($params, $entity->getEntityType()) . '.' .
+            $this->toDb($this->sanitize($attribute));
+
+        $part = $this->quoteColumn($part);
 
         $part .= ' ' . $order;
 
@@ -1530,6 +1541,7 @@ abstract class BaseQueryComposer implements QueryComposer
         }
 
         if (!empty($defs['sql'])) {
+            // @deprecated
             $part = $defs['sql'];
 
             if ($alias) {
@@ -1555,10 +1567,11 @@ abstract class BaseQueryComposer implements QueryComposer
             return $pair[0];
         }
 
-        return $this->getFromAlias(
-            $params,
-            $entity->getEntityType()) . '.' . $this->toDb($this->sanitize($attribute)
-        );
+        $fromAlias = $this->getFromAlias($params, $entity->getEntityType());
+
+        $path = $fromAlias . '.' . $this->toDb($this->sanitize($attribute));
+
+        return $this->quoteColumn($path);
     }
 
     /**
@@ -1996,12 +2009,9 @@ abstract class BaseQueryComposer implements QueryComposer
         $key = $keySet['key'];
         $foreignKey = $keySet['foreignKey'];
 
-        if (!$alias) {
-            $alias = $this->getAlias($entity, $relationName);
-        }
-        else {
-            $alias = $this->sanitizeSelectAlias($alias);
-        }
+        $alias = !$alias ?
+            $this->getAlias($entity, $relationName) :
+            $this->sanitizeSelectAlias($alias);
 
         if (!$alias) {
             return null;
@@ -2013,10 +2023,12 @@ abstract class BaseQueryComposer implements QueryComposer
 
         $fromAlias = $this->getFromAlias($params, $entity->getEntityType());
 
+        $leftColumnPart = $this->quoteColumn("{$fromAlias}." . $this->toDb($key));
+        $rightColumnPart = $this->quoteColumn("{$alias}." . $this->toDb($foreignKey));
+
         return
             "JOIN " . $this->quoteIdentifier($table) . " AS " . $this->quoteIdentifier($alias) . " ON ".
-            "{$fromAlias}." . $this->toDb($key) . " = " .
-            "{$alias}." . $this->toDb($foreignKey);
+            "{$leftColumnPart} = {$rightColumnPart}";
     }
 
     /**
@@ -2294,14 +2306,12 @@ abstract class BaseQueryComposer implements QueryComposer
         $fromAlias = $this->getFromAlias($params, $entity->getEntityType());
 
         $columnPart = "{$fromAlias}." . $this->toDb($this->sanitize($aggregationBy));
+        $columnPart = $this->quoteColumn($columnPart);
 
         return "{$aggregationPart}({$distinctPart}{$columnPart}) AS " . $this->quoteIdentifier('value');
     }
 
-    protected function quoteIdentifier(string $string): string
-    {
-        return $this->identifierQuoteCharacter . $string . $this->identifierQuoteCharacter;
-    }
+
 
     /**
      * Quote a value (if needed).
@@ -2442,12 +2452,14 @@ abstract class BaseQueryComposer implements QueryComposer
                             $foreign[$i] = '\' \'';
 
                             $wsCount ++;
-                        }
-                        else {
-                            $item =  $this->getAlias($entity, $relationName) . '.' . $this->toDb($value);
 
-                            $foreign[$i] = "IFNULL({$item}, '')";
+                            continue;
                         }
+
+                        $item =  $this->getAlias($entity, $relationName) . '.' . $this->toDb($value);
+                        $item = $this->quoteColumn($item);
+
+                        $foreign[$i] = "IFNULL({$item}, '')";
                     }
 
                     $path = 'TRIM(CONCAT(' . implode(', ', $foreign). '))';
@@ -2457,19 +2469,22 @@ abstract class BaseQueryComposer implements QueryComposer
                     }
 
                     $path = "NULLIF({$path}, '')";
-                }
-                else {
-                    $expression = $this->getAlias($entity, $relationName) . '.' . $foreign;
 
-                    $path = $this->convertComplexExpression($entity, $expression, false, $params);
+                    return $path;
                 }
+
+                $expression = $this->getAlias($entity, $relationName) . '.' . $foreign;
+
+                $path = $this->convertComplexExpression($entity, $expression, false, $params);
 
                 return $path;
         }
 
         $alias = $this->getFromAlias($params, $entityType);
 
-        return $alias . '.' . $this->toDb($this->sanitize($attribute));
+        $path = $alias . '.' . $this->toDb($this->sanitize($attribute));
+
+        return $this->quoteColumn($path);
     }
 
     /**
@@ -3321,7 +3336,7 @@ abstract class BaseQueryComposer implements QueryComposer
                     . " AND "
                     . "{$alias}." . $this->toDb($foreignType) . " = " . $this->pdo->quote($entity->getEntityType())
                     . " AND "
-                    . "{$alias}.deleted = " . $this->quote(false) . "";
+                    . "{$alias}.deleted = " . $this->quote(false);
 
                 $joinSqlList = [];
 
