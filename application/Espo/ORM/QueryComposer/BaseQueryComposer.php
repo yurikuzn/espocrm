@@ -3074,7 +3074,7 @@ abstract class BaseQueryComposer implements QueryComposer
                     $this->sanitize($alias);
             }
 
-            $sql .= "{$leftAlias}.{$column}";
+            $sql .= $this->quoteColumn("{$leftAlias}.{$column}");
         }
 
         if (is_array($right)) {
@@ -3257,12 +3257,16 @@ abstract class BaseQueryComposer implements QueryComposer
                     $indexPart = " USE INDEX (".implode(', ', $sanitizedIndexList).")";
                 }
 
+                $leftKeyColumn = $this->quoteColumn("{$fromAlias}." . $this->toDb($key));
+                $middleKeyColumn = $this->quoteColumn("{$midAlias}." . $this->toDb($nearKey));
+                $middleDeletedColumn = $this->quoteColumn("{$midAlias}.deleted");
+
                 $sql =
                     "{$prefix}JOIN ".$this->quoteIdentifier($relTable)." AS " .
                     $this->quoteIdentifier($midAlias) . "{$indexPart} " .
-                    "ON {$fromAlias}." . $this->toDb($key) . " = {$midAlias}." . $this->toDb($nearKey) .
+                    "ON {$leftKeyColumn} = {$middleKeyColumn}" .
                     " AND " .
-                    "{$midAlias}.deleted = " . $this->quote(false);
+                    "{$middleDeletedColumn} = " . $this->quote(false);
 
                 $joinSqlList = [];
 
@@ -3283,12 +3287,15 @@ abstract class BaseQueryComposer implements QueryComposer
                 $onlyMiddle = $joinParams['onlyMiddle'] ?? false;
 
                 if (!$onlyMiddle) {
-                    $sql .= " {$prefix}JOIN " . $this->quoteIdentifier($distantTable)." AS " .
-                        $this->quoteIdentifier($alias) . " ".
-                        "ON {$alias}." . $this->toDb($foreignKey) .
-                        " = {$midAlias}." . $this->toDb($distantKey)
-                            . " AND "
-                            . "{$alias}.deleted = " . $this->quote(false);
+                    $rightKeyColumn = $this->quoteColumn("{$alias}." . $this->toDb($foreignKey));
+                    $middleDistantKeyColumn = $this->quoteColumn("{$midAlias}." . $this->toDb($distantKey));
+                    $rightDeletedColumn = $this->quoteColumn("{$alias}.deleted");
+
+                    $sql .= " {$prefix}JOIN " . $this->quoteIdentifier($distantTable) . " AS " .
+                        $this->quoteIdentifier($alias)
+                        . " ON {$rightKeyColumn} = {$middleDistantKeyColumn}"
+                        . " AND "
+                        . "{$rightDeletedColumn} = " . $this->quote(false);
                 }
 
                 return $sql;
@@ -3298,13 +3305,15 @@ abstract class BaseQueryComposer implements QueryComposer
                 $foreignKey = $keySet['foreignKey'];
                 $distantTable = $this->toDb($foreignEntityType);
 
+                $leftIdColumn = $this->quoteColumn("{$fromAlias}." . $this->toDb('id'));
+                $rightIdColumn = $this->quoteColumn("{$alias}." . $this->toDb($foreignKey));
+                $leftDeletedColumn = $this->quoteColumn("{$alias}.deleted");
+
                 $sql =
-                    "{$prefix}JOIN " . $this->quoteIdentifier($distantTable) . " AS " .
-                    $this->quoteIdentifier($alias) . " ".
-                    "ON {$fromAlias}." .
-                    $this->toDb('id') . " = {$alias}." . $this->toDb($foreignKey)
-                    . " AND "
-                    . "{$alias}.deleted = " . $this->quote(false);
+                    "{$prefix}JOIN " . $this->quoteIdentifier($distantTable) . " AS "
+                    . $this->quoteIdentifier($alias) . " ON "
+                    . "{$leftIdColumn} = {$rightIdColumn} AND "
+                    . "{$leftDeletedColumn} = " . $this->quote(false);
 
                 $joinSqlList = [];
 
@@ -3328,15 +3337,18 @@ abstract class BaseQueryComposer implements QueryComposer
 
                 $distantTable = $this->toDb($foreignEntityType);
 
+                $leftIdColumn = $this->quoteColumn("{$fromAlias}." . $this->toDb('id'));
+                $rightIdColumn = $this->quoteColumn("{$alias}." . $this->toDb($foreignKey));
+                $leftTypeColumn = $this->quoteColumn("{$alias}." . $this->toDb($foreignType));
+                $leftDeletedColumn = $this->quoteColumn("{$alias}.deleted");
+
                 $sql =
-                    "{$prefix}JOIN " . $this->quoteIdentifier($distantTable) . " AS ".
-                    $this->quoteIdentifier($alias) . " ON ".
-                    "{$fromAlias}." .
-                    $this->toDb('id') . " = {$alias}." . $this->toDb($foreignKey)
-                    . " AND "
-                    . "{$alias}." . $this->toDb($foreignType) . " = " . $this->pdo->quote($entity->getEntityType())
-                    . " AND "
-                    . "{$alias}.deleted = " . $this->quote(false);
+                    "{$prefix}JOIN " . $this->quoteIdentifier($distantTable)
+                    . " AS "
+                    . $this->quoteIdentifier($alias) . " ON "
+                    . "{$leftIdColumn} = {$rightIdColumn} AND "
+                    . "{$leftTypeColumn} = " . $this->pdo->quote($entity->getEntityType()) . " AND "
+                    . "{$leftDeletedColumn} = " . $this->quote(false);
 
                 $joinSqlList = [];
 
