@@ -1219,7 +1219,7 @@ abstract class BaseQueryComposer implements QueryComposer
         $fromAlias = $this->getFromAlias($params, $entity->getEntityType());
 
         foreach ($columnList as $i => $column) {
-            $columnList[$i] = $fromAlias . '.' . $this->sanitize($this->toDb($column));
+            $columnList[$i] = $this->quoteColumn($fromAlias . '.' . $this->sanitize($this->toDb($column)));
         }
 
         if (!Util::isArgumentString($query)) {
@@ -1236,9 +1236,7 @@ abstract class BaseQueryComposer implements QueryComposer
 
         $modePart = ' ' . $this->matchFunctionMap[$function];
 
-        $result = "MATCH (" . implode(',', $columnList) . ") AGAINST (" . $query . "" . $modePart . ")";
-
-        return $result;
+        return "MATCH (" . implode(',', $columnList) . ") AGAINST (" . $query . $modePart . ")";
     }
 
     /**
@@ -2311,8 +2309,6 @@ abstract class BaseQueryComposer implements QueryComposer
         return "{$aggregationPart}({$distinctPart}{$columnPart}) AS " . $this->quoteIdentifier('value');
     }
 
-
-
     /**
      * Quote a value (if needed).
      * @deprecated
@@ -2468,16 +2464,12 @@ abstract class BaseQueryComposer implements QueryComposer
                         $path = "REPLACE({$path}, '  ', ' ')";
                     }
 
-                    $path = "NULLIF({$path}, '')";
-
-                    return $path;
+                    return "NULLIF({$path}, '')";
                 }
 
                 $expression = $this->getAlias($entity, $relationName) . '.' . $foreign;
 
-                $path = $this->convertComplexExpression($entity, $expression, false, $params);
-
-                return $path;
+                return $this->convertComplexExpression($entity, $expression, false, $params);
         }
 
         $alias = $this->getFromAlias($params, $entityType);
@@ -2601,7 +2593,11 @@ abstract class BaseQueryComposer implements QueryComposer
 
             $attributeType = $entity->getAttributeType($field) ?? null;
 
-            if (is_bool($value) && in_array($operator, ['=', '<>']) && $attributeType == Entity::BOOL) {
+            if (
+                is_bool($value) &&
+                in_array($operator, ['=', '<>']) &&
+                $attributeType == Entity::BOOL
+            ) {
                 if ($value) {
                     if ($operator === '=') {
                         $operatorModified = '= TRUE';
@@ -2609,7 +2605,8 @@ abstract class BaseQueryComposer implements QueryComposer
                     else {
                         $operatorModified = '= FALSE';
                     }
-                } else {
+                }
+                else {
                     if ($operator === '=') {
                         $operatorModified = '= FALSE';
                     }
@@ -2748,16 +2745,14 @@ abstract class BaseQueryComposer implements QueryComposer
                 return '0';
             }
 
-            $subQuerySelectParams = [];
+            $subQuerySelectParams = !empty($value['selectParams']) ?
+                $value['selectParams'] :
+                $value;
 
-            if (!empty($value['selectParams'])) {
-                $subQuerySelectParams = $value['selectParams'];
-            }
-            else {
-                $subQuerySelectParams = $value;
-            }
-
-            if (!isset($subQuerySelectParams['from']) && !isset($subQuerySelectParams['fromQuery'])) {
+            if (
+                !isset($subQuerySelectParams['from']) &&
+                !isset($subQuerySelectParams['fromQuery'])
+            ) {
                 // 'entityType' is for backward compatibility.
                 $subQuerySelectParams['from'] = $value['entityType'] ?? $entity->getEntityType();
             }
@@ -3146,12 +3141,9 @@ abstract class BaseQueryComposer implements QueryComposer
         $prefix = ($isLeft) ? 'LEFT ' : '';
 
         if (!$entity->hasRelation($name)) {
-            if (!$alias) {
-                $alias = $this->sanitize($name);
-            }
-            else {
-                $alias = $this->sanitizeSelectAlias($alias);
-            }
+            $alias = !$alias ?
+                $this->sanitize($name) :
+                $this->sanitizeSelectAlias($alias);
 
             $table = $this->toDb($this->sanitize($name));
 
@@ -3254,7 +3246,7 @@ abstract class BaseQueryComposer implements QueryComposer
                         );
                     }
 
-                    $indexPart = " USE INDEX (".implode(', ', $sanitizedIndexList).")";
+                    $indexPart = " USE INDEX (" . implode(', ', $sanitizedIndexList) . ")";
                 }
 
                 $leftKeyColumn = $this->quoteColumn("{$fromAlias}." . $this->toDb($key));
@@ -3363,9 +3355,7 @@ abstract class BaseQueryComposer implements QueryComposer
                 return $sql;
 
             case Entity::BELONGS_TO:
-                $sql = $prefix . $this->getBelongsToJoinItemPart($entity, $relationName, $alias, $params);
-
-                return $sql;
+                return $prefix . $this->getBelongsToJoinItemPart($entity, $relationName, $alias, $params);
         }
 
         return '';
