@@ -75,6 +75,7 @@ define('views/fields/float', ['views/fields/int'], function (Dep) {
                 decimalPlacesRawValue: this.decimalPlacesRawValue,
                 allowDecimalPadding: false,
                 showWarnings: false,
+                formulaMode: true,
             };
         },
 

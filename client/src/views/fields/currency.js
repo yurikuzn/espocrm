@@ -115,8 +115,9 @@ function (Dep, /** module:ui/select*/Select) {
                 modifyValueOnWheel: false,
                 selectOnFocus: false,
                 decimalPlaces: this.decimalPlaces,
-                //allowDecimalPadding: false,
+                allowDecimalPadding: true,
                 showWarnings: false,
+                formulaMode: true,
             };
         },
 

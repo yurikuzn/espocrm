@@ -104,6 +104,7 @@ define('views/fields/int', ['views/fields/base', 'lib!autonumeric'], function (D
                 modifyValueOnWheel: false,
                 decimalPlaces: 0,
                 selectOnFocus: false,
+                formulaMode: true,
             };
         },
 
@@ -130,9 +131,14 @@ define('views/fields/int', ['views/fields/base', 'lib!autonumeric'], function (D
                     this.trigger('change');
                 });
 
-                this.$el.find('input.additional').on('input', () => {
+                let $inputAdditional = this.$el.find('input.additional');
+
+                $inputAdditional.on('input', () => {
                     this.trigger('change');
                 });
+
+                new AutoNumeric(this.$element.get(0), this.autoNumericOptions);
+                new AutoNumeric($inputAdditional.get(0), this.autoNumericOptions);
             }
         },
 
