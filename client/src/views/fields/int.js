@@ -137,8 +137,10 @@ define('views/fields/int', ['views/fields/base', 'lib!autonumeric'], function (D
                     this.trigger('change');
                 });
 
-                new AutoNumeric(this.$element.get(0), this.autoNumericOptions);
-                new AutoNumeric($inputAdditional.get(0), this.autoNumericOptions);
+                if (this.autoNumericOptions) {
+                    new AutoNumeric(this.$element.get(0), this.autoNumericOptions);
+                    new AutoNumeric($inputAdditional.get(0), this.autoNumericOptions);
+                }
             }
         },
 
