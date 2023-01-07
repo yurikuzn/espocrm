@@ -34,5 +34,21 @@
             "symbol",
             "times"
         ]
+    },
+    "Dompdf": {
+        "implementationClassNameMap": {
+            "entity": "Espo\\Tools\\Pdf\\Dompdf\\EntityPrinter",
+            "collection": "Espo\\Tools\\Pdf\\Dompdf\\CollectionPrinter"
+        },
+        "fontFaceList": [
+            "Courier",
+            "Helvetica",
+            "Times",
+            "Symbol",
+            "ZapfDingbats",
+            "DejaVu Sans",
+            "DejaVu Serif",
+            "DejaVu Sans Mono"
+        ]
     }
 }

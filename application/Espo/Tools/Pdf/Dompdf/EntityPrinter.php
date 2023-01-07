@@ -27,48 +27,34 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Tools\Pdf;
+namespace Espo\Tools\Pdf\Dompdf;
 
-interface Template
+use Espo\ORM\Entity;
+use Espo\Tools\Pdf\Contents;
+use Espo\Tools\Pdf\Data;
+use Espo\Tools\Pdf\Dompdf\Contents as DompdfContents;
+use Espo\Tools\Pdf\EntityPrinter as EntityPrinterInterface;
+use Espo\Tools\Pdf\Params;
+use Espo\Tools\Pdf\Template;
+
+class EntityPrinter implements EntityPrinterInterface
 {
-    public const PAGE_FORMAT_CUSTOM = 'Custom';
+    public function __construct(
+        private DompdfInitializer $dompdfInitializer,
+        private EntityHtmlComposer $entityHtmlComposer,
+        private HeadHtmlComposer $headHtmlComposer
+    ) {}
 
-    public const PAGE_ORIENTATION_PORTRAIT = 'Portrait';
-    public const PAGE_ORIENTATION_LANDSCAPE = 'Landscape';
+    public function print(Template $template, Entity $entity, Params $params, Data $data): Contents
+    {
+        $pdf = $this->dompdfInitializer->initialize($template);
 
-    public function getFontFace(): ?string;
+        $htmlHead = $this->headHtmlComposer->compose($template, $entity, $params, $data);
 
-    public function getBottomMargin(): float;
+        $this->entityHtmlComposer->process($pdf, $template, $entity, $params, $data);
 
-    public function getTopMargin(): float;
 
-    public function getLeftMargin(): float;
 
-    public function getRightMargin(): float;
-
-    public function hasFooter(): bool;
-
-    public function getFooter(): string;
-
-    public function getFooterPosition(): float;
-
-    public function hasHeader(): bool;
-
-    public function getHeader(): string;
-
-    public function getHeaderPosition(): float;
-
-    public function getBody(): string;
-
-    public function getPageOrientation(): string;
-
-    public function getPageFormat(): string;
-
-    public function getPageWidth(): float;
-
-    public function getPageHeight(): float;
-
-    public function hasTitle(): bool;
-
-    public function getTitle(): string;
+        return new DompdfContents($pdf);
+    }
 }
