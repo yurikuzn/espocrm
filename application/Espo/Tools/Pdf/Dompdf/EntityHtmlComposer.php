@@ -29,22 +29,37 @@
 
 namespace Espo\Tools\Pdf\Dompdf;
 
+use Espo\Core\Htmlizer\TemplateRendererFactory;
 use Espo\ORM\Entity;
 use Espo\Tools\Pdf\Data;
 use Espo\Tools\Pdf\Params;
 use Espo\Tools\Pdf\Template;
 
-use Dompdf\Dompdf;
-
 class EntityHtmlComposer
 {
-    public function process(
-        Dompdf $pdf,
+    public function __construct(
+        private TemplateRendererFactory $templateRendererFactory
+    ) {}
+
+    public function compose(
         Template $template,
         Entity $entity,
         Params $params,
         Data $data
-    ): void {
+    ): string {
 
+        $renderer = $this->templateRendererFactory
+            ->create()
+            ->setApplyAcl($params->applyAcl())
+            ->setEntity($entity)
+            ->setData($data->getAdditionalTemplateData());
+
+        $bodyTemplate = $template->getBody();
+
+        // @todo Convert barcode tags.
+
+        $html = $renderer->renderTemplate($bodyTemplate);
+
+        return "<main>{$html}</main>";
     }
 }

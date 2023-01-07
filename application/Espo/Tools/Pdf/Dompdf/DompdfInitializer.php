@@ -32,6 +32,7 @@ namespace Espo\Tools\Pdf\Dompdf;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Espo\Core\Utils\Config;
+use Espo\ORM\Entity;
 use Espo\Tools\Pdf\Template;
 
 class DompdfInitializer
@@ -42,7 +43,7 @@ class DompdfInitializer
         private Config $config
     ) {}
 
-    public function initialize(Template $template): Dompdf
+    public function initialize(Template $template, Entity $entity): Dompdf
     {
         $options = new Options();
 
@@ -59,6 +60,12 @@ class DompdfInitializer
             'landscape';
 
         $pdf->setPaper($size, $orientation);
+
+        if ($template->getTitle()) {
+            $title = $this->replacePlaceholders($template->getTitle(), $entity);
+
+            $pdf->addInfo('Title', $title);
+        }
     }
 
     private function getFontFace(Template $template): string
@@ -67,5 +74,20 @@ class DompdfInitializer
             $template->getFontFace() ??
             $this->config->get('pdfFontFace') ??
             $this->defaultFontFace;
+    }
+
+    private function replacePlaceholders(string $string, Entity $entity): string
+    {
+        $newString = $string;
+
+        $attributeList = ['name'];
+
+        foreach ($attributeList as $attribute) {
+            $value = (string) ($entity->get($attribute) ?? '');
+
+            $newString = str_replace('{$' . $attribute . '}', $value, $newString);
+        }
+
+        return $newString;
     }
 }
