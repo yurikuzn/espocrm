@@ -29,34 +29,44 @@
 
 namespace Espo\Tools\Pdf\Dompdf;
 
-use Espo\ORM\Entity;
-use Espo\Tools\Pdf\Contents;
-use Espo\Tools\Pdf\Data;
-use Espo\Tools\Pdf\Dompdf\Contents as DompdfContents;
-use Espo\Tools\Pdf\EntityPrinter as EntityPrinterInterface;
-use Espo\Tools\Pdf\Params;
-use Espo\Tools\Pdf\Template;
+use Espo\Core\Exceptions\Forbidden;
+use Espo\Core\FileStorage\Manager as FileStorageManager;
+use Espo\Entities\Attachment;
+use Espo\ORM\EntityManager;
+use Espo\Tools\Attachment\Checker;
 
-class EntityPrinter implements EntityPrinterInterface
+class ImageSourceProvider
 {
     public function __construct(
-        private DompdfInitializer $dompdfInitializer,
-        private HtmlComposer $htmlComposer
+        private EntityManager $entityManager,
+        private Checker $checker,
+        private FileStorageManager $fileStorageManager,
     ) {}
 
-    public function print(Template $template, Entity $entity, Params $params, Data $data): Contents
+    public function get(string $id): ?string
     {
-        $pdf = $this->dompdfInitializer->initialize($template, $entity);
+        /** @var Attachment $attachment */
+        $attachment = $this->entityManager->getEntityById(Attachment::ENTITY_TYPE, $id);
 
-        $headHtml = $this->htmlComposer->composeHead($template);
-        $headerFooterHtml = $this->htmlComposer->composeHeaderFooter($template, $entity, $params, $data);
-        $mainHtml = $this->htmlComposer->composeMain($template, $entity, $params, $data);
+        if (!$attachment) {
+            return null;
+        }
 
-        $html = $headHtml . "\n<body>" . $headerFooterHtml . $mainHtml . "</body>";
+        try {
+            $this->checker->checkTypeImage($attachment);
+        }
+        catch (Forbidden) {
+            return null;
+        }
 
-        $pdf->loadHtml($html);
-        $pdf->render();
+        $type = $attachment->getType();
 
-        return new DompdfContents($pdf);
+        if (!$type) {
+            return null;
+        }
+
+        $contents = $this->fileStorageManager->getContents($attachment);
+
+        return 'data:image/' . $type . ';base64,' . base64_encode($contents);
     }
 }

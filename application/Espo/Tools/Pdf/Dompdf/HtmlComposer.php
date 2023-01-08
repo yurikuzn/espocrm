@@ -40,7 +40,8 @@ class HtmlComposer
 {
     public function __construct(
         private Config $config,
-        private TemplateRendererFactory $templateRendererFactory
+        private TemplateRendererFactory $templateRendererFactory,
+        private ImageSourceProvider $imageSourceProvider
     ) {}
 
     public function composeHead(Template $template): string
@@ -103,6 +104,7 @@ class HtmlComposer
             ->create()
             ->setApplyAcl($params->applyAcl())
             ->setEntity($entity)
+            ->setSkipInlineAttachmentHandling(true)
             ->setData($data->getAdditionalTemplateData());
 
         // @todo Apply pagination tags.
@@ -110,7 +112,7 @@ class HtmlComposer
         if ($template->hasHeader()) {
             $htmlHeader = $renderer->renderTemplate($template->getHeader());
 
-            $htmlHeader = $this->replaceTags($htmlHeader);
+            $htmlHeader = $this->replaceHeadTags($htmlHeader);
 
             $html .= "<header>{$htmlHeader}</header>";
         }
@@ -118,7 +120,7 @@ class HtmlComposer
         if ($template->hasFooter()) {
             $htmlFooter = $renderer->renderTemplate($template->getFooter());
 
-            $htmlFooter = $this->replaceTags($htmlFooter);
+            $htmlFooter = $this->replaceHeadTags($htmlFooter);
 
             $html .= "<footer>{$htmlFooter}</footer>";
         }
@@ -126,10 +128,66 @@ class HtmlComposer
         return $html;
     }
 
-    private function replaceTags(string $string): string
-    {
-        $string = str_replace('{pageNumber}', '<span class="page-number"></span>', $string);
+    public function composeMain(
+        Template $template,
+        Entity $entity,
+        Params $params,
+        Data $data
+    ): string {
 
-        return $string;
+        $renderer = $this->templateRendererFactory
+            ->create()
+            ->setApplyAcl($params->applyAcl())
+            ->setEntity($entity)
+            ->setSkipInlineAttachmentHandling(true)
+            ->setData($data->getAdditionalTemplateData());
+
+        $bodyTemplate = $template->getBody();
+
+        $html = $renderer->renderTemplate($bodyTemplate);
+
+        $html = $this->replaceTags($html);
+
+        //echo $html;die;
+
+        return "<main>{$html}</main>";
+    }
+
+    private function replaceTags(string $html): string
+    {
+        // @todo Convert barcode tags.
+
+        $html = str_replace('<br pagebreak="true">', '<div style="page-break-after: always;"></div>', $html);
+
+        $html = str_replace('?entryPoint=attachment&amp;', '?entryPoint=attachment&', $html);
+
+        $html = preg_replace_callback(
+            "/src=\"\?entryPoint=attachment\&id=([A-Za-z0-9]*)\"/",
+            function ($matches) {
+                $id = $matches[1];
+
+                if (!$id) {
+                    return '';
+                }
+
+                $src = $this->imageSourceProvider->get($id);
+
+                if (!$src) {
+                    return '';
+                }
+
+                return "src=\"{$src}\"";
+            },
+            $html
+        );
+
+        return $html;
+    }
+
+    private function replaceHeadTags(string $html): string
+    {
+        $html = str_replace('{pageNumber}', '<span class="page-number"></span>', $html);
+
+        return $this->replaceTags($html);
     }
 }
