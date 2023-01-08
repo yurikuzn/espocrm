@@ -60,6 +60,15 @@ class EntityHtmlComposer
 
         $html = $renderer->renderTemplate($bodyTemplate);
 
+        $html = $this->replaceTags($html);
+
         return "<main>{$html}</main>";
+    }
+
+    private function replaceTags(string $html): string
+    {
+        $html = str_replace('<br pagebreak="true">', '<div style="page-break-after: always;"></div>', $html);
+
+        return $html;
     }
 }

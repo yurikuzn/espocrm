@@ -36,14 +36,14 @@ use Espo\Tools\Pdf\Data;
 use Espo\Tools\Pdf\Params;
 use Espo\Tools\Pdf\Template;
 
-class HeadHtmlComposer
+class HtmlComposer
 {
     public function __construct(
         private Config $config,
         private TemplateRendererFactory $templateRendererFactory
     ) {}
 
-    public function compose(Template $template, Entity $entity, Params $params, Data $data): string
+    public function composeHead(Template $template): string
     {
         $topMargin = $template->getTopMargin();
         $rightMargin = $template->getRightMargin();
@@ -58,34 +58,46 @@ class HeadHtmlComposer
         $html = "
             <style>
             @page {
-                margin: {$topMargin}px {$rightMargin}px {$bottomMargin}px {$leftMargin}px;
+                margin: {$topMargin}mm {$rightMargin}mm {$bottomMargin}mm {$leftMargin}mm;
             }
 
             body {
-                font-size: {$fontSize}px;
+                font-size: {$fontSize}pt;
             }
 
             > header {
                 position: fixed;
-                margin-top: -{$topMargin}px;
-                margin-left: -{$rightMargin}px;
-                margin-right: -{$leftMargin}px;
-                top: {$headerPosition}px;
+                margin-top: -{$topMargin}mm;
+                margin-left: -{$rightMargin}mm;
+                margin-right: -{$leftMargin}mm;
+                top: {$headerPosition}mm;
                 left: 0;
                 right: 0;
             }
 
             > footer {
                 position: fixed;
-                margin-bottom: -{$bottomMargin}px;
-                margin-left: -{$leftMargin}px;
-                margin-right: -{$rightMargin}px;
-                bottom: {$footerPosition}px;
+                margin-bottom: -{$bottomMargin}mm;
+                margin-left: -{$leftMargin}mm;
+                margin-right: -{$rightMargin}mm;
+                bottom: {$footerPosition}mm;
                 left: 0;
                 right: 0;
             }
+
+            > header .page-number:after,
+            > footer .page-number:after {
+                content: counter(page);
+            }
             </style>
         ";
+
+        return $html;
+    }
+
+    public function composeHeaderFooter(Template $template, Entity $entity, Params $params, Data $data): string
+    {
+        $html = "";
 
         $renderer = $this->templateRendererFactory
             ->create()
@@ -98,15 +110,26 @@ class HeadHtmlComposer
         if ($template->hasHeader()) {
             $htmlHeader = $renderer->renderTemplate($template->getHeader());
 
+            $htmlHeader = $this->replaceTags($htmlHeader);
+
             $html .= "<header>{$htmlHeader}</header>";
         }
 
         if ($template->hasFooter()) {
             $htmlFooter = $renderer->renderTemplate($template->getFooter());
 
-            $html .= "<header>{$htmlFooter}</header>";
+            $htmlFooter = $this->replaceTags($htmlFooter);
+
+            $html .= "<footer>{$htmlFooter}</footer>";
         }
 
         return $html;
+    }
+
+    private function replaceTags(string $string): string
+    {
+        $string = str_replace('{pageNumber}', '<span class="page-number"></span>', $string);
+
+        return $string;
     }
 }

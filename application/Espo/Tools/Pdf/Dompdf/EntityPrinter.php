@@ -42,19 +42,21 @@ class EntityPrinter implements EntityPrinterInterface
     public function __construct(
         private DompdfInitializer $dompdfInitializer,
         private EntityHtmlComposer $entityHtmlComposer,
-        private HeadHtmlComposer $headHtmlComposer
+        private HtmlComposer $htmlComposer
     ) {}
 
     public function print(Template $template, Entity $entity, Params $params, Data $data): Contents
     {
         $pdf = $this->dompdfInitializer->initialize($template, $entity);
 
-        $htmlHead = $this->headHtmlComposer->compose($template, $entity, $params, $data);
+        $headHtml = $this->htmlComposer->composeHead($template);
+        $headerFooterHtml = $this->htmlComposer->composeHeaderFooter($template, $entity, $params, $data);
         $mainHtml = $this->entityHtmlComposer->compose($template, $entity, $params, $data);
 
-        $html = $htmlHead . "\n" . $mainHtml;
+        $html = $headHtml . "\n<body>" . $headerFooterHtml . $mainHtml . "</body>";
 
         $pdf->loadHtml($html);
+        $pdf->render();
 
         return new DompdfContents($pdf);
     }

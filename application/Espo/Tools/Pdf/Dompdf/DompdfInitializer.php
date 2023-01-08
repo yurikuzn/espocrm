@@ -43,7 +43,7 @@ class DompdfInitializer
         private Config $config
     ) {}
 
-    public function initialize(Template $template, Entity $entity): Dompdf
+    public function initialize(Template $template, ?Entity $entity = null): Dompdf
     {
         $options = new Options();
 
@@ -61,11 +61,15 @@ class DompdfInitializer
 
         $pdf->setPaper($size, $orientation);
 
-        if ($template->getTitle()) {
-            $title = $this->replacePlaceholders($template->getTitle(), $entity);
+        if ($template->hasTitle()) {
+            $title = $entity ?
+                $this->replacePlaceholders($template->getTitle(), $entity) :
+                $template->getTitle();
 
             $pdf->addInfo('Title', $title);
         }
+
+        return $pdf;
     }
 
     private function getFontFace(Template $template): string
