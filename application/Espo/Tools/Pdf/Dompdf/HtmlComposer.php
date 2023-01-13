@@ -275,32 +275,5 @@ class HtmlComposer
         $css = "width: {$width}mm; height: {$height}mm;";
 
         return "<img src=\"data:image/svg+xml;base64,{$encoded}\" style=\"{$css}\">";
-
-        $function = 'write1DBarcode';
-
-        $params = [
-            $value,
-            $typeMap[$codeType] ?? null,
-            '', '',
-            $data['width'] ?? 60,
-            $data['height'] ?? 30,
-            0.4,
-            [
-                'position' => 'S',
-                'border' => false,
-                'padding' => $data['padding'] ?? 0,
-                'fgcolor' => $data['color'] ?? [0, 0, 0],
-                'bgcolor' => $data['bgcolor'] ?? [255, 255, 255],
-                'text' => $data['text'] ?? true,
-                'font' => 'helvetica',
-                'fontsize' => $data['fontsize'] ?? 14,
-                'stretchtext' => 4,
-            ],
-            'N',
-        ];
-
-        $paramsString = urlencode(Json::encode($params));
-
-        return "<tcpdf method=\"{$function}\" params=\"{$paramsString}\" />";
     }
 }
