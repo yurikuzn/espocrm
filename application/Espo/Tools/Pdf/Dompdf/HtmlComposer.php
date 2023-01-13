@@ -32,19 +32,22 @@ namespace Espo\Tools\Pdf\Dompdf;
 use Espo\Core\Htmlizer\TemplateRendererFactory;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Json;
+use Espo\Core\Utils\Log;
 use Espo\ORM\Entity;
 use Espo\Tools\Pdf\Data;
 use Espo\Tools\Pdf\Params;
 use Espo\Tools\Pdf\Template;
 
 use TCPDF2DBarcode;
+use TCPDFBarcode;
 
 class HtmlComposer
 {
     public function __construct(
         private Config $config,
         private TemplateRendererFactory $templateRendererFactory,
-        private ImageSourceProvider $imageSourceProvider
+        private ImageSourceProvider $imageSourceProvider,
+        private Log $log
     ) {}
 
     public function composeHead(Template $template): string
@@ -233,8 +236,9 @@ class HtmlComposer
             "QRcode" => 'QRCODE,H',
         ];
 
+        $type = $typeMap[$codeType] ?? null;
+
         if ($codeType === 'QRcode') {
-            $type = $typeMap[$codeType];
             $width = $data['width'] ?? 40;
             $height = $data['height'] ?? 40;
             $color = $data['color'] ?? [0, 0, 0];
@@ -248,6 +252,25 @@ class HtmlComposer
 
             return "<img src=\"data:image/svg+xml;base64,{$encoded}\" style=\"{$css}\">";
         }
+
+        if (!$type) {
+            $this->log->warning("Not supported barcode type {$codeType}.");
+
+            return '';
+        }
+
+        $width = $data['width'] ?? 60;
+        $height = $data['height'] ?? 30;
+        $color = $data['color'] ?? [0, 0, 0];
+
+        $barcode = new TCPDFBarcode($value, $type);
+        $code = $barcode->getBarcodeSVGcode($width, $height, $color);
+
+        $encoded = base64_encode($code);
+
+        $css = "width: {$width}mm; height: {$height}mm;";
+
+        return "<img src=\"data:image/svg+xml;base64,{$encoded}\" style=\"{$css}\">";
 
         $function = 'write1DBarcode';
 
