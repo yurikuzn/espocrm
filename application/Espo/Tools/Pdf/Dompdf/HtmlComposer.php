@@ -31,10 +31,13 @@ namespace Espo\Tools\Pdf\Dompdf;
 
 use Espo\Core\Htmlizer\TemplateRendererFactory;
 use Espo\Core\Utils\Config;
+use Espo\Core\Utils\Json;
 use Espo\ORM\Entity;
 use Espo\Tools\Pdf\Data;
 use Espo\Tools\Pdf\Params;
 use Espo\Tools\Pdf\Template;
+
+use TCPDF2DBarcode;
 
 class HtmlComposer
 {
@@ -162,6 +165,18 @@ class HtmlComposer
         $html = str_replace('?entryPoint=attachment&amp;', '?entryPoint=attachment&', $html);
 
         $html = preg_replace_callback(
+            '/<barcodeimage data="([^"]+)"\/>/',
+            function ($matches) {
+                $dataString = $matches[1];
+
+                $data = json_decode(urldecode($dataString), true);
+
+                return $this->composeBarcode($data);
+            },
+            $html
+        );
+
+        $html = preg_replace_callback(
             "/src=\"\?entryPoint=attachment\&id=([A-Za-z0-9]*)\"/",
             function ($matches) {
                 $id = $matches[1];
@@ -189,5 +204,76 @@ class HtmlComposer
         $html = str_replace('{pageNumber}', '<span class="page-number"></span>', $html);
 
         return $this->replaceTags($html);
+    }
+
+    /**
+     *
+     * @param array<string, mixed> $data
+     * @return string
+     */
+    private function composeBarcode(array $data): string
+    {
+        $value = $data['value'] ?? null;
+
+        $codeType = $data['type'] ?? 'CODE128';
+
+        $typeMap = [
+            "CODE128" => 'C128',
+            "CODE128A" => 'C128A',
+            "CODE128B" => 'C128B',
+            "CODE128C" => 'C128C',
+            "EAN13" => 'EAN13',
+            "EAN8" => 'EAN8',
+            "EAN5" => 'EAN5',
+            "EAN2" => 'EAN2',
+            "UPC" => 'UPCA',
+            "UPCE" => 'UPCE',
+            "ITF14" => 'I25',
+            "pharmacode" => 'PHARMA',
+            "QRcode" => 'QRCODE,H',
+        ];
+
+        if ($codeType === 'QRcode') {
+            $type = $typeMap[$codeType];
+            $width = $data['width'] ?? 40;
+            $height = $data['height'] ?? 40;
+            $color = $data['color'] ?? [0, 0, 0];
+
+            $barcode = new TCPDF2DBarcode($value, $type);
+            $code = $barcode->getBarcodeSVGcode($width, $height, $color);
+
+            $encoded = base64_encode($code);
+
+            $css = "width: {$width}mm; height: {$height}mm;";
+
+            return "<img src=\"data:image/svg+xml;base64,{$encoded}\" style=\"{$css}\">";
+        }
+
+        $function = 'write1DBarcode';
+
+        $params = [
+            $value,
+            $typeMap[$codeType] ?? null,
+            '', '',
+            $data['width'] ?? 60,
+            $data['height'] ?? 30,
+            0.4,
+            [
+                'position' => 'S',
+                'border' => false,
+                'padding' => $data['padding'] ?? 0,
+                'fgcolor' => $data['color'] ?? [0, 0, 0],
+                'bgcolor' => $data['bgcolor'] ?? [255, 255, 255],
+                'text' => $data['text'] ?? true,
+                'font' => 'helvetica',
+                'fontsize' => $data['fontsize'] ?? 14,
+                'stretchtext' => 4,
+            ],
+            'N',
+        ];
+
+        $paramsString = urlencode(Json::encode($params));
+
+        return "<tcpdf method=\"{$function}\" params=\"{$paramsString}\" />";
     }
 }
