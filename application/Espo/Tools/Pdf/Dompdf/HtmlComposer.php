@@ -218,6 +218,10 @@ class HtmlComposer
     {
         $value = $data['value'] ?? null;
 
+        if ($value === null) {
+            return '';
+        }
+
         $codeType = $data['type'] ?? 'CODE128';
 
         $typeMap = [
