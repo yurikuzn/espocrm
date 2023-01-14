@@ -44,6 +44,10 @@ class Zipper
     {
         $tempPath = tempnam(sys_get_temp_dir(), 'espo-pdf-zip-item');
 
+        $fp = fopen($tempPath, 'w');
+        fwrite($fp, $contents->getString());
+        fclose($fp);
+
         $this->itemList[] = [$tempPath, $name . '.pdf'];
     }
 
@@ -60,7 +64,6 @@ class Zipper
 
         $archive->close();
     }
-
 
     public function getFilePath(): string
     {
