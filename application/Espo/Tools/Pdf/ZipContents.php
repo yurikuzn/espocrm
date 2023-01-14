@@ -46,9 +46,6 @@ class ZipContents implements Contents
             throw new RuntimeException("Could not open {$this->filePath}.");
         }
 
-        fwrite($resource, $this->getString());
-        rewind($resource);
-
         return new Stream($resource);
     }
 
