@@ -77,8 +77,8 @@ class HtmlComposer
                 margin-left: -{$rightMargin}mm;
                 margin-right: -{$leftMargin}mm;
                 top: {$headerPosition}mm;
-                left: 0;
-                right: 0;
+                left: {$leftMargin}mm;
+                right: {$rightMargin}mm;
             }
 
             > footer {
@@ -88,8 +88,8 @@ class HtmlComposer
                 margin-right: -{$rightMargin}mm;
                 height: {$footerPosition}mm;
                 bottom: 0;
-                left: 0;
-                right: 0;
+                left: {$leftMargin}mm;
+                right: {$rightMargin}mm;
             }
 
             > header .page-number:after,
