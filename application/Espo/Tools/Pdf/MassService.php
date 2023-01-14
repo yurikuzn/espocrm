@@ -184,6 +184,8 @@ class MassService
         /** @var Attachment $attachment */
         $attachment = $this->entityManager->getNewEntity(Attachment::ENTITY_TYPE);
 
+        $type = $contents->
+
         $attachment
             ->setName($filename)
             ->setType('application/pdf')

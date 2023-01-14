@@ -29,46 +29,45 @@
 
 namespace Espo\Tools\Pdf;
 
-use Espo\Core\InjectableFactory;
-use RuntimeException;
+use LogicException;
+use ZipArchive;
 
-class Builder
+class Zipper
 {
-    private ?Template $template = null;
-    private ?string $engine = null;
+    private ?string $filePath = null;
+    /** @var array{string, string}[] */
+    private array $itemList = [];
 
-    public function __construct(private InjectableFactory $injectableFactory) {}
+    public function __construct() {}
 
-    public function setTemplate(Template $template): self
+    public function add(Contents $contents, string $name): void
     {
-        $this->template = $template;
+        $tempPath = tempnam(sys_get_temp_dir(), 'espo-pdf-zip-item');
 
-        return $this;
+        $this->itemList[] = [$tempPath, $name . '.pdf'];
     }
 
-    public function setEngine(string $engine): self
+    public function archive(): void
     {
-        $this->engine = $engine;
+        $this->filePath = tempnam(sys_get_temp_dir(), 'espo-pdf-zip');
 
-        return $this;
+        $archive = new ZipArchive();
+        $archive->open($this->filePath, ZipArchive::CREATE);
+
+        foreach ($this->itemList as $item) {
+            $archive->addFile($item[0], $item[1]);
+        }
+
+        $archive->close();
     }
 
-    public function build(): PrinterController
+
+    public function getFilePath(): string
     {
-        if (!$this->engine) {
-            throw new RuntimeException('Engine is not set.');
+        if (!$this->filePath) {
+            throw new LogicException();
         }
 
-        if (!$this->template) {
-            throw new RuntimeException('Template is not set.');
-        }
-
-        return $this->injectableFactory->createWith(
-            PrinterController::class,
-            [
-                'template' => $this->template,
-                'engine' => $this->engine,
-            ]
-        );
+        return $this->filePath;
     }
 }

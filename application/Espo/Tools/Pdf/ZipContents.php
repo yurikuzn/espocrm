@@ -29,46 +29,36 @@
 
 namespace Espo\Tools\Pdf;
 
-use Espo\Core\InjectableFactory;
+use Psr\Http\Message\StreamInterface;
+use GuzzleHttp\Psr7\Stream;
+
 use RuntimeException;
 
-class Builder
+class ZipContents implements Contents
 {
-    private ?Template $template = null;
-    private ?string $engine = null;
+    public function __construct(private string $filePath) {}
 
-    public function __construct(private InjectableFactory $injectableFactory) {}
-
-    public function setTemplate(Template $template): self
+    public function getStream(): StreamInterface
     {
-        $this->template = $template;
+        $resource = fopen($this->filePath, 'r+');
 
-        return $this;
-    }
-
-    public function setEngine(string $engine): self
-    {
-        $this->engine = $engine;
-
-        return $this;
-    }
-
-    public function build(): PrinterController
-    {
-        if (!$this->engine) {
-            throw new RuntimeException('Engine is not set.');
+        if ($resource === false) {
+            throw new RuntimeException("Could not open {$this->filePath}.");
         }
 
-        if (!$this->template) {
-            throw new RuntimeException('Template is not set.');
-        }
+        fwrite($resource, $this->getString());
+        rewind($resource);
 
-        return $this->injectableFactory->createWith(
-            PrinterController::class,
-            [
-                'template' => $this->template,
-                'engine' => $this->engine,
-            ]
-        );
+        return new Stream($resource);
+    }
+
+    public function getString(): string
+    {
+        return $this->getStream()->getContents();
+    }
+
+    public function getLength(): int
+    {
+        return (int) $this->getStream()->getSize();
     }
 }
