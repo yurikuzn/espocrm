@@ -30,6 +30,7 @@
 namespace Espo\Tools\Pdf;
 
 use LogicException;
+use RuntimeException;
 use ZipArchive;
 
 class Zipper
@@ -44,7 +45,16 @@ class Zipper
     {
         $tempPath = tempnam(sys_get_temp_dir(), 'espo-pdf-zip-item');
 
+        if ($tempPath === false) {
+            throw new RuntimeException("Could not create a temp file.");
+        }
+
         $fp = fopen($tempPath, 'w');
+
+        if ($fp === false) {
+            throw new RuntimeException("Could not open a temp file {$tempPath}.");
+        }
+
         fwrite($fp, $contents->getString());
         fclose($fp);
 
@@ -53,16 +63,22 @@ class Zipper
 
     public function archive(): void
     {
-        $this->filePath = tempnam(sys_get_temp_dir(), 'espo-pdf-zip');
+        $tempPath = tempnam(sys_get_temp_dir(), 'espo-pdf-zip');
+
+        if ($tempPath === false) {
+            throw new RuntimeException("Could not create a temp file.");
+        }
 
         $archive = new ZipArchive();
-        $archive->open($this->filePath, ZipArchive::CREATE);
+        $archive->open($tempPath, ZipArchive::CREATE);
 
         foreach ($this->itemList as $item) {
             $archive->addFile($item[0], $item[1]);
         }
 
         $archive->close();
+
+        $this->filePath = $tempPath;
     }
 
     public function getFilePath(): string

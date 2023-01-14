@@ -31,7 +31,6 @@ namespace Espo\Tools\Pdf\Dompdf;
 
 use Espo\Core\Htmlizer\TemplateRendererFactory;
 use Espo\Core\Utils\Config;
-use Espo\Core\Utils\Json;
 use Espo\Core\Utils\Log;
 use Espo\ORM\Entity;
 use Espo\Tools\Pdf\Data;
@@ -162,10 +161,8 @@ class HtmlComposer
         // @todo Convert barcode tags.
 
         $html = str_replace('<br pagebreak="true">', '<div style="page-break-after: always;"></div>', $html);
-
         $html = preg_replace('/src="\@([A-Za-z0-9\+\/]*={0,2})"/', 'src="data:image/jpeg;base64,$1"', $html);
-
-        $html = str_replace('?entryPoint=attachment&amp;', '?entryPoint=attachment&', $html);
+        $html = str_replace('?entryPoint=attachment&amp;', '?entryPoint=attachment&', $html ?? '');
 
         $html = preg_replace_callback(
             '/<barcodeimage data="([^"]+)"\/>/',
@@ -177,7 +174,7 @@ class HtmlComposer
                 return $this->composeBarcode($data);
             },
             $html
-        );
+        ) ?? '';
 
         $html = preg_replace_callback(
             "/src=\"\?entryPoint=attachment\&id=([A-Za-z0-9]*)\"/",
@@ -197,7 +194,7 @@ class HtmlComposer
                 return "src=\"{$src}\"";
             },
             $html
-        );
+        ) ?? '';
 
         return $html;
     }

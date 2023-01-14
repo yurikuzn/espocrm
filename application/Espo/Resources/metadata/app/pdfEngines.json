@@ -37,8 +37,7 @@
     },
     "Dompdf": {
         "implementationClassNameMap": {
-            "entity": "Espo\\Tools\\Pdf\\Dompdf\\EntityPrinter",
-            "collection": "Espo\\Tools\\Pdf\\Dompdf\\CollectionPrinter"
+            "entity": "Espo\\Tools\\Pdf\\Dompdf\\EntityPrinter"
         },
         "fontFaceList": [
             "Courier",
