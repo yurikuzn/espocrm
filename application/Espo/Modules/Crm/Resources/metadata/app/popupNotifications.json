@@ -2,9 +2,6 @@
     "event": {
         "grouped": true,
         "providerClassName": "Espo\\Modules\\Crm\\Tools\\Activities\\PopupNotificationsProvider",
-        "serviceName": "Activities",
-        "methodName": "getPopupNotifications",
-        "interval": 15,
         "useWebSocket": true,
         "portalDisabled": true,
         "view": "crm:views/meeting/popup-notification"
