@@ -86,7 +86,8 @@ class HtmlComposer
                 margin-bottom: -{$bottomMargin}mm;
                 margin-left: -{$leftMargin}mm;
                 margin-right: -{$rightMargin}mm;
-                bottom: {$footerPosition}mm;
+                height: {$footerPosition}mm;
+                bottom: 0;
                 left: 0;
                 right: 0;
             }
