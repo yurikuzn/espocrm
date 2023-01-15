@@ -61,13 +61,7 @@ class DompdfInitializer
 
         $pdf->setPaper($size, $orientation);
 
-        if ($template->hasTitle()) {
-            $title = $entity ?
-                $this->replacePlaceholders($template->getTitle(), $entity) :
-                $template->getTitle();
 
-            $pdf->addInfo('Title', $title);
-        }
 
         return $pdf;
     }
@@ -78,20 +72,5 @@ class DompdfInitializer
             $template->getFontFace() ??
             $this->config->get('pdfFontFace') ??
             $this->defaultFontFace;
-    }
-
-    private function replacePlaceholders(string $string, Entity $entity): string
-    {
-        $newString = $string;
-
-        $attributeList = ['name'];
-
-        foreach ($attributeList as $attribute) {
-            $value = (string) ($entity->get($attribute) ?? '');
-
-            $newString = str_replace('{$' . $attribute . '}', $value, $newString);
-        }
-
-        return $newString;
     }
 }

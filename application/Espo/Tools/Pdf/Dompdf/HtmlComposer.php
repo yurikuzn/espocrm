@@ -49,7 +49,7 @@ class HtmlComposer
         private Log $log
     ) {}
 
-    public function composeHead(Template $template): string
+    public function composeHead(Template $template, Entity $entity): string
     {
         $topMargin = $template->getTopMargin();
         $rightMargin = $template->getRightMargin();
@@ -61,7 +61,19 @@ class HtmlComposer
         $headerPosition = $template->getHeaderPosition();
         $footerPosition = $template->getFooterPosition();
 
+
+        $titleHtml = '';
+
+        if ($template->hasTitle()) {
+            $title = $this->replacePlaceholders($template->getTitle(), $entity);
+
+            $titleHtml = "<title>" . htmlspecialchars($title) . "</title>";
+        }
+
         $html = "
+            <head>
+                {$titleHtml}
+            </head>
             <style>
             @page {
                 margin: {$topMargin}mm {$rightMargin}mm {$bottomMargin}mm {$leftMargin}mm;
@@ -273,5 +285,20 @@ class HtmlComposer
         $css = "width: {$width}mm; height: {$height}mm;";
 
         return "<img src=\"data:image/svg+xml;base64,{$encoded}\" style=\"{$css}\">";
+    }
+
+    private function replacePlaceholders(string $string, Entity $entity): string
+    {
+        $newString = $string;
+
+        $attributeList = ['name'];
+
+        foreach ($attributeList as $attribute) {
+            $value = (string) ($entity->get($attribute) ?? '');
+
+            $newString = str_replace('{$' . $attribute . '}', $value, $newString);
+        }
+
+        return $newString;
     }
 }
