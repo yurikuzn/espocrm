@@ -29,6 +29,7 @@
 
 namespace Espo\Tools\Pdf;
 
+use Espo\Core\Utils\Util;
 use LogicException;
 use RuntimeException;
 use ZipArchive;
@@ -58,7 +59,7 @@ class Zipper
         fwrite($fp, $contents->getString());
         fclose($fp);
 
-        $this->itemList[] = [$tempPath, $name . '.pdf'];
+        $this->itemList[] = [$tempPath, Util::sanitizeFileName($name) . '.pdf'];
     }
 
     public function archive(): void
