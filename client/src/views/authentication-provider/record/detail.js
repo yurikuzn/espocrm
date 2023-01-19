@@ -31,6 +31,8 @@ function (Dep, Helper) {
 
     return Dep.extend({
 
+        editModeDisabled: true,
+
         /**
          * @private
          * @type {module:helpers/misc/authentication-provider.Class}

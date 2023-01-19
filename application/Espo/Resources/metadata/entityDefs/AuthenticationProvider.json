@@ -1,10 +1,19 @@
 {
     "fields": {
+        "name": {
+            "type": "varchar",
+            "required": true
+        },
         "method": {
             "type": "enum",
             "view": "views/authentication-provider/fields/method",
             "translation": "Settings.options.authenticationMethod",
             "required": true
+        },
+        "oidcAuthorizationRedirectUri": {
+            "type": "url",
+            "notStorable": true,
+            "readOnly": true
         },
         "oidcClientId": {
             "type": "varchar"
@@ -26,12 +35,20 @@
         },
         "oidcJwtSignatureAlgorithmList": {
             "type": "multiEnum",
-            "optionsPath": "entityDefs.Settings.fields.oidcJwtSignatureAlgorithmList.options"
+            "optionsPath": "entityDefs.Settings.fields.oidcJwtSignatureAlgorithmList.options",
+            "default": [
+                "RS256"
+            ]
         },
         "oidcScopes": {
             "type": "multiEnum",
             "allowCustomOptions": true,
-            "optionsPath": "entityDefs.Settings.fields.oidcScopes.options"
+            "optionsPath": "entityDefs.Settings.fields.oidcScopes.options",
+            "default": [
+                "profile",
+                "email",
+                "phone"
+            ]
         },
         "oidcCreateUser": {
             "type": "bool",
@@ -40,7 +57,8 @@
         "oidcUsernameClaim": {
             "type": "varchar",
             "optionsPath": "entityDefs.Settings.fields.oidcUsernameClaim.options",
-            "tooltip": true
+            "tooltip": true,
+            "default": "sub"
         },
         "oidcSync": {
             "type": "bool",
