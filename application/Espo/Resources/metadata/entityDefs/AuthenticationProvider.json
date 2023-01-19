@@ -11,7 +11,7 @@
             "required": true
         },
         "oidcAuthorizationRedirectUri": {
-            "type": "url",
+            "type": "varchar",
             "notStorable": true,
             "readOnly": true
         },
