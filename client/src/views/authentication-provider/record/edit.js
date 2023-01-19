@@ -85,8 +85,6 @@ define('views/authentication-provider/record/edit', ['views/record/edit'], funct
             let mDynamicLogicFieldsDefs = this.getMetadata()
                 .get(['authenticationMethods', method, 'settings', 'dynamicLogic', 'fields']) || {};
 
-            mDynamicLogicFieldsDefs = this.modifyDynamicLogic(mDynamicLogicFieldsDefs);
-
             for (let f in mDynamicLogicFieldsDefs) {
                 if (!fieldList.includes(f)) {
                     continue;
@@ -99,9 +97,28 @@ define('views/authentication-provider/record/edit', ['views/record/edit'], funct
         },
 
         modifyDynamicLogic: function (defs) {
-            defs = Espo.Utils.cloneDeep(defs);
+            defs = Espo.Utils.clone(defs);
 
-            
+            if (Array.isArray(defs)) {
+                return defs.map(item => this.modifyDynamicLogic(item));
+            }
+
+            if (typeof defs === 'object') {
+                let o = {};
+
+                for (let property in defs) {
+                    let value = defs[property];
+
+                    if (property === 'attribute' && value === 'authenticationMethod') {
+                        value = 'method';
+                    }
+
+                    o[property] = this.modifyDynamicLogic(value);
+                }
+
+                return o;
+            }
+
             return defs;
         },
 
