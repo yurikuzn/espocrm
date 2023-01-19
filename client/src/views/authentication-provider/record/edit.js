@@ -26,7 +26,8 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('views/authentication-provider/record/edit', ['views/record/edit'], function (Dep) {
+define('views/authentication-provider/record/edit', ['views/record/edit', 'helpers/misc/authentication-provider'],
+function (Dep, Helper) {
 
     return Dep.extend({
 
@@ -34,149 +35,28 @@ define('views/authentication-provider/record/edit', ['views/record/edit'], funct
 
         /**
          * @private
-         * @type {?string[]}
+         * @type {module:helpers/misc/authentication-provider.Class}
          */
-        methodList: null,
+        helper: null,
 
-        /**
-         * @private
-         * @type {?Object}
-         */
-        authFields: null,
+        setup: function () {
+            this.helper = new Helper(this);
 
-        /*setup: function () {
             Dep.prototype.setup.call(this);
-
-            this.handlePanelsVisibility();
-            this.listenTo(this.model, 'change:method', () => this.handlePanelsVisibility());
-        },*/
+        },
 
         setupBeforeFinal: function () {
-            this.methodList = [];
-
-            /** @var {Object.<string, Object.<string, *>>} defs */
-            let defs = this.getMetadata().get(['authenticationMethods']) || {};
-
-            this.methodList = Object.keys(defs).filter(item => defs[item].additional);
-
-            this.authFields = {};
-
-            this.dynamicLogicDefs = {
-                fields: {},
-                panels: {},
-            };
-
-            this.methodList.forEach(method => this.setupMethod(method));
+            this.helper.setupMethods();
 
             Dep.prototype.setupBeforeFinal.call(this);
 
-            this.handlePanelsVisibility();
-            this.listenTo(this.model, 'change:method', () => this.handlePanelsVisibility());
-        },
-
-        setupMethod: function (method) {
-            /** @var {string[]} */
-            let fieldList = this.getMetadata().get(['authenticationMethods', method, 'settings', 'fieldList']) || [];
-
-            fieldList = fieldList.filter(item => this.model.hasField(item));
-
-            this.authFields[method] = fieldList;
-
-            let mDynamicLogicFieldsDefs = this.getMetadata()
-                .get(['authenticationMethods', method, 'settings', 'dynamicLogic', 'fields']) || {};
-
-            for (let f in mDynamicLogicFieldsDefs) {
-                if (!fieldList.includes(f)) {
-                    continue;
-                }
-
-                let defs = this.modifyDynamicLogic(mDynamicLogicFieldsDefs[f]);
-
-                this.dynamicLogicDefs.fields[f] = Espo.Utils.cloneDeep(defs);
-            }
-        },
-
-        modifyDynamicLogic: function (defs) {
-            defs = Espo.Utils.clone(defs);
-
-            if (Array.isArray(defs)) {
-                return defs.map(item => this.modifyDynamicLogic(item));
-            }
-
-            if (typeof defs === 'object') {
-                let o = {};
-
-                for (let property in defs) {
-                    let value = defs[property];
-
-                    if (property === 'attribute' && value === 'authenticationMethod') {
-                        value = 'method';
-                    }
-
-                    o[property] = this.modifyDynamicLogic(value);
-                }
-
-                return o;
-            }
-
-            return defs;
+            this.helper.setupPanelsVisibility();
         },
 
         modifyDetailLayout: function (layout) {
-            this.methodList.forEach(method => {
-                let mLayout = this.getMetadata().get(['authenticationMethods', method, 'settings', 'layout']);
-
-                if (!mLayout) {
-                    return;
-                }
-
-                mLayout = Espo.Utils.cloneDeep(mLayout);
-                mLayout.name = method;
-
-                this.prepareLayout(mLayout, method);
-
-                layout.push(mLayout);
-            });
+            this.helper.modifyDetailLayout(layout);
         },
 
-        prepareLayout: function (layout, method) {
-            layout.rows.forEach(row => {
-                row
-                    .filter(item => !item.noLabel && !item.labelText && item.name)
-                    .forEach(item => {
-                        let labelText = this.translate(item.name, 'fields', 'Settings');
 
-                        if (labelText && labelText.toLowerCase().indexOf(method.toLowerCase() + ' ') === 0) {
-                            item.labelText = labelText.substring(method.length + 1);
-                        }
-                    });
-            });
-        },
-
-        handlePanelsVisibility: function () {
-            let authenticationMethod = this.model.get('method');
-
-            this.methodList.forEach(method => {
-                let fieldList = (this.authFields[method] || []);
-
-                if (method !== authenticationMethod) {
-                    this.hidePanel(method);
-
-                    fieldList.forEach(field => {
-                        this.hideField(field);
-                    });
-
-                    return;
-                }
-
-                this.showPanel(method);
-
-                fieldList.forEach(field => {
-                    this.showField(field);
-                });
-
-                this.processDynamicLogic();
-            });
-        },
     });
 });
