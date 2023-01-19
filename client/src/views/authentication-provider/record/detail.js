@@ -26,12 +26,10 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('views/authentication-provider/record/edit', ['views/record/edit', 'helpers/misc/authentication-provider'],
+define('views/authentication-provider/record/detail', ['views/record/detail', 'helpers/misc/authentication-provider'],
 function (Dep, Helper) {
 
     return Dep.extend({
-
-        saveAndNewAction: false,
 
         /**
          * @private

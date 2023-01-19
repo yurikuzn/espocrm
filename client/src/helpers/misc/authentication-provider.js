@@ -71,11 +71,16 @@ define('helpers/misc/authentication-provider', [], function () {
 
         setupPanelsVisibility() {
             this.handlePanelsVisibility();
-            this.listenTo(this.model, 'change:method', () => this.handlePanelsVisibility());
+            this.view.listenTo(this.model, 'change:method', () => this.handlePanelsVisibility());
         }
 
+        /**
+         * @return {Object}
+         */
         setupMethods() {
             this.methodList.forEach(method => this.setupMethod(method));
+
+            return this.dynamicLogicDefs;
         }
 
         /**
@@ -159,7 +164,7 @@ define('helpers/misc/authentication-provider', [], function () {
                             return;
                         }
 
-                        let labelText = this.translate(item.name, 'fields', 'Settings');
+                        let labelText = this.view.translate(item.name, 'fields', 'Settings');
 
                         item.options = item.options || {};
 
@@ -167,7 +172,7 @@ define('helpers/misc/authentication-provider', [], function () {
                             item.labelText = labelText.substring(method.length + 1);
                         }
 
-                        item.options.tooltipText = this.translate(item.name, 'tooltips', 'Settings');
+                        item.options.tooltipText = this.view.translate(item.name, 'tooltips', 'Settings');
                     });
             });
 
