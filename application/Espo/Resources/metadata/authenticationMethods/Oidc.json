@@ -5,6 +5,7 @@
         "handler": "handlers/login/oidc",
         "fallbackConfigParam": "oidcFallback"
     },
+    "additional": true,
     "settings": {
         "isAvailable": true,
         "layout": {

@@ -1,0 +1,9 @@
+{
+    "controller": "controllers/record",
+    "recordViews": {
+        "detail": "views/authentication-provider/record/detail",
+        "edit": "views/authentication-provider/record/edit"
+    },
+    "searchPanelDisabled": true,
+    "inlineEditDisabled": true
+}
