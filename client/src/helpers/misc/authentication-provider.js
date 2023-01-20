@@ -57,7 +57,12 @@ define('helpers/misc/authentication-provider', [], function () {
              * @private
              * @type {string[]}
              */
-            this.methodList = Object.keys(defs).filter(item => defs[item].additional);
+            this.methodList = Object.keys(defs).filter(item => {
+                /** @var {Object.<string, *>} */
+                let data = defs[item].provider || {};
+
+                return data.isAvailable;
+            });
 
             /** @private */
             this.authFields = {};
@@ -69,9 +74,27 @@ define('helpers/misc/authentication-provider', [], function () {
             };
         }
 
-        setupPanelsVisibility() {
-            this.handlePanelsVisibility();
-            this.view.listenTo(this.model, 'change:method', () => this.handlePanelsVisibility());
+        /**
+         *
+         * @param {function(): void} callback
+         */
+        setupPanelsVisibility(callback) {
+            this.handlePanelsVisibility(callback);
+
+            this.view.listenTo(this.model, 'change:method', () => this.handlePanelsVisibility(callback));
+        }
+
+        /**
+         * @private
+         * @param {string} method
+         * @param {string} param
+         * @return {*}
+         */
+        getFromMetadata(method, param) {
+            return this.metadata
+                .get(['authenticationMethods', method, 'provider', param]) ||
+            this.metadata
+                .get(['authenticationMethods', method, 'settings', param]);
         }
 
         /**
@@ -88,15 +111,13 @@ define('helpers/misc/authentication-provider', [], function () {
          */
         setupMethod(method) {
             /** @var {string[]} */
-            let fieldList = this.metadata
-                .get(['authenticationMethods', method, 'settings', 'fieldList']) || [];
+            let fieldList = this.getFromMetadata(method, 'fieldList') || [];
 
             fieldList = fieldList.filter(item => this.model.hasField(item));
 
             this.authFields[method] = fieldList;
 
-            let mDynamicLogicFieldsDefs = this.metadata
-                .get(['authenticationMethods', method, 'settings', 'dynamicLogic', 'fields']) || {};
+            let mDynamicLogicFieldsDefs = (this.getFromMetadata(method, 'dynamicLogic') || {}).fields || {};
 
             for (let f in mDynamicLogicFieldsDefs) {
                 if (!fieldList.includes(f)) {
@@ -140,7 +161,7 @@ define('helpers/misc/authentication-provider', [], function () {
 
         modifyDetailLayout(layout) {
             this.methodList.forEach(method => {
-                let mLayout = this.metadata.get(['authenticationMethods', method, 'settings', 'layout']);
+                let mLayout = this.getFromMetadata(method, 'layout');
 
                 if (!mLayout) {
                     return;
@@ -193,7 +214,11 @@ define('helpers/misc/authentication-provider', [], function () {
             });
         }
 
-        handlePanelsVisibility() {
+        /**
+         * @private
+         * @param {function(): void} callback
+         */
+        handlePanelsVisibility(callback) {
             let authenticationMethod = this.model.get('method');
 
             this.methodList.forEach(method => {
@@ -213,7 +238,7 @@ define('helpers/misc/authentication-provider', [], function () {
 
                 fieldList.forEach(field => this.view.showField(field));
 
-                this.view.processDynamicLogic();
+                callback();
             });
         }
     }

@@ -50,7 +50,9 @@ function (Dep, Helper) {
 
             Dep.prototype.setupBeforeFinal.call(this);
 
-            this.helper.setupPanelsVisibility();
+            this.helper.setupPanelsVisibility(() => {
+                this.processDynamicLogic();
+            });
         },
 
         modifyDetailLayout: function (layout) {

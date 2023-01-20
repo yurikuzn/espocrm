@@ -35,7 +35,12 @@ define('views/authentication-provider/fields/method', ['views/fields/enum'], fun
             let defs = this.getMetadata().get(['authenticationMethods']) || {};
 
             let options = Object.keys(defs)
-                .filter(item => defs[item].additional);
+                .filter(item => {
+                    /** @var {Object.<string, *>} */
+                    let data = defs[item].provider || {};
+
+                    return data.isAvailable;
+                });
 
             options.unshift('');
 
