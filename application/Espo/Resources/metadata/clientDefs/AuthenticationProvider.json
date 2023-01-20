@@ -6,5 +6,8 @@
     },
     "searchPanelDisabled": true,
     "inlineEditDisabled": true,
-    "duplicateDisabled": true
+    "duplicateDisabled": true,
+    "massUpdateDisabled": true,
+    "massRemoveDisabled": true,
+    "mergeDisabled": true
 }
