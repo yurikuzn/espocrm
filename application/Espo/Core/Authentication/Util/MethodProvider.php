@@ -66,7 +66,7 @@ class MethodProvider
     }
 
     /**
-     * Get a default authentication method for portals. Should be applied if a portal does not have
+     * Get a default authentication method for portals. Should be used if a portal does not have
      * an authentication provider.
      */
     public function getDefaultForPortal(): string
