@@ -35,7 +35,6 @@ use Espo\Core\Authentication\Oidc\BackchannelLogout;
 use Espo\Core\Authentication\Util\MethodProvider;
 use Espo\Core\Exceptions\Error;
 use Espo\Core\Exceptions\Forbidden;
-use Espo\Core\Exceptions\ForbiddenSilent;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Json;
 
@@ -63,7 +62,7 @@ class Service
     public function getAuthorizationData(): array
     {
         if ($this->methodProvider->get() !== OidcLogin::NAME) {
-            throw new ForbiddenSilent();
+            throw new Forbidden();
         }
 
         /** @var ?string $clientId */
@@ -115,19 +114,19 @@ class Service
     }
 
     /**
-     * @throws ForbiddenSilent
+     * @throws Forbidden
      */
     public function backchannelLogout(string $rawToken): void
     {
         if ($this->methodProvider->get() !== OidcLogin::NAME) {
-            throw new ForbiddenSilent();
+            throw new Forbidden();
         }
 
         try {
             $this->backchannelLogout->logout($rawToken);
         }
         catch (Invalid $e) {
-            throw new ForbiddenSilent("OIDC logout: Invalid JWT. " . $e->getMessage());
+            throw new Forbidden("OIDC logout: Invalid JWT. " . $e->getMessage());
         }
     }
 }
