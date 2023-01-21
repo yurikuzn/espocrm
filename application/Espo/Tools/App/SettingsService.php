@@ -133,7 +133,20 @@ class SettingsService
      */
     private function getLoginData(): ?array
     {
-        $method = $this->config->get('authenticationMethod') ?? Espo::NAME;
+        $method = null;
+
+        $isProvider = false;
+
+        if ($this->applicationState->isPortal()) {
+            $method = $this->getPortalAuthenticationMethod();
+
+            if ($method) {
+                $isProvider = true;
+            }
+
+        }
+
+        $method = $method ?? $this->config->get('authenticationMethod') ?? Espo::NAME;
 
         /** @var array<string, mixed> $mData */
         $mData = $this->metadata->get(['authenticationMethods', $method, 'login']) ?? [];
@@ -145,7 +158,7 @@ class SettingsService
             return null;
         }
 
-        if ($this->applicationState->isPortal()) {
+        if (!$isProvider && $this->applicationState->isPortal()) {
             /** @var ?bool $portal */
             $portal = $mData['portal'] ?? null;
 
@@ -169,6 +182,10 @@ class SettingsService
             $fallbackConfigParam = $mData['fallbackConfigParam'] ?? null;
 
             $fallback = $fallbackConfigParam && $this->config->get($fallbackConfigParam);
+        }
+
+        if ($isProvider) {
+            $fallback = false;
         }
 
         /** @var stdClass $data */

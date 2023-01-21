@@ -29,6 +29,8 @@
 
 namespace Espo\Entities;
 
+use Espo\Core\Field\Link;
+
 class Portal extends \Espo\Core\ORM\Entity
 {
     public const ENTITY_TYPE = 'Portal';
@@ -63,5 +65,11 @@ class Portal extends \Espo\Core\ORM\Entity
     public function getUrl(): ?string
     {
         return $this->get('url');
+    }
+
+    public function getAuthenticationProvider(): ?Link
+    {
+        /** @var ?Link */
+        return $this->getValueObject('authenticationProvider');
     }
 }

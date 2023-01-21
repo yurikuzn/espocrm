@@ -31,6 +31,7 @@ namespace Espo\Core\Authentication;
 
 use Espo\Core\Authentication\Logout\Params as LogoutParams;
 use Espo\Core\Exceptions\Error\Body;
+use Espo\Entities\AuthenticationProvider;
 use Espo\Repositories\UserData as UserDataRepository;
 use Espo\Entities\Portal;
 use Espo\Entities\User;
@@ -195,7 +196,7 @@ class Authentication
             }
         }
 
-        $authenticationMethod ??= $this->configDataProvider->getDefaultAuthenticationMethod();
+        $authenticationMethod ??= $this->getDefaultAuthenticationMethod();
 
         $login = $this->loginFactory->create($authenticationMethod, $this->isPortal());
 
@@ -570,7 +571,7 @@ class Authentication
             }
         }
 
-        $method = $this->configDataProvider->getDefaultAuthenticationMethod();
+        $method = $this->getDefaultAuthenticationMethod($authToken->getPortalId());
 
         if ($this->logoutFactory->isCreatable($method)) {
             $logout = $this->logoutFactory->create($method);
@@ -784,5 +785,51 @@ class Authentication
         }
 
         return [$loggedUser, null];
+    }
+
+    private function getDefaultAuthenticationMethod(?string $portalId = null): string
+    {
+        if ($portalId || $this->isPortal()) {
+            $method = $this->getPortalAuthenticationMethod($portalId);
+
+            if ($method) {
+                return $method;
+            }
+        }
+
+        return $this->configDataProvider->getDefaultAuthenticationMethod();
+    }
+
+    private function getPortalAuthenticationMethod(?string $portalId = null): ?string
+    {
+        /** @var ?Portal $portal */
+        $portal = $portalId ?
+            $this->entityManager->getEntityById(Portal::ENTITY_TYPE, $portalId) :
+            $this->getPortal();
+
+        if (!$portal) {
+            throw new RuntimeException("Could not get portal.");
+        }
+
+        $providerId = $portal->getAuthenticationProvider()?->getId();
+
+        if (!$providerId) {
+            return null;
+        }
+
+        /** @var ?AuthenticationProvider $provider */
+        $provider = $this->entityManager->getEntityById(AuthenticationProvider::ENTITY_TYPE, $providerId);
+
+        if (!$provider) {
+            throw new RuntimeException("No authentication provider for portal.");
+        }
+
+        $method = $provider->getMethod();
+
+        if (!$method) {
+            throw new RuntimeException("No method in authentication provider.");
+        }
+
+        return $method;
     }
 }
