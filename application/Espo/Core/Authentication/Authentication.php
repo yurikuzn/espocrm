@@ -29,9 +29,8 @@
 
 namespace Espo\Core\Authentication;
 
-use Espo\Core\Authentication\Logout\Params as LogoutParams;
-use Espo\Core\Authentication\Util\MethodProvider;
-use Espo\Core\Exceptions\Error\Body;
+use Espo\Core\Exceptions\Forbidden;
+use Espo\Core\Exceptions\NotFound;
 use Espo\Repositories\UserData as UserDataRepository;
 use Espo\Entities\Portal;
 use Espo\Entities\User;
@@ -39,6 +38,9 @@ use Espo\Entities\AuthLogRecord;
 use Espo\Entities\AuthToken as AuthTokenEntity;
 use Espo\Entities\UserData;
 
+use Espo\Core\Exceptions\Error\Body;
+use Espo\Core\Authentication\Logout\Params as LogoutParams;
+use Espo\Core\Authentication\Util\MethodProvider;
 use Espo\Core\Authentication\Result\FailReason;
 use Espo\Core\Authentication\TwoFactor\LoginFactory as TwoFactorLoginFactory;
 use Espo\Core\Authentication\AuthToken\Manager as AuthTokenManager;
@@ -46,7 +48,6 @@ use Espo\Core\Authentication\AuthToken\Data as AuthTokenData;
 use Espo\Core\Authentication\AuthToken\AuthToken;
 use Espo\Core\Authentication\Hook\Manager as HookManager;
 use Espo\Core\Authentication\Login\Data as LoginData;
-
 use Espo\Core\ApplicationUser;
 use Espo\Core\ApplicationState;
 use Espo\Core\Api\Request;
@@ -55,6 +56,7 @@ use Espo\Core\Utils\Log;
 use Espo\Core\ORM\EntityManagerProxy;
 use Espo\Core\Exceptions\ServiceUnavailable;
 
+use LogicException;
 use RuntimeException;
 
 /**
@@ -72,8 +74,6 @@ class Authentication
 
     private const COOKIE_AUTH_TOKEN_SECRET = 'auth-token-secret';
 
-    private ?Portal $portal = null;
-
     public function __construct(
         private ApplicationUser $applicationUser,
         private ApplicationState $applicationState,
@@ -85,13 +85,11 @@ class Authentication
         private HookManager $hookManager,
         private Log $log,
         private LogoutFactory $logoutFactory,
-        private MethodProvider $methodProvider,
-        private bool $allowAnyAccess = false
+        private MethodProvider $methodProvider
     ) {}
 
     /**
      * Process logging in.
-     * Note: This method can change the state of the object (by setting the `portal` property.).
      *
      * @throws ServiceUnavailable
      */
@@ -172,7 +170,7 @@ class Authentication
             }
         }
 
-        $authenticationMethod ??= $this->getDefaultAuthenticationMethod();
+        $authenticationMethod ??= $this->methodProvider->get();
 
         $login = $this->loginFactory->create($authenticationMethod, $this->isPortal());
 
@@ -333,40 +331,18 @@ class Authentication
         }
     }
 
-    private function setPortal(Portal $portal): void
-    {
-        $this->portal = $portal;
-    }
-
     private function isPortal(): bool
     {
-        return $this->portal || $this->applicationState->isPortal();
+        return $this->applicationState->isPortal();
     }
 
     private function getPortal(): Portal
     {
-        if ($this->portal) {
-            return $this->portal;
-        }
-
         return $this->applicationState->getPortal();
     }
 
     private function processAuthTokenCheck(AuthToken $authToken): bool
     {
-        if ($this->allowAnyAccess && $authToken->getPortalId() && !$this->isPortal()) {
-            /** @var ?Portal $portal */
-            $portal = $this->entityManager->getEntity(Portal::ENTITY_TYPE, $authToken->getPortalId());
-
-            if ($portal) {
-                $this->setPortal($portal);
-            }
-        }
-
-        if ($this->allowAnyAccess) {
-            return true;
-        }
-
         if ($this->isPortal() && $authToken->getPortalId() !== $this->getPortal()->getId()) {
             $this->log->info("AUTH: Trying to login to portal with a token not related to portal.");
 
@@ -529,12 +505,30 @@ class Authentication
         return $authToken;
     }
 
-    public function destroyAuthToken(string $token, Request $request, Response $response): bool
+    /**
+     * Destroy an auth token.
+     * @param string $token A token to destroy.
+     * @param Request $request A request.
+     * @param Response $response A response.
+     * @throws Forbidden
+     * @throws NotFound
+     */
+    public function destroyAuthToken(string $token, Request $request, Response $response): void
     {
         $authToken = $this->authTokenManager->get($token);
 
         if (!$authToken) {
-            return false;
+            throw new NotFound("Auth token not found.");
+        }
+
+        if (!$this->applicationState->hasUser()) {
+            throw new LogicException("No logged user.");
+        }
+
+        $user = $this->applicationState->getUser();
+
+        if ($authToken->getUserId() !== $user->getId()) {
+            throw new Forbidden("Auth token for another user.");
         }
 
         $this->authTokenManager->inactivate($authToken);
@@ -547,21 +541,21 @@ class Authentication
             }
         }
 
-        $method = $this->getDefaultAuthenticationMethod($authToken->getPortalId());
+        $method = $this->methodProvider->get();
 
-        if ($this->logoutFactory->isCreatable($method)) {
-            $logout = $this->logoutFactory->create($method);
-
-            $result = $logout->logout($authToken, LogoutParams::create());
-
-            $redirectUrl = $result->getRedirectUrl();
-
-            if ($redirectUrl) {
-                $response->setHeader(self::HEADER_LOGOUT_REDIRECT_URL, $redirectUrl);
-            }
+        if (!$this->logoutFactory->isCreatable($method)) {
+            return;
         }
 
-        return true;
+        $logout = $this->logoutFactory->create($method);
+
+        $result = $logout->logout($authToken, LogoutParams::create());
+
+        $redirectUrl = $result->getRedirectUrl();
+
+        if ($redirectUrl) {
+            $response->setHeader(self::HEADER_LOGOUT_REDIRECT_URL, $redirectUrl);
+        }
     }
 
     private function createAuthLogRecord(
@@ -761,34 +755,5 @@ class Authentication
         }
 
         return [$loggedUser, null];
-    }
-
-    private function getDefaultAuthenticationMethod(?string $portalId = null): string
-    {
-        if ($portalId || $this->isPortal()) {
-            $method = $this->getPortalAuthenticationMethod($portalId);
-
-            if ($method) {
-                return $method;
-            }
-
-            return $this->methodProvider->getDefaultForPortal();
-        }
-
-        return $this->configDataProvider->getDefaultAuthenticationMethod();
-    }
-
-    private function getPortalAuthenticationMethod(?string $portalId = null): ?string
-    {
-        /** @var ?Portal $portal */
-        $portal = $portalId ?
-            $this->entityManager->getEntityById(Portal::ENTITY_TYPE, $portalId) :
-            $this->getPortal();
-
-        if (!$portal) {
-            throw new RuntimeException("Could not get portal.");
-        }
-
-        return $this->methodProvider->getForPortal($portal);
     }
 }
