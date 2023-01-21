@@ -29,20 +29,19 @@
 
 namespace Espo\Tools\App;
 
-use Espo\Core\Authentication\Logins\Espo;
-use Espo\Core\Authentication\Util\MethodProvider as AuthenticationMethodProvider;
 use Espo\ORM\Entity;
 use Espo\ORM\EntityManager;
 
+use Espo\Core\Exceptions\BadRequest;
+use Espo\Core\Exceptions\Error;
 use Espo\Core\Exceptions\Forbidden;
+use Espo\Core\Authentication\Util\MethodProvider as AuthenticationMethodProvider;
 use Espo\Core\ApplicationState;
 use Espo\Core\Acl;
 use Espo\Core\InjectableFactory;
-
 use Espo\Core\DataManager;
 use Espo\Core\FieldValidation\FieldValidationManager;
 use Espo\Core\Utils\Currency\DatabasePopulator as CurrencyDatabasePopulator;
-
 use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Config\ConfigWriter;
@@ -113,16 +112,9 @@ class SettingsService
      */
     private function getLoginData(): ?array
     {
-        $method = null;
-        $isProvider = false;
+        $isProvider = $this->applicationState->isPortal() && $this->getPortalAuthenticationMethod();
 
-        if ($this->applicationState->isPortal()) {
-            $method = $this->getPortalAuthenticationMethod();
-
-            $isProvider = (bool) $method;
-        }
-
-        $method = $method ?? $this->config->get('authenticationMethod') ?? Espo::NAME;
+        $method = $this->authenticationMethodProvider->get();
 
         /** @var array<string, mixed> $mData */
         $mData = $this->metadata->get(['authenticationMethods', $method, 'login']) ?? [];
@@ -185,9 +177,9 @@ class SettingsService
     }
 
     /**
-     * @throws \Espo\Core\Exceptions\BadRequest
+     * @throws BadRequest
      * @throws Forbidden
-     * @throws \Espo\Core\Exceptions\Error
+     * @throws Error
      */
     public function setConfigData(stdClass $data): void
     {
@@ -372,7 +364,7 @@ class SettingsService
     }
 
     /**
-     * @throws \Espo\Core\Exceptions\BadRequest
+     * @throws BadRequest
      */
     private function processValidation(Entity $entity, stdClass $data): void
     {

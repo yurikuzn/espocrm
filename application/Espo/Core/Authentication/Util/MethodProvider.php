@@ -31,7 +31,9 @@ namespace Espo\Core\Authentication\Util;
 
 use Espo\Core\ApplicationState;
 use Espo\Core\Authentication\ConfigDataProvider;
+use Espo\Core\Authentication\Logins\Espo;
 use Espo\Core\ORM\EntityManagerProxy;
+use Espo\Core\Utils\Metadata;
 use Espo\Entities\AuthenticationProvider;
 use Espo\Entities\Portal;
 use RuntimeException;
@@ -41,7 +43,8 @@ class MethodProvider
     public function __construct(
         private EntityManagerProxy $entityManager,
         private ApplicationState $applicationState,
-        private ConfigDataProvider $configDataProvider
+        private ConfigDataProvider $configDataProvider,
+        private Metadata $metadata
     ) {}
 
     public function get(): string
@@ -54,7 +57,17 @@ class MethodProvider
             }
         }
 
-        return $this->configDataProvider->getDefaultAuthenticationMethod();
+        $method = $this->configDataProvider->getDefaultAuthenticationMethod();
+
+        if ($this->applicationState->isPortal()) {
+            $allow = $this->metadata->get(['authenticationMethods', $method, 'portalDefault']);
+
+            if (!$allow) {
+                return Espo::NAME;
+            }
+        }
+
+        return $method;
     }
 
     public function getForPortal(Portal $portal): ?string
