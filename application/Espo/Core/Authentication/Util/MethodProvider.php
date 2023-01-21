@@ -38,6 +38,9 @@ use Espo\Entities\AuthenticationProvider;
 use Espo\Entities\Portal;
 use RuntimeException;
 
+/**
+ * An authentication method provider.
+ */
 class MethodProvider
 {
     public function __construct(
@@ -66,24 +69,7 @@ class MethodProvider
     }
 
     /**
-     * Get a default authentication method for portals. Should be used if a portal does not have
-     * an authentication provider.
-     */
-    public function getDefaultForPortal(): string
-    {
-        $method = $this->configDataProvider->getDefaultAuthenticationMethod();
-
-        $allow = $this->metadata->get(['authenticationMethods', $method, 'portalDefault']);
-
-        if (!$allow) {
-            return Espo::NAME;
-        }
-
-        return $method;
-    }
-
-    /**
-     * Get an authentication method for portal. The method that is applied via the authentication provider link.
+     * Get an authentication method for portals. The method that is applied via the authentication provider link.
      * If no provider, then returns null.
      */
     public function getForPortal(Portal $portal): ?string
@@ -105,6 +91,23 @@ class MethodProvider
 
         if (!$method) {
             throw new RuntimeException("No method in authentication provider.");
+        }
+
+        return $method;
+    }
+
+    /**
+     * Get a default authentication method for portals. Should be used if a portal does not have
+     * an authentication provider.
+     */
+    private function getDefaultForPortal(): string
+    {
+        $method = $this->configDataProvider->getDefaultAuthenticationMethod();
+
+        $allow = $this->metadata->get(['authenticationMethods', $method, 'portalDefault']);
+
+        if (!$allow) {
+            return Espo::NAME;
         }
 
         return $method;

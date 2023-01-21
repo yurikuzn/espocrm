@@ -97,22 +97,22 @@ class Authentication
     {
         $username = $data->getUsername();
         $password = $data->getPassword();
-        $authenticationMethod = $data->getMethod();
+        $method = $data->getMethod();
         $byTokenOnly = $data->byTokenOnly();
 
         if (
-            $authenticationMethod &&
-            !$this->configDataProvider->authenticationMethodIsApi($authenticationMethod)
+            $method &&
+            !$this->configDataProvider->authenticationMethodIsApi($method)
         ) {
             $this->log
-                ->warning("AUTH: Trying to use not allowed authentication method '{$authenticationMethod}'.");
+                ->warning("AUTH: Trying to use not allowed authentication method '{$method}'.");
 
             return $this->processFail(Result::fail(FailReason::METHOD_NOT_ALLOWED), $data, $request);
         }
 
         $this->hookManager->processBeforeLogin($data, $request);
 
-        if (!$authenticationMethod && $password === null) {
+        if (!$method && $password === null) {
             $this->log->error("AUTH: Trying to login w/o password.");
 
             return Result::fail(FailReason::NO_PASSWORD);
@@ -120,7 +120,7 @@ class Authentication
 
         $authToken = null;
 
-        if (!$authenticationMethod) {
+        if (!$method) {
             $authToken = $this->authTokenManager->get($password);
         }
 
@@ -148,7 +148,7 @@ class Authentication
 
         $byTokenAndUsername = $request->getHeader(self::HEADER_BY_TOKEN) === 'true';
 
-        if ($authenticationMethod && $byTokenAndUsername) {
+        if ($method && $byTokenAndUsername) {
             return Result::fail(FailReason::DISCREPANT_DATA);
         }
 
@@ -170,9 +170,9 @@ class Authentication
             }
         }
 
-        $authenticationMethod ??= $this->methodProvider->get();
+        $method ??= $this->methodProvider->get();
 
-        $login = $this->loginFactory->create($authenticationMethod, $this->isPortal());
+        $login = $this->loginFactory->create($method, $this->isPortal());
 
         $loginData = LoginData
             ::createBuilder()
@@ -186,7 +186,7 @@ class Authentication
         $user = $result->getUser();
 
         $authLogRecord = !$authTokenIsFound ?
-            $this->createAuthLogRecord($username, $user, $request, $authenticationMethod) :
+            $this->createAuthLogRecord($username, $user, $request, $method) :
             null;
 
         if ($result->isFail()) {
@@ -507,6 +507,7 @@ class Authentication
 
     /**
      * Destroy an auth token.
+     *
      * @param string $token A token to destroy.
      * @param Request $request A request.
      * @param Response $response A response.
@@ -547,9 +548,9 @@ class Authentication
             return;
         }
 
-        $logout = $this->logoutFactory->create($method);
-
-        $result = $logout->logout($authToken, LogoutParams::create());
+        $result = $this->logoutFactory
+            ->create($method)
+            ->logout($authToken, LogoutParams::create());
 
         $redirectUrl = $result->getRedirectUrl();
 
@@ -562,7 +563,7 @@ class Authentication
         ?string $username,
         ?User $user,
         Request $request,
-        ?string $authenticationMethod = null
+        ?string $method = null
     ): ?AuthLogRecord {
 
         if ($username === self::LOGOUT_USERNAME) {
@@ -587,7 +588,7 @@ class Authentication
             'requestTime' => $request->getServerParam('REQUEST_TIME_FLOAT'),
             'requestMethod' => $request->getMethod(),
             'requestUrl' => $requestUrl,
-            'authenticationMethod' => $authenticationMethod,
+            'authenticationMethod' => $method,
         ]);
 
         if ($this->isPortal()) {

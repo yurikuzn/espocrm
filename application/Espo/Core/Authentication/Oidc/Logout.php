@@ -37,12 +37,8 @@ use Espo\Core\Utils\Config;
 
 class Logout implements LogoutInterface
 {
-    private Config $config;
-
-    public function __construct(Config $config)
-    {
-        $this->config = $config;
-    }
+    public function __construct(private Config $config)
+    {}
 
     public function logout(AuthToken $authToken, Params $params): Result
     {
