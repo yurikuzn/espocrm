@@ -112,8 +112,6 @@ class SettingsService
      */
     private function getLoginData(): ?array
     {
-        $isProvider = $this->applicationState->isPortal() && $this->getPortalAuthenticationMethod();
-
         $method = $this->authenticationMethodProvider->get();
 
         /** @var array<string, mixed> $mData */
@@ -125,6 +123,8 @@ class SettingsService
         if (!$handler) {
             return null;
         }
+
+        $isProvider = $this->isPortalWithAuthenticationProvider();
 
         if (!$isProvider && $this->applicationState->isPortal()) {
             /** @var ?bool $portal */
@@ -169,11 +169,15 @@ class SettingsService
         ];
     }
 
-    private function getPortalAuthenticationMethod(): ?string
+    private function isPortalWithAuthenticationProvider(): bool
     {
+        if (!$this->applicationState->isPortal()) {
+            return false;
+        }
+
         $portal = $this->applicationState->getPortal();
 
-        return $this->authenticationMethodProvider->getForPortal($portal);
+        return (bool) $this->authenticationMethodProvider->getForPortal($portal);
     }
 
     /**
