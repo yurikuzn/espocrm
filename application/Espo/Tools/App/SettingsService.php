@@ -30,6 +30,7 @@
 namespace Espo\Tools\App;
 
 use Espo\Core\Authentication\Logins\Espo;
+use Espo\Entities\AuthenticationProvider;
 use Espo\ORM\Entity;
 use Espo\ORM\EntityManager;
 
@@ -50,6 +51,7 @@ use Espo\Core\Utils\Config\Access;
 use Espo\Entities\Portal;
 use Espo\Repositories\Portal as PortalRepository;
 
+use RuntimeException;
 use stdClass;
 
 class SettingsService
@@ -134,16 +136,12 @@ class SettingsService
     private function getLoginData(): ?array
     {
         $method = null;
-
         $isProvider = false;
 
         if ($this->applicationState->isPortal()) {
             $method = $this->getPortalAuthenticationMethod();
 
-            if ($method) {
-                $isProvider = true;
-            }
-
+            $isProvider = (bool) $method;
         }
 
         $method = $method ?? $this->config->get('authenticationMethod') ?? Espo::NAME;
@@ -199,6 +197,32 @@ class SettingsService
             'method' => $method,
             'data' => $data,
         ];
+    }
+
+    private function getPortalAuthenticationMethod(): ?string
+    {
+        $portal = $this->applicationState->getPortal();
+
+        $providerId = $portal->getAuthenticationProvider()?->getId();
+
+        if (!$providerId) {
+            return null;
+        }
+
+        /** @var ?AuthenticationProvider $provider */
+        $provider = $this->entityManager->getEntityById(AuthenticationProvider::ENTITY_TYPE, $providerId);
+
+        if (!$provider) {
+            throw new RuntimeException("No authentication provider for portal.");
+        }
+
+        $method = $provider->getMethod();
+
+        if (!$method) {
+            throw new RuntimeException("No method in authentication provider.");
+        }
+
+        return $method;
     }
 
     /**
