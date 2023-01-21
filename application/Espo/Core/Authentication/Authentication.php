@@ -771,6 +771,8 @@ class Authentication
             if ($method) {
                 return $method;
             }
+
+            return $this->methodProvider->getDefaultForPortal();
         }
 
         return $this->configDataProvider->getDefaultAuthenticationMethod();

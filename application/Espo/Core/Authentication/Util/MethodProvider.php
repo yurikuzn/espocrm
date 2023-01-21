@@ -57,14 +57,21 @@ class MethodProvider
             }
         }
 
+        if ($this->applicationState->isPortal()) {
+            return $this->getDefaultForPortal();
+        }
+
+        return $this->configDataProvider->getDefaultAuthenticationMethod();
+    }
+
+    public function getDefaultForPortal(): string
+    {
         $method = $this->configDataProvider->getDefaultAuthenticationMethod();
 
-        if ($this->applicationState->isPortal()) {
-            $allow = $this->metadata->get(['authenticationMethods', $method, 'portalDefault']);
+        $allow = $this->metadata->get(['authenticationMethods', $method, 'portalDefault']);
 
-            if (!$allow) {
-                return Espo::NAME;
-            }
+        if (!$allow) {
+            return Espo::NAME;
         }
 
         return $method;
