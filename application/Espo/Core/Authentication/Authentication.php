@@ -30,8 +30,8 @@
 namespace Espo\Core\Authentication;
 
 use Espo\Core\Authentication\Logout\Params as LogoutParams;
+use Espo\Core\Authentication\Util\MethodProvider;
 use Espo\Core\Exceptions\Error\Body;
-use Espo\Entities\AuthenticationProvider;
 use Espo\Repositories\UserData as UserDataRepository;
 use Espo\Entities\Portal;
 use Espo\Entities\User;
@@ -72,46 +72,22 @@ class Authentication
 
     private const COOKIE_AUTH_TOKEN_SECRET = 'auth-token-secret';
 
-    private bool $allowAnyAccess;
     private ?Portal $portal = null;
 
-    private ApplicationUser $applicationUser;
-    private ApplicationState $applicationState;
-    private ConfigDataProvider $configDataProvider;
-    private EntityManagerProxy $entityManager;
-    private LoginFactory $loginFactory;
-    private TwoFactorLoginFactory $twoFactorLoginFactory;
-    private AuthTokenManager $authTokenManager;
-    private HookManager $hookManager;
-    private LogoutFactory $logoutFactory;
-    private Log $log;
-
     public function __construct(
-        ApplicationUser $applicationUser,
-        ApplicationState $applicationState,
-        ConfigDataProvider $configDataProvider,
-        EntityManagerProxy $entityManagerProxy,
-        LoginFactory $loginFactory,
-        TwoFactorLoginFactory $twoFactorLoginFactory,
-        AuthTokenManager $authTokenManager,
-        HookManager $hookManager,
-        Log $log,
-        LogoutFactory $logoutFactory,
-        bool $allowAnyAccess = false
-    ) {
-        $this->allowAnyAccess = $allowAnyAccess;
-
-        $this->applicationUser = $applicationUser;
-        $this->applicationState = $applicationState;
-        $this->configDataProvider = $configDataProvider;
-        $this->entityManager = $entityManagerProxy;
-        $this->loginFactory = $loginFactory;
-        $this->twoFactorLoginFactory = $twoFactorLoginFactory;
-        $this->authTokenManager = $authTokenManager;
-        $this->hookManager = $hookManager;
-        $this->logoutFactory = $logoutFactory;
-        $this->log = $log;
-    }
+        private ApplicationUser $applicationUser,
+        private ApplicationState $applicationState,
+        private ConfigDataProvider $configDataProvider,
+        private EntityManagerProxy $entityManager,
+        private LoginFactory $loginFactory,
+        private TwoFactorLoginFactory $twoFactorLoginFactory,
+        private AuthTokenManager $authTokenManager,
+        private HookManager $hookManager,
+        private Log $log,
+        private LogoutFactory $logoutFactory,
+        private MethodProvider $methodProvider,
+        private bool $allowAnyAccess = false
+    ) {}
 
     /**
      * Process logging in.
@@ -380,7 +356,7 @@ class Authentication
     {
         if ($this->allowAnyAccess && $authToken->getPortalId() && !$this->isPortal()) {
             /** @var ?Portal $portal */
-            $portal = $this->entityManager->getEntity('Portal', $authToken->getPortalId());
+            $portal = $this->entityManager->getEntity(Portal::ENTITY_TYPE, $authToken->getPortalId());
 
             if ($portal) {
                 $this->setPortal($portal);
@@ -811,25 +787,6 @@ class Authentication
             throw new RuntimeException("Could not get portal.");
         }
 
-        $providerId = $portal->getAuthenticationProvider()?->getId();
-
-        if (!$providerId) {
-            return null;
-        }
-
-        /** @var ?AuthenticationProvider $provider */
-        $provider = $this->entityManager->getEntityById(AuthenticationProvider::ENTITY_TYPE, $providerId);
-
-        if (!$provider) {
-            throw new RuntimeException("No authentication provider for portal.");
-        }
-
-        $method = $provider->getMethod();
-
-        if (!$method) {
-            throw new RuntimeException("No method in authentication provider.");
-        }
-
-        return $method;
+        return $this->methodProvider->getForPortal($portal);
     }
 }

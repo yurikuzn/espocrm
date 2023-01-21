@@ -32,6 +32,7 @@ namespace Espo\Tools\Oidc;
 use Espo\Core\Authentication\Jwt\Exceptions\Invalid;
 use Espo\Core\Authentication\Oidc\Login as OidcLogin;
 use Espo\Core\Authentication\Oidc\BackchannelLogout;
+use Espo\Core\Authentication\Util\MethodProvider;
 use Espo\Core\Exceptions\Error;
 use Espo\Core\Exceptions\Forbidden;
 use Espo\Core\Exceptions\ForbiddenSilent;
@@ -40,14 +41,11 @@ use Espo\Core\Utils\Json;
 
 class Service
 {
-    private Config $config;
-    private BackchannelLogout $backchannelLogout;
-
-    public function __construct(Config $config, BackchannelLogout $backchannelLogout)
-    {
-        $this->config = $config;
-        $this->backchannelLogout = $backchannelLogout;
-    }
+    public function __construct(
+        private Config $config,
+        private BackchannelLogout $backchannelLogout,
+        private MethodProvider $methodProvider
+    ) {}
 
     /**
      * @return array{
@@ -64,7 +62,7 @@ class Service
      */
     public function getAuthorizationData(): array
     {
-        if ($this->config->get('authenticationMethod') !== OidcLogin::NAME) {
+        if ($this->methodProvider->get() !== OidcLogin::NAME) {
             throw new ForbiddenSilent();
         }
 
@@ -121,7 +119,7 @@ class Service
      */
     public function backchannelLogout(string $rawToken): void
     {
-        if ($this->config->get('authenticationMethod') !== OidcLogin::NAME) {
+        if ($this->methodProvider->get() !== OidcLogin::NAME) {
             throw new ForbiddenSilent();
         }
 

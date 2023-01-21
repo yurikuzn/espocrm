@@ -30,7 +30,7 @@
 namespace Espo\Tools\App;
 
 use Espo\Core\Authentication\Logins\Espo;
-use Espo\Entities\AuthenticationProvider;
+use Espo\Core\Authentication\Util\MethodProvider as AuthenticationMethodProvider;
 use Espo\ORM\Entity;
 use Espo\ORM\EntityManager;
 
@@ -51,45 +51,23 @@ use Espo\Core\Utils\Config\Access;
 use Espo\Entities\Portal;
 use Espo\Repositories\Portal as PortalRepository;
 
-use RuntimeException;
 use stdClass;
 
 class SettingsService
 {
-    private ApplicationState $applicationState;
-    private Config $config;
-    private ConfigWriter $configWriter;
-    private Metadata $metadata;
-    private Acl $acl;
-    private EntityManager $entityManager;
-    private DataManager $dataManager;
-    private FieldValidationManager $fieldValidationManager;
-    private InjectableFactory $injectableFactory;
-    private Access $access;
-
     public function __construct(
-        ApplicationState $applicationState,
-        Config $config,
-        ConfigWriter $configWriter,
-        Metadata $metadata,
-        Acl $acl,
-        EntityManager $entityManager,
-        DataManager $dataManager,
-        FieldValidationManager $fieldValidationManager,
-        InjectableFactory $injectableFactory,
-        Access $access
-    ) {
-        $this->applicationState = $applicationState;
-        $this->config = $config;
-        $this->configWriter = $configWriter;
-        $this->metadata = $metadata;
-        $this->acl = $acl;
-        $this->entityManager = $entityManager;
-        $this->dataManager = $dataManager;
-        $this->fieldValidationManager = $fieldValidationManager;
-        $this->injectableFactory = $injectableFactory;
-        $this->access = $access;
-    }
+        private ApplicationState $applicationState,
+        private Config $config,
+        private ConfigWriter $configWriter,
+        private Metadata $metadata,
+        private Acl $acl,
+        private EntityManager $entityManager,
+        private DataManager $dataManager,
+        private FieldValidationManager $fieldValidationManager,
+        private InjectableFactory $injectableFactory,
+        private Access $access,
+        private AuthenticationMethodProvider $authenticationMethodProvider
+    ) {}
 
     public function getConfigData(): stdClass
     {
@@ -203,26 +181,7 @@ class SettingsService
     {
         $portal = $this->applicationState->getPortal();
 
-        $providerId = $portal->getAuthenticationProvider()?->getId();
-
-        if (!$providerId) {
-            return null;
-        }
-
-        /** @var ?AuthenticationProvider $provider */
-        $provider = $this->entityManager->getEntityById(AuthenticationProvider::ENTITY_TYPE, $providerId);
-
-        if (!$provider) {
-            throw new RuntimeException("No authentication provider for portal.");
-        }
-
-        $method = $provider->getMethod();
-
-        if (!$method) {
-            throw new RuntimeException("No method in authentication provider.");
-        }
-
-        return $method;
+        return $this->authenticationMethodProvider->getForPortal($portal);
     }
 
     /**
