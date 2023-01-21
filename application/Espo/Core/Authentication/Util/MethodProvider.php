@@ -47,6 +47,9 @@ class MethodProvider
         private Metadata $metadata
     ) {}
 
+    /**
+     * Get an authentication method.
+     */
     public function get(): string
     {
         if ($this->applicationState->isPortal()) {
@@ -55,15 +58,17 @@ class MethodProvider
             if ($method) {
                 return $method;
             }
-        }
 
-        if ($this->applicationState->isPortal()) {
             return $this->getDefaultForPortal();
         }
 
         return $this->configDataProvider->getDefaultAuthenticationMethod();
     }
 
+    /**
+     * Get a default authentication method for portals. Should be applied if a portal does not have
+     * an authentication provider.
+     */
     public function getDefaultForPortal(): string
     {
         $method = $this->configDataProvider->getDefaultAuthenticationMethod();
@@ -77,6 +82,10 @@ class MethodProvider
         return $method;
     }
 
+    /**
+     * Get an authentication method for portal. The method that is applied via the authentication provider link.
+     * If no provider, then returns null.
+     */
     public function getForPortal(Portal $portal): ?string
     {
         $providerId = $portal->getAuthenticationProvider()?->getId();
