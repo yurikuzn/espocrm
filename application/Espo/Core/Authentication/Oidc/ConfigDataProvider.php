@@ -33,9 +33,12 @@ use Espo\Core\ApplicationState;
 use Espo\Core\ORM\EntityManagerProxy;
 use Espo\Core\Utils\Config;
 use Espo\Entities\AuthenticationProvider;
+use stdClass;
 
 class ConfigDataProvider
 {
+    private const JWKS_CACHE_PERIOD = '10 minutes';
+
     private Config|AuthenticationProvider $object;
 
     public function __construct(
@@ -90,6 +93,19 @@ class ConfigDataProvider
     public function getTokenEndpoint(): ?string
     {
         return $this->object->get('oidcTokenEndpoint');
+    }
+
+    public function getJwksEndpoint(): ?string
+    {
+        return $this->object->get('oidcJwksEndpoint');
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getJwtSignatureAlgorithmList(): array
+    {
+        return $this->object->get('oidcJwtSignatureAlgorithmList') ?? [];
     }
 
     /**
@@ -148,6 +164,15 @@ class ConfigDataProvider
         return (bool) $this->config->get('oidcAllowRegularUserFallback');
     }
 
+    public function allowAdminUser(): bool
+    {
+        if ($this->isAuthenticationProvider()) {
+            return false;
+        }
+
+        return (bool) $this->config->get('oidcAllowAdminUser');
+    }
+
     public function getGroupClaim(): ?string
     {
         if ($this->isAuthenticationProvider()) {
@@ -155,6 +180,27 @@ class ConfigDataProvider
         }
 
         return $this->config->get('oidcGroupClaim');
+    }
+
+    /**
+     * @return ?string[]
+     */
+    public function getTeamIds(): ?array
+    {
+        if ($this->isAuthenticationProvider()) {
+            return null;
+        }
+
+        return $this->config->get('oidcTeamsIds') ?? [];
+    }
+
+    public function getTeamColumns(): ?stdClass
+    {
+        if ($this->isAuthenticationProvider()) {
+            return null;
+        }
+
+        return $this->config->get('oidcTeamsColumns') ?? (object) [];
     }
 
     public function getAuthorizationPrompt(): string
@@ -167,12 +213,8 @@ class ConfigDataProvider
         return $this->config->get('oidcAuthorizationMaxAge');
     }
 
-    public function allowAdminUser(): bool
+    public function getJwksCachePeriod(): string
     {
-        if ($this->isAuthenticationProvider()) {
-            return false;
-        }
-
-        return (bool) $this->config->get('oidcAllowAdminUser');
+        return $this->config->get('oidcJwksCachePeriod') ?? self::JWKS_CACHE_PERIOD;
     }
 }

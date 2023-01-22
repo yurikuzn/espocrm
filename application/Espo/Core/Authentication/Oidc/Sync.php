@@ -42,35 +42,19 @@ use Espo\Core\Utils\Util;
 use Espo\Entities\User;
 use Espo\ORM\EntityManager;
 use RuntimeException;
-use stdClass;
 
 class Sync
 {
-    private EntityManager $entityManager;
-    private Config $config;
-    private LinkMultipleSaver $linkMultipleSaver;
-    private EmailAddressSaver $emailAddressSaver;
-    private PhoneNumberSaver $phoneNumberSaver;
-    private PasswordHash $passwordHash;
-    private AclCacheClearer $aclCacheClearer;
-
     public function __construct(
-        EntityManager $entityManager,
-        Config $config,
-        LinkMultipleSaver $linkMultipleSaver,
-        EmailAddressSaver $emailAddressSaver,
-        PhoneNumberSaver $phoneNumberSaver,
-        PasswordHash $passwordHash,
-        AclCacheClearer $aclCacheClearer
-    ) {
-        $this->entityManager = $entityManager;
-        $this->config = $config;
-        $this->linkMultipleSaver = $linkMultipleSaver;
-        $this->emailAddressSaver = $emailAddressSaver;
-        $this->phoneNumberSaver = $phoneNumberSaver;
-        $this->passwordHash = $passwordHash;
-        $this->aclCacheClearer = $aclCacheClearer;
-    }
+        private EntityManager $entityManager,
+        private Config $config,
+        private ConfigDataProvider $configDataProvider,
+        private LinkMultipleSaver $linkMultipleSaver,
+        private EmailAddressSaver $emailAddressSaver,
+        private PhoneNumberSaver $phoneNumberSaver,
+        private PasswordHash $passwordHash,
+        private AclCacheClearer $aclCacheClearer
+    ) {}
 
     public function createUser(Payload $payload): User
     {
@@ -104,13 +88,13 @@ class Sync
             throw new RuntimeException("Could not sync user. Username mismatch.");
         }
 
-        if ($this->config->get('oidcSync')) {
+        if ($this->configDataProvider->sync()) {
             $user->set($this->getUserDataFromToken($payload));
         }
 
         $clearAclCache = false;
 
-        if ($this->config->get('oidcSyncTeams')) {
+        if ($this->configDataProvider->syncTeams()) {
             $user->loadLinkMultipleField('teams');
 
             $user->set($this->getUserTeamsDataFromToken($payload));
@@ -180,7 +164,7 @@ class Sync
 
     private function getUsernameFromToken(Payload $payload): string
     {
-        $usernameClaim = $this->config->get('oidcUsernameClaim');
+        $usernameClaim = $this->configDataProvider->getUsernameClaim();
 
         if (!$usernameClaim) {
             throw new RuntimeException("No OIDC username claim in config.");
@@ -204,10 +188,8 @@ class Sync
      */
     private function getTeamIdList(Payload $payload): array
     {
-        /** @var string[] $idList */
-        $idList = $this->config->get('oidcTeamsIds') ?? [];
-        /** @var stdClass $columns */
-        $columns = $this->config->get('oidcTeamsColumns') ?? (object) [];
+        $idList = $this->configDataProvider->getTeamIds() ?? [];
+        $columns = $this->configDataProvider->getTeamColumns() ?? (object) [];
 
         if ($idList === []) {
             return [];
@@ -233,8 +215,7 @@ class Sync
      */
     private function getGroups(Payload $payload): array
     {
-        /** @var ?string $groupClaim */
-        $groupClaim = $this->config->get('oidcGroupClaim');
+        $groupClaim = $this->configDataProvider->getGroupClaim();
 
         if (!$groupClaim) {
             return [];
