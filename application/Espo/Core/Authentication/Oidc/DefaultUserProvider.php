@@ -30,7 +30,6 @@
 namespace Espo\Core\Authentication\Oidc;
 
 use Espo\Core\Authentication\Jwt\Token\Payload;
-use Espo\Core\Utils\Config;
 use Espo\Entities\User;
 use Espo\ORM\EntityManager;
 use RuntimeException;
@@ -38,7 +37,7 @@ use RuntimeException;
 class DefaultUserProvider implements UserProvider
 {
     public function __construct(
-        private Config $config,
+        private ConfigDataProvider $configDataProvider,
         private Sync $sync,
         private EntityManager $entityManager
     ) {}
@@ -58,7 +57,7 @@ class DefaultUserProvider implements UserProvider
 
     private function findUser(Payload $payload): ?User
     {
-        $usernameClaim = $this->config->get('oidcUsernameClaim');
+        $usernameClaim = $this->configDataProvider->getUsernameClaim();
 
         if (!$usernameClaim) {
             throw new RuntimeException("No username claim in config.");
@@ -94,7 +93,7 @@ class DefaultUserProvider implements UserProvider
             return null;
         }
 
-        if ($user->isAdmin() && !$this->config->get('oidcAllowAdminUser')) {
+        if ($user->isAdmin() && !$this->configDataProvider->allowAdminUser()) {
             return null;
         }
 
@@ -103,11 +102,11 @@ class DefaultUserProvider implements UserProvider
 
     private function tryToCreateUser(Payload $payload): ?User
     {
-        if (!$this->config->get('oidcCreateUser')) {
+        if (!$this->configDataProvider->createUser()) {
             return null;
         }
 
-        $usernameClaim = $this->config->get('oidcUsernameClaim');
+        $usernameClaim = $this->configDataProvider->getUsernameClaim();
 
         if (!$usernameClaim) {
             throw new RuntimeException("Could not create a user. No OIDC username claim in config.");
@@ -124,7 +123,10 @@ class DefaultUserProvider implements UserProvider
 
     private function syncUser(User $user, Payload $payload): void
     {
-        if (!$this->config->get('oidcSync') && !$this->config->get('oidcSyncTeams')) {
+        if (
+            !$this->configDataProvider->sync() &&
+            !$this->configDataProvider->syncTeams()
+        ) {
             return;
         }
 

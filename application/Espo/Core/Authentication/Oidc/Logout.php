@@ -37,8 +37,10 @@ use Espo\Core\Utils\Config;
 
 class Logout implements LogoutInterface
 {
-    public function __construct(private Config $config)
-    {}
+    public function __construct(
+        private Config $config,
+        private ConfigDataProvider $configDataProvider
+    ) {}
 
     public function logout(AuthToken $authToken, Params $params): Result
     {
@@ -46,10 +48,8 @@ class Logout implements LogoutInterface
             return Result::create();
         }
 
-        /** @var ?string $url */
-        $url = $this->config->get('oidcLogoutUrl');
-        /** @var string $oidcClientId */
-        $oidcClientId = $this->config->get('oidcClientId') ?? '';
+        $url = $this->configDataProvider->getLogoutUrl();
+        $oidcClientId = $this->configDataProvider->getClientId() ?? '';
         $siteUrl = rtrim($this->config->get('siteUrl') ?? '', '/');
 
         if ($url) {

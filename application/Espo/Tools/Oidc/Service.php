@@ -30,27 +30,27 @@
 namespace Espo\Tools\Oidc;
 
 use Espo\Core\Authentication\Jwt\Exceptions\Invalid;
+use Espo\Core\Authentication\Oidc\ConfigDataProvider;
 use Espo\Core\Authentication\Oidc\Login as OidcLogin;
 use Espo\Core\Authentication\Oidc\BackchannelLogout;
 use Espo\Core\Authentication\Util\MethodProvider;
 use Espo\Core\Exceptions\Error;
 use Espo\Core\Exceptions\Forbidden;
-use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Json;
 
 class Service
 {
     public function __construct(
-        private Config $config,
         private BackchannelLogout $backchannelLogout,
-        private MethodProvider $methodProvider
+        private MethodProvider $methodProvider,
+        private ConfigDataProvider $configDataProvider
     ) {}
 
     /**
      * @return array{
      *     clientId: non-empty-string,
      *     endpoint: non-empty-string,
-     *     redirectUri: non-empty-string,
+     *     redirectUri: string,
      *     scopes: non-empty-array<string>,
      *     claims: ?string,
      *     prompt: 'login'|'consent'|'select_account',
@@ -65,15 +65,11 @@ class Service
             throw new Forbidden();
         }
 
-        /** @var ?string $clientId */
-        $clientId = $this->config->get('oidcClientId');
-        /** @var ?string $endpoint */
-        $endpoint = $this->config->get('oidcAuthorizationEndpoint');
-        /** @var string[] $scopes */
-        $scopes = $this->config->get('oidcScopes') ?? [];
-
-        /** @var ?string $groupClaim */
-        $groupClaim = $this->config->get('oidcGroupClaim');
+        $clientId = $this->configDataProvider->getClientId();
+        $endpoint = $this->configDataProvider->getAuthorizationEndpoint();
+        $scopes = $this->configDataProvider->getScopes();
+        $groupClaim = $this->configDataProvider->getGroupClaim();
+        $redirectUri = $this->configDataProvider->getRedirectUri();
 
         if (!$clientId) {
             throw new Error("No client ID.");
@@ -82,8 +78,6 @@ class Service
         if (!$endpoint) {
             throw new Error("No authorization endpoint.");
         }
-
-        $redirectUri = rtrim($this->config->get('siteUrl') ?? '', '/') . '/oauth-callback.php';
 
         array_unshift($scopes, 'openid');
 
@@ -98,9 +92,8 @@ class Service
         }
 
         /** @var 'login'|'consent'|'select_account' $prompt */
-        $prompt = $this->config->get('oidcAuthorizationPrompt') ?? 'consent';
-        /** @var ?int $maxAge */
-        $maxAge = $this->config->get('oidcAuthorizationMaxAge');
+        $prompt = $this->configDataProvider->getAuthorizationPrompt();
+        $maxAge = $this->configDataProvider->getAuthorizationMaxAge();
 
         return [
             'clientId' => $clientId,
