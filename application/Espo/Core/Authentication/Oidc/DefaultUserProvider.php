@@ -29,7 +29,9 @@
 
 namespace Espo\Core\Authentication\Oidc;
 
+use Espo\Core\ApplicationState;
 use Espo\Core\Authentication\Jwt\Token\Payload;
+use Espo\Core\Utils\Log;
 use Espo\Entities\User;
 use Espo\ORM\EntityManager;
 use RuntimeException;
@@ -39,7 +41,9 @@ class DefaultUserProvider implements UserProvider
     public function __construct(
         private ConfigDataProvider $configDataProvider,
         private Sync $sync,
-        private EntityManager $entityManager
+        private EntityManager $entityManager,
+        private ApplicationState $applicationState,
+        private Log $log
     ) {}
 
     public function get(Payload $payload): ?User
@@ -85,15 +89,41 @@ class DefaultUserProvider implements UserProvider
             return null;
         }
 
-        if (!$user->isRegular() && !$user->isAdmin()) {
+        $userId = $user->getId();
+
+        $isPortal = $this->applicationState->isPortal();
+
+        if (!$isPortal && !$user->isRegular() && !$user->isAdmin()) {
+            $this->log->info("Oidc: User {$userId} found but it's neither regular user not admin.");
+
             return null;
         }
 
+        if ($isPortal && !$user->isPortal()) {
+            $this->log->info("Oidc: User {$userId} found but it's not portal user.");
+
+            return null;
+        }
+
+        if ($isPortal) {
+            $portalId = $this->applicationState->getPortalId();
+
+            if (!$user->getPortals()->hasId($portalId)) {
+                $this->log->info("Oidc: User {$userId} found but it's not related to current portal.");
+
+                return null;
+            }
+        }
+
         if ($user->isSuperAdmin()) {
+            $this->log->info("Oidc: User {$userId} found but it's super-admin, not allowed.");
+
             return null;
         }
 
         if ($user->isAdmin() && !$this->configDataProvider->allowAdminUser()) {
+            $this->log->info("Oidc: User {$userId} found but it's admin, not allowed.");
+
             return null;
         }
 

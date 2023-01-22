@@ -30,7 +30,9 @@
 namespace Espo\Core\Authentication\Oidc;
 
 use Espo\Core\Acl\Cache\Clearer as AclCacheClearer;
+use Espo\Core\ApplicationState;
 use Espo\Core\Authentication\Jwt\Token\Payload;
+use Espo\Core\Field\LinkMultiple;
 use Espo\Core\FieldProcessing\EmailAddress\Saver as EmailAddressSaver;
 use Espo\Core\FieldProcessing\PhoneNumber\Saver as PhoneNumberSaver;
 use Espo\Core\FieldProcessing\Relation\LinkMultipleSaver;
@@ -39,6 +41,7 @@ use Espo\Core\ORM\Repository\Option\SaveOption;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\PasswordHash;
 use Espo\Core\Utils\Util;
+use Espo\Entities\Portal;
 use Espo\Entities\User;
 use Espo\ORM\EntityManager;
 use RuntimeException;
@@ -53,7 +56,8 @@ class Sync
         private EmailAddressSaver $emailAddressSaver,
         private PhoneNumberSaver $phoneNumberSaver,
         private PasswordHash $passwordHash,
-        private AclCacheClearer $aclCacheClearer
+        private AclCacheClearer $aclCacheClearer,
+        private ApplicationState $applicationState
     ) {}
 
     public function createUser(Payload $payload): User
@@ -62,6 +66,7 @@ class Sync
 
         $this->validateUsername($username);
 
+        /** @var User $user */
         $user = $this->entityManager->getRDBRepositoryByClass(User::class)->getNew();
 
         $user->set([
@@ -72,6 +77,12 @@ class Sync
 
         $user->set($this->getUserDataFromToken($payload));
         $user->set($this->getUserTeamsDataFromToken($payload));
+
+        if ($this->applicationState->isPortal()) {
+            $portalId = $this->applicationState->getPortalId();
+
+            $user->setPortals(LinkMultiple::create()->withAddedId($portalId));
+        }
 
         $this->saveUser($user);
 
