@@ -81,6 +81,7 @@ class Sync
         if ($this->applicationState->isPortal()) {
             $portalId = $this->applicationState->getPortalId();
 
+            $user->set('type', User::TYPE_PORTAL);
             $user->setPortals(LinkMultiple::create()->withAddedId($portalId));
         }
 
