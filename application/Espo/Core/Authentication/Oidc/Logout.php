@@ -44,10 +44,6 @@ class Logout implements LogoutInterface
 
     public function logout(AuthToken $authToken, Params $params): Result
     {
-        if ($authToken->getPortalId()) {
-            return Result::create();
-        }
-
         $url = $this->configDataProvider->getLogoutUrl();
         $clientId = $this->configDataProvider->getClientId() ?? '';
         $siteUrl = rtrim($this->config->get('siteUrl') ?? '', '/');
