@@ -8,7 +8,10 @@
             "type": "enum",
             "view": "views/authentication-provider/fields/method",
             "translation": "Settings.options.authenticationMethod",
-            "required": true
+            "required": true,
+            "validatorClassNameMap": {
+                "valid": "Espo\\Classes\\FieldValidators\\AuthenticationProvider\\MethodValid"
+            }
         },
         "oidcAuthorizationRedirectUri": {
             "type": "varchar",
