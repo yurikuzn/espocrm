@@ -49,15 +49,15 @@ class Logout implements LogoutInterface
         }
 
         $url = $this->configDataProvider->getLogoutUrl();
-        $oidcClientId = $this->configDataProvider->getClientId() ?? '';
+        $clientId = $this->configDataProvider->getClientId() ?? '';
         $siteUrl = rtrim($this->config->get('siteUrl') ?? '', '/');
 
         if ($url) {
-            $url = str_replace('{clientId}', urlencode($oidcClientId), $url);
+            $url = str_replace('{clientId}', urlencode($clientId), $url);
             $url = str_replace('{siteUrl}', urlencode($siteUrl), $url);
         }
 
-        // @todo Check session is set if auth token to bypass fallback logins.
+        // @todo Check session is set in auth token to bypass fallback logins.
 
         return Result::create()->withRedirectUrl($url);
     }
