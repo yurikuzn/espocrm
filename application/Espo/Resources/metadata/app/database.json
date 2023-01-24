@@ -1,10 +1,12 @@
 {
-    "dbalConnectionFactoryClassNameMap": {
-        "Mysql": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\MysqlConnectionFactory",
-        "Postgresql": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\PostgresqlConnectionFactory"
-    },
-    "indexHelperClassNameMap": {
-        "Mysql": "Espo\\Core\\Utils\\Database\\Orm\\IndexHelpers\\MysqlIndexHelper",
-        "Postgresql": "Espo\\Core\\Utils\\Database\\Orm\\IndexHelpers\\PostgresqlIndexHelper"
+    "platforms": {
+        "Mysql": {
+            "dbalConnectionFactoryClassName": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\MysqlConnectionFactory",
+            "indexHelperClassName": "Espo\\Core\\Utils\\Database\\Orm\\IndexHelpers\\MysqlIndexHelper"
+        },
+        "Postgresql": {
+            "dbalConnectionFactoryClassName": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\PostgresqlConnectionFactory",
+            "indexHelperClassName": "Espo\\Core\\Utils\\Database\\Orm\\IndexHelpers\\PostgresqlIndexHelper"
+        }
     }
 }

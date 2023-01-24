@@ -45,7 +45,8 @@ class ConnectionFactoryFactory
     public function create(string $platform, PDO $pdo): ConnectionFactory
     {
         /** @var ?class-string<ConnectionFactory> $className */
-        $className = $this->metadata->get(['app', 'database', 'dbalConnectionFactoryClassNameMap', $platform]);
+        $className = $this->metadata
+            ->get(['app', 'database', 'platforms', $platform, 'dbalConnectionFactoryClassName']);
 
         if (!$className) {
             throw new RuntimeException("No DBAL ConnectionFactory for {$platform}.");
