@@ -46,52 +46,56 @@ class Utils
         $indexList = [];
 
         foreach ($defs as $entityType => $entityParams) {
-            $entityIndexList = self::getEntityIndexListByFieldsDefs($entityParams['fields'] ?? []);
+            /*$entityIndexList = self::getEntityIndexListByFieldsDefs($entityParams['fields'] ?? []);
 
             foreach ($entityIndexList as $indexName => $indexParams) {
                 if (!isset($entityParams['indexes'][$indexName])) {
                     $entityParams['indexes'][$indexName] = $indexParams;
                 }
-            }
+            }*/
 
-            if (isset($entityParams['indexes']) && is_array($entityParams['indexes'])) {
-                foreach ($entityParams['indexes'] as $indexName => $indexParams) {
-                    $indexDefs = IndexDefs::fromRaw($indexParams, $indexName);
+            $indexes = $entityParams['indexes'] ?? [];
 
-                    $tableIndexName = $indexParams['key'] ?? self::generateIndexName($indexDefs, $entityType);
+            foreach ($indexes as $indexName => $indexParams) {
+                $indexDefs = IndexDefs::fromRaw($indexParams, $indexName);
 
-                    $columns = $indexDefs->getColumnList();
-                    $flags = $indexDefs->getFlagList();
+                $tableIndexName = $indexParams['key'] ?? null;// ?? self::generateIndexName($indexDefs, $entityType);
 
-                    if ($flags !== []) {
-                        $skipIndex = false;
+                if (!$tableIndexName) {
+                    continue;
+                }
 
-                        foreach ($ignoreFlags as $ignoreFlag) {
-                            if (($flagKey = array_search($ignoreFlag, $flags)) !== false) {
-                                unset($flags[$flagKey]);
+                $columns = $indexDefs->getColumnList();
+                $flags = $indexDefs->getFlagList();
 
-                                $skipIndex = true;
-                            }
+                if ($flags !== []) {
+                    $skipIndex = false;
+
+                    foreach ($ignoreFlags as $ignoreFlag) {
+                        if (($flagKey = array_search($ignoreFlag, $flags)) !== false) {
+                            unset($flags[$flagKey]);
+
+                            $skipIndex = true;
                         }
-
-                        if ($skipIndex && empty($flags)) {
-                            continue;
-                        }
-
-                        $indexList[$entityType][$tableIndexName]['flags'] = $flags;
                     }
 
-                    if ($columns !== []) {
-                        $indexType = self::getIndexTypeByIndexDefs($indexDefs);
-
-                        // @todo Revise, may to be removed.
-                        $indexList[$entityType][$tableIndexName]['type'] = $indexType;
-
-                        $indexList[$entityType][$tableIndexName]['columns'] = array_map(
-                            fn ($item) => Util::toUnderScore($item),
-                            $columns
-                        );
+                    if ($skipIndex && empty($flags)) {
+                        continue;
                     }
+
+                    $indexList[$entityType][$tableIndexName]['flags'] = $flags;
+                }
+
+                if ($columns !== []) {
+                    $indexType = self::getIndexTypeByIndexDefs($indexDefs);
+
+                    // @todo Revise, may to be removed.
+                    $indexList[$entityType][$tableIndexName]['type'] = $indexType;
+
+                    $indexList[$entityType][$tableIndexName]['columns'] = array_map(
+                        fn ($item) => Util::toUnderScore($item),
+                        $columns
+                    );
                 }
             }
         }

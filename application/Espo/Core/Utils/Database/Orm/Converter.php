@@ -147,13 +147,13 @@ class Converter
             /** @var array<string, array<string, mixed>> $ormMetadata */
             $ormMetadata = Util::merge(
                 $ormMetadata,
-                $this->createRelationsEntityDefs($entityType, $entityOrmMetadata)
+                $this->createRelationsEntityDefs($entityOrmMetadata)
             );
 
             /** @var array<string, array<string, mixed>> $ormMetadata */
             $ormMetadata = Util::merge(
                 $ormMetadata,
-                $this->createAdditionalEntityTypes($entityType, $entityOrmMetadata)
+                $this->createAdditionalEntityTypes($entityOrmMetadata)
             );
         }
 
@@ -757,7 +757,7 @@ class Converter
      * @param array<string, mixed> $defs
      * @return array<string, mixed>
      */
-    private function createAdditionalEntityTypes(string $entityType, array $defs): array
+    private function createAdditionalEntityTypes(array $defs): array
     {
         /** @var array<string, array<string, mixed>> $additionalDefs */
         $additionalDefs = $defs['additionalTables'] ?? [];
@@ -780,7 +780,7 @@ class Converter
      * @param array<string, mixed> $defs
      * @return array<string, mixed>
      */
-    private function createRelationsEntityDefs(string $entityType, array $defs): array
+    private function createRelationsEntityDefs(array $defs): array
     {
         $result = [];
 
