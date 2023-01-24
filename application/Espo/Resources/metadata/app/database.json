@@ -2,11 +2,11 @@
     "platforms": {
         "Mysql": {
             "dbalConnectionFactoryClassName": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\MysqlConnectionFactory",
-            "indexHelperClassName": "Espo\\Core\\Utils\\Database\\Orm\\IndexHelpers\\MysqlIndexHelper"
+            "indexHelperClassName": "Espo\\Core\\Utils\\Database\\Orm\\IndexHelpers\\MysqlIndexHelper",
+            "columnOptionsPreparatorClassName": "Espo\\Core\\Utils\\Database\\Schema\\ColumnOptionsPreparators\\MysqlColumnOptionsPreparator"
         },
         "Postgresql": {
-            "dbalConnectionFactoryClassName": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\PostgresqlConnectionFactory",
-            "indexHelperClassName": "Espo\\Core\\Utils\\Database\\Orm\\IndexHelpers\\PostgresqlIndexHelper"
+            "dbalConnectionFactoryClassName": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\PostgresqlConnectionFactory"
         }
     }
 }

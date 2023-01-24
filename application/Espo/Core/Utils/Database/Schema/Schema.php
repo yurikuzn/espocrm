@@ -55,7 +55,6 @@ class Schema
     private string $rebuildActionsPath = 'Core/Utils/Database/Schema/rebuildActions';
 
     private Comparator $comparator;
-    private DatabaseConverter $converter;
     private Converter $schemaConverter;
 
     /**
@@ -69,13 +68,12 @@ class Schema
     public function __construct(
         private FileManager $fileManager,
         private ClassMap $classMap,
-        protected OrmMetadataData $ormMetadataData,
+        private OrmMetadataData $ormMetadataData,
         private Log $log,
-        DatabaseConverter $databaseConverter,
+        private DatabaseConverter $databaseConverter,
         private Helper $databaseHelper,
         private InjectableFactory $injectableFactory
     ) {
-        $this->converter = $databaseConverter;
 
         $this->comparator = new Comparator();
 
@@ -87,15 +85,6 @@ class Schema
                 ->bindInstance(Helper::class, $this->databaseHelper)
                 ->build()
         );
-
-        /*$this->schemaConverter = new Converter(
-            $this->metadata,
-            $this->fileManager,
-            $this,
-            $this->config,
-            $this->log,
-            $pathProvider
-        );*/
     }
 
     public function getDatabaseHelper(): Helper
@@ -159,7 +148,7 @@ class Schema
      */
     public function rebuild(?array $entityList = null): bool
     {
-        if (!$this->converter->process()) {
+        if (!$this->databaseConverter->process()) {
             return false;
         }
 

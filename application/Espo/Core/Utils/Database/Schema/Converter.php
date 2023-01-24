@@ -31,7 +31,6 @@ namespace Espo\Core\Utils\Database\Schema;
 
 use Doctrine\DBAL\Schema\SchemaException;
 use Espo\Core\Utils\Config;
-use Espo\Core\Utils\Database\Helper;
 use Espo\Core\Utils\Database\Schema\Utils as SchemaUtils;
 use Espo\Core\Utils\File\Manager as FileManager;
 use Espo\Core\Utils\Log;
@@ -42,7 +41,9 @@ use Espo\Core\Utils\Util;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Types\Type as DbalType;
+use Espo\ORM\Defs\AttributeDefs;
 use Espo\ORM\Defs\IndexDefs;
+use Espo\ORM\Entity;
 
 class Converter
 {
@@ -119,22 +120,6 @@ class Converter
 
         return $this->dbalSchema;
     }
-
-    /*private function getDatabaseSchema(): Schema
-    {
-        return $this->databaseSchema;
-    }*/
-
-    /*private function getMaxIndexLength(): int
-    {
-        if (!isset($this->maxIndexLength)) {
-            $this->maxIndexLength = $this->getDatabaseSchema()
-                ->getDatabaseHelper()
-                ->getMaxIndexLength();
-        }
-
-        return $this->maxIndexLength;
-    }*/
 
     /**
      * Schema conversation process.
@@ -226,29 +211,31 @@ class Converter
             $primaryColumns = [];
 
             foreach ($entityParams['fields'] as $fieldName => $fieldParams) {
+                $attributeDefs = AttributeDefs::fromRaw($fieldParams, $fieldName);
+
                 if (
-                    (isset($fieldParams['notStorable']) && $fieldParams['notStorable']) ||
-                    in_array($fieldParams['type'], $this->notStorableTypes)
+                    $attributeDefs->isNotStorable() ||
+                    in_array($attributeDefs->getType(), $this->notStorableTypes)
                 ) {
                     continue;
                 }
 
-                switch ($fieldParams['type']) {
-                    case 'id':
+                switch ($attributeDefs->getType()) {
+                    case Entity::ID:
                         $primaryColumns[] = Util::toUnderScore($fieldName);
 
                         break;
                 }
 
-                $fieldType = $fieldParams['dbType'] ?? $fieldParams['type'];
+                $fieldType = $attributeDefs->getParam('dbType') ?? $attributeDefs->getType();
 
-                /** Doctrine uses 'strtolower' for all field types. */
+                /** Doctrine uses lower case for all field types. */
                 $fieldType = strtolower($fieldType);
 
                 if (!in_array($fieldType, $this->typeList)) {
                     $this->log->debug(
-                        'Converters\Schema::process(): Field type [' . $fieldType . '] does not exist '.
-                        $entityName.':'.$fieldName
+                        'Converters\Schema::process(): Field type [' . $fieldType . '] not supported, ' .
+                        $entityName . ':' . $fieldName
                     );
 
                     continue;
@@ -256,9 +243,19 @@ class Converter
 
                 $columnName = Util::toUnderScore($fieldName);
 
-                if (!$tables[$entityName]->hasColumn($columnName)) {
-                    $tables[$entityName]->addColumn($columnName, $fieldType, $this->getDbFieldParams($fieldParams));
+                if ($tables[$entityName]->hasColumn($columnName)) {
+                    continue;
                 }
+
+                $columnOptions = $this->columnOptionsPreparator->prepare($attributeDefs);
+
+                $tables[$entityName]->addColumn(
+                    $columnName,
+                    strtolower($columnOptions->getType()),
+                    self::convertColumnOptions($columnOptions)
+                );
+
+                //$tables[$entityName]->addColumn($columnName, $fieldType, $this->getDbFieldParams($fieldParams));
             }
 
             $tables[$entityName]->setPrimaryKey($primaryColumns);
@@ -269,20 +266,20 @@ class Converter
         }
 
         // Check and create columns/tables for relations.
-        foreach ($ormMeta as $entityName => $entityParams) {
+        foreach ($ormMeta as $entityType => $entityParams) {
             if (!isset($entityParams['relations'])) {
                 continue;
             }
 
             foreach ($entityParams['relations'] as $relationName => $relationParams) {
                  switch ($relationParams['type']) {
-                    case 'manyMany':
+                    case Entity::MANY_MANY:
                         $tableName = $relationParams['relationName'];
 
                         // Check for duplicate tables.
                         if (!isset($tables[$tableName])) {
                             // No needs to create a table if it already exists.
-                            $tables[$tableName] = $this->prepareManyMany($entityName, $relationParams);
+                            $tables[$tableName] = $this->prepareManyMany($entityType, $relationParams);
                         }
 
                         break;
@@ -320,13 +317,26 @@ class Converter
 
         $table = $this->getSchema()->createTable($tableName);
 
-        $idColumnOptions = $this->getDbFieldParams([
+        $idColumnOptions = $this->columnOptionsPreparator->prepare(
+            AttributeDefs::fromRaw([
+                'dbType' => 'bigint',
+                'type' => Entity::ID,
+                'len' => 20,
+                'autoincrement' => true,
+            ], 'id')
+        );
+
+        /*$idColumnOptions = $this->getDbFieldParams([
             'type' => 'id',
             'len' => 20,
             'autoincrement' => true,
-        ]);
+        ]);*/
 
-        $table->addColumn('id', 'bigint', $idColumnOptions);
+        $table->addColumn(
+            'id',
+            strtolower($idColumnOptions->getType()),
+            self::convertColumnOptions($idColumnOptions)
+        );
 
         $midKeys = $relationParams['midKeys'] ?? [];
 
@@ -339,16 +349,28 @@ class Converter
         }
 
         foreach ($midKeys as $midKey) {
-            $columnName = Util::toUnderScore($midKey);
+            $columnOptions = $this->columnOptionsPreparator->prepare(
+                AttributeDefs::fromRaw([
+                    'dbType' => $this->idParams['dbType'],
+                    'type' => Entity::FOREIGN_ID,
+                    'len' => $this->idParams['len'],
+                ], $midKey)
+            );
 
             $table->addColumn(
+                Util::toUnderScore($midKey),
+                strtolower($columnOptions->getType()),
+                self::convertColumnOptions($columnOptions)
+            );
+
+            /*$table->addColumn(
                 $columnName,
                 $this->idParams['dbType'],
                 $this->getDbFieldParams([
                     'type' => 'foreignId',
                     'len' => $this->idParams['len'],
                 ])
-            );
+            );*/
         }
 
         foreach (($relationParams['additionalColumns'] ?? []) as $fieldName => $fieldParams) {
@@ -358,22 +380,44 @@ class Converter
                     'len' => $this->defaultLength['varchar'],
                 ]);
             }
+            $columnOptions = $this->columnOptionsPreparator->prepare(
+                AttributeDefs::fromRaw($fieldParams, $fieldName)
+            );
 
             $table->addColumn(
                 Util::toUnderScore($fieldName),
+                strtolower($columnOptions->getType()),
+                self::convertColumnOptions($columnOptions)
+            );
+
+            /*$table->addColumn(
+                Util::toUnderScore($fieldName),
                 $fieldParams['type'],
                 $this->getDbFieldParams($fieldParams)
-            );
+            );*/
         }
 
+        $deletedColumnOptions = $this->columnOptionsPreparator->prepare(
+            AttributeDefs::fromRaw([
+                'type' => Entity::BOOL,
+                'default' => false,
+            ], 'deleted')
+        );
+
         $table->addColumn(
+            'deleted',
+            strtolower($deletedColumnOptions->getType()),
+            self::convertColumnOptions($deletedColumnOptions)
+        );
+
+       /*$table->addColumn(
             'deleted',
             'bool',
             $this->getDbFieldParams([
                 'type' => 'bool',
                 'default' => false,
             ])
-        );
+        );*/
 
         $table->setPrimaryKey(['id']);
 
