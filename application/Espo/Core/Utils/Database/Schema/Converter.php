@@ -124,7 +124,7 @@ class Converter
     /**
      * Schema conversation process.
      *
-     * @param array<string,mixed> $ormMeta
+     * @param array<string, mixed> $ormMeta
      * @param string[]|string|null $entityList
      * @throws SchemaException
      */
@@ -251,7 +251,7 @@ class Converter
 
                 $tables[$entityName]->addColumn(
                     $columnName,
-                    strtolower($columnOptions->getType()),
+                    $columnOptions->getType(),
                     self::convertColumnOptions($columnOptions)
                 );
 
@@ -326,15 +326,9 @@ class Converter
             ], 'id')
         );
 
-        /*$idColumnOptions = $this->getDbFieldParams([
-            'type' => 'id',
-            'len' => 20,
-            'autoincrement' => true,
-        ]);*/
-
         $table->addColumn(
             'id',
-            strtolower($idColumnOptions->getType()),
+            $idColumnOptions->getType(),
             self::convertColumnOptions($idColumnOptions)
         );
 
@@ -359,18 +353,9 @@ class Converter
 
             $table->addColumn(
                 Util::toUnderScore($midKey),
-                strtolower($columnOptions->getType()),
+                $columnOptions->getType(),
                 self::convertColumnOptions($columnOptions)
             );
-
-            /*$table->addColumn(
-                $columnName,
-                $this->idParams['dbType'],
-                $this->getDbFieldParams([
-                    'type' => 'foreignId',
-                    'len' => $this->idParams['len'],
-                ])
-            );*/
         }
 
         foreach (($relationParams['additionalColumns'] ?? []) as $fieldName => $fieldParams) {
@@ -380,21 +365,16 @@ class Converter
                     'len' => $this->defaultLength['varchar'],
                 ]);
             }
+
             $columnOptions = $this->columnOptionsPreparator->prepare(
                 AttributeDefs::fromRaw($fieldParams, $fieldName)
             );
 
             $table->addColumn(
                 Util::toUnderScore($fieldName),
-                strtolower($columnOptions->getType()),
+                $columnOptions->getType(),
                 self::convertColumnOptions($columnOptions)
             );
-
-            /*$table->addColumn(
-                Util::toUnderScore($fieldName),
-                $fieldParams['type'],
-                $this->getDbFieldParams($fieldParams)
-            );*/
         }
 
         $deletedColumnOptions = $this->columnOptionsPreparator->prepare(
@@ -406,18 +386,9 @@ class Converter
 
         $table->addColumn(
             'deleted',
-            strtolower($deletedColumnOptions->getType()),
+            $deletedColumnOptions->getType(),
             self::convertColumnOptions($deletedColumnOptions)
         );
-
-       /*$table->addColumn(
-            'deleted',
-            'bool',
-            $this->getDbFieldParams([
-                'type' => 'bool',
-                'default' => false,
-            ])
-        );*/
 
         $table->setPrimaryKey(['id']);
 

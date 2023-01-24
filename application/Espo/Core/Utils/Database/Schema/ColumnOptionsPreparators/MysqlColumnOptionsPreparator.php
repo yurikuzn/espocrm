@@ -59,7 +59,7 @@ class MysqlColumnOptionsPreparator implements ColumnOptionsPreparator
     {
         $columnType = $defs->getParam(self::PARAM_DB_TYPE) ?? $defs->getType();
 
-        $options = ColumnOptions::create($columnType);
+        $options = ColumnOptions::create(strtolower($columnType));
 
         $type = $defs->getType();
         $length = $defs->getLength();
