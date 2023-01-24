@@ -172,7 +172,7 @@ class Utils
             }
         }
 
-        /** @var array<string,mixed> */
+        /** @var array<string, mixed> */
         return $indexList;
     }
 

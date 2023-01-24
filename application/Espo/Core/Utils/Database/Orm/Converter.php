@@ -137,20 +137,20 @@ class Converter
                 $ormMetadata[$entityType]['skipRebuild'] = true;
             }
 
-            /** @var array<string,array<string,mixed>> $ormMetadata */
+            /** @var array<string, array<string, mixed>> $ormMetadata */
             $ormMetadata = Util::merge($ormMetadata, $this->convertEntity($entityType, $entityMetadata));
         }
 
         $ormMetadata = $this->afterFieldsProcess($ormMetadata);
 
         foreach ($ormMetadata as $entityType => $entityOrmMetadata) {
-            /** @var array<string,array<string,mixed>> $ormMetadata */
+            /** @var array<string, array<string, mixed>> $ormMetadata */
             $ormMetadata = Util::merge(
                 $ormMetadata,
                 $this->createRelationsEntityDefs($entityType, $entityOrmMetadata)
             );
 
-            /** @var array<string,array<string,mixed>> $ormMetadata */
+            /** @var array<string, array<string, mixed>> $ormMetadata */
             $ormMetadata = Util::merge(
                 $ormMetadata,
                 $this->createAdditionalEntityTypes($entityType, $entityOrmMetadata)
@@ -714,36 +714,40 @@ class Converter
      */
     private function applyIndexes(&$ormMetadata, string $entityType): void
     {
-        if (isset($ormMetadata[$entityType]['fields'])) {
-            $indexList = SchemaUtils::getEntityIndexListByFieldsDefs($ormMetadata[$entityType]['fields']);
+        $defs = &$ormMetadata[$entityType];
+
+        $defs['indexes'] ??= [];
+
+        if (isset($defs['fields'])) {
+            $indexList = SchemaUtils::getEntityIndexListByFieldsDefs($defs['fields']);
 
             foreach ($indexList as $indexName => $indexParams) {
-                if (!isset($ormMetadata[$entityType]['indexes'][$indexName])) {
-                    $ormMetadata[$entityType]['indexes'][$indexName] = $indexParams;
+                if (!isset($defs['indexes'][$indexName])) {
+                    $defs['indexes'][$indexName] = $indexParams;
                 }
             }
         }
 
-        if (isset($ormMetadata[$entityType]['indexes'])) {
-            foreach ($ormMetadata[$entityType]['indexes'] as $indexName => &$indexData) {
-                $indexDefs = IndexDefs::fromRaw($indexData, $indexName);
+        foreach ($defs['indexes'] as $indexName => &$indexData) {
+            $indexDefs = IndexDefs::fromRaw($indexData, $indexName);
 
-                if (!$indexDefs->getKey()) {
-                    $indexData['key'] = SchemaUtils::generateIndexName($indexDefs, $entityType);
-                }
+            if (!$indexDefs->getKey()) {
+                $indexData['key'] = SchemaUtils::generateIndexName($indexDefs, $entityType);
             }
         }
 
-        if (isset($ormMetadata[$entityType]['relations'])) {
-            foreach ($ormMetadata[$entityType]['relations'] as &$relationData) {
-                if (isset($relationData['indexes'])) {
-                    foreach ($relationData['indexes'] as $indexName => &$indexData) {
-                        $indexDefs = IndexDefs::fromRaw($indexData, $indexName);
+        if (isset($defs['relations'])) {
+            foreach ($defs['relations'] as &$relationData) {
+                if (!isset($relationData['indexes'])) {
+                    continue;
+                }
 
-                        $relationName = $relationData['relationName'] ?? '';
+                foreach ($relationData['indexes'] as $indexName => &$indexData) {
+                    $indexDefs = IndexDefs::fromRaw($indexData, $indexName);
 
-                        $indexData['key'] = SchemaUtils::generateIndexName($indexDefs, $relationName);
-                    }
+                    $relationName = $relationData['relationName'] ?? '';
+
+                    $indexData['key'] = SchemaUtils::generateIndexName($indexDefs, $relationName);
                 }
             }
         }
@@ -755,11 +759,21 @@ class Converter
      */
     private function createAdditionalEntityTypes(string $entityType, array $defs): array
     {
-        if (empty($defs['additionalTables'])) {
+        /** @var array<string, array<string, mixed>> $additionalDefs */
+        $additionalDefs = $defs['additionalTables'] ?? [];
+
+        if ($additionalDefs === []) {
             return [];
         }
 
-        return $defs['additionalTables'];
+        /** @var string[] $entityTypeList */
+        $entityTypeList = array_keys($additionalDefs);
+
+        foreach ($entityTypeList as $itemEntityType) {
+            $this->applyIndexes($additionalDefs, $itemEntityType);
+        }
+
+        return $additionalDefs;
     }
 
     /**
