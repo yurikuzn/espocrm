@@ -46,14 +46,6 @@ class Utils
         $indexList = [];
 
         foreach ($defs as $entityType => $entityParams) {
-            /*$entityIndexList = self::getEntityIndexListByFieldsDefs($entityParams['fields'] ?? []);
-
-            foreach ($entityIndexList as $indexName => $indexParams) {
-                if (!isset($entityParams['indexes'][$indexName])) {
-                    $entityParams['indexes'][$indexName] = $indexParams;
-                }
-            }*/
-
             $indexes = $entityParams['indexes'] ?? [];
 
             foreach ($indexes as $indexName => $indexParams) {
@@ -101,82 +93,6 @@ class Utils
         }
 
         /** @var array<string, array<string, mixed>> */
-        return $indexList;
-    }
-
-    /**
-     * @param array<string, mixed> $fieldDefs
-     */
-    private static function getIndexTypeByFieldDefs(array $fieldDefs): ?string
-    {
-        if ($fieldDefs['type'] != 'id' && isset($fieldDefs['unique']) && $fieldDefs['unique']) {
-            return 'unique';
-        }
-
-        if (isset($fieldDefs['index']) && $fieldDefs['index']) {
-            return 'index';
-        }
-
-        return null;
-    }
-
-    /**
-     * @param array<string, mixed> $fieldDefs
-     */
-    private static function getIndexNameByFieldDefs(string $fieldName, array $fieldDefs): ?string
-    {
-        $indexType = self::getIndexTypeByFieldDefs($fieldDefs);
-
-        if ($indexType) {
-            $keyValue = $fieldDefs[$indexType];
-
-            if ($keyValue === true) {
-                return $fieldName;
-            }
-
-            if (is_string($keyValue)) {
-                return $keyValue;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param array<string, mixed> $fieldsDefs
-     * @return array<string, mixed>
-     */
-    public static function getEntityIndexListByFieldsDefs(array $fieldsDefs, bool $isTableColumnNames = false): array
-    {
-        $indexList = [];
-
-        foreach ($fieldsDefs as $fieldName => $fieldParams) {
-            if (isset($fieldParams['notStorable']) && $fieldParams['notStorable']) {
-                continue;
-            }
-
-            $indexType = self::getIndexTypeByFieldDefs($fieldParams);
-            $indexName = self::getIndexNameByFieldDefs($fieldName, $fieldParams);
-
-            if (!$indexType || !$indexName) {
-                continue;
-            }
-
-            $keyValue = $fieldParams[$indexType];
-
-            $columnName = $isTableColumnNames ? Util::toUnderScore($fieldName) : $fieldName;
-
-            if ($keyValue === true) {
-                $indexList[$indexName]['type'] = $indexType;
-                $indexList[$indexName]['columns'] = [$columnName];
-            }
-            else if (is_string($keyValue)) {
-                $indexList[$indexName]['type'] = $indexType;
-                $indexList[$indexName]['columns'][] = $columnName;
-            }
-        }
-
-        /** @var array<string, mixed> */
         return $indexList;
     }
 
