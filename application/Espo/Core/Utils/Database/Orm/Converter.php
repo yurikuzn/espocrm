@@ -738,16 +738,56 @@ class Converter
 
         if (isset($defs['relations'])) {
             foreach ($defs['relations'] as &$relationData) {
-                if (!isset($relationData['indexes'])) {
+                $type = $relationData['type'] ?? null;
+
+                if ($type !== Entity::MANY_MANY) {
                     continue;
                 }
 
+                $relationName = $relationData['relationName'] ?? '';
+
+                $relationData['indexes'] ??= [];
+
+                $uniqueColumnList = [];
+
+                foreach (($relationData['midKeys'] ?? []) as $midKey) {
+                    $indexName = $midKey;
+
+                    $indexDefs = IndexDefs::fromRaw(['columns' => [$midKey]], $indexName);
+
+                    $relationData['indexes'][$indexName] = [
+                        'columns' => $indexDefs->getColumnList(),
+                        'key' => SchemaUtils::generateIndexName($indexDefs, ucfirst($relationName)),
+                    ];
+
+                    $uniqueColumnList[] = $midKey;
+                }
+
                 foreach ($relationData['indexes'] as $indexName => &$indexData) {
+                    if (!empty($indexData['key'])) {
+                        continue;
+                    }
+
                     $indexDefs = IndexDefs::fromRaw($indexData, $indexName);
 
-                    $relationName = $relationData['relationName'] ?? '';
+                    $indexData['key'] = SchemaUtils::generateIndexName($indexDefs, ucfirst($relationName));
+                }
 
-                    $indexData['key'] = SchemaUtils::generateIndexName($indexDefs, $relationName);
+                foreach (($relationData['conditions'] ?? []) as $column => $fieldParams) {
+                    $uniqueColumnList[] = $column;
+                }
+
+                if ($uniqueColumnList !== []) {
+                    $indexName = implode('_', $uniqueColumnList);
+
+                    $indexDefs = IndexDefs
+                        ::fromRaw(['columns' => $uniqueColumnList, 'type' => 'unique'], $indexName);
+
+                    $relationData['indexes'][$indexName] = [
+                        'type' => 'unique',
+                        'columns' => $indexDefs->getColumnList(),
+                        'key' => SchemaUtils::generateIndexName($indexDefs, ucfirst($relationName)),
+                    ];
                 }
             }
         }

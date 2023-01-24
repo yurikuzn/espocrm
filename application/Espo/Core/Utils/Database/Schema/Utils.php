@@ -59,7 +59,7 @@ class Utils
             foreach ($indexes as $indexName => $indexParams) {
                 $indexDefs = IndexDefs::fromRaw($indexParams, $indexName);
 
-                $tableIndexName = $indexParams['key'] ?? null;// ?? self::generateIndexName($indexDefs, $entityType);
+                $tableIndexName = $indexParams['key'] ?? null;
 
                 if (!$tableIndexName) {
                     continue;

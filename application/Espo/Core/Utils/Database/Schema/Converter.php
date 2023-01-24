@@ -42,6 +42,7 @@ use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Types\Type as DbalType;
 use Espo\ORM\Defs\IndexDefs;
+use Espo\ORM\Entity;
 
 class Converter
 {
@@ -308,17 +309,17 @@ class Converter
     /**
      * Prepare a relation table for the manyMany relation.
      *
-     * @param string $entityName
+     * @param string $entityType
      * @param array<string, mixed> $relationParams
      * @throws SchemaException
      */
-    private function prepareManyMany(string $entityName, $relationParams): Table
+    private function prepareManyMany(string $entityType, $relationParams): Table
     {
         $relationName = $relationParams['relationName'];
 
         $tableName = Util::toUnderScore($relationName);
 
-        $this->log->debug('DBAL: prepareManyMany invoked for ' . $entityName, [
+        $this->log->debug('DBAL: prepareManyMany invoked for ' . $entityType, [
             'tableName' => $tableName, 'parameters' => $relationParams
         ]);
 
@@ -338,53 +339,52 @@ class Converter
 
         $table->addColumn('id', 'bigint', $idColumnOptions);
 
-        // Add midKeys to the schema.
-        $uniqueIndex = [];
+        //$uniqueIndex = [];
 
-        if (empty($relationParams['midKeys'])) {
-            $this->log->debug('REBUILD: midKeys are empty!', [
-                'scope' => $entityName, 'tableName' => $tableName,
-                'parameters' => $relationParams
+        $midKeys = $relationParams['midKeys'] ?? [];
+
+        if ($midKeys === []) {
+            $this->log->warning('REBUILD: Relationship midKeys are empty.', [
+                'scope' => $entityType,
+                'tableName' => $tableName,
+                'parameters' => $relationParams,
             ]);
         }
-        else {
-            foreach ($relationParams['midKeys'] as $midKey) {
-                $columnName = Util::toUnderScore($midKey);
 
-                $table->addColumn(
-                    $columnName,
-                    $this->idParams['dbType'],
-                    $this->getDbFieldParams([
-                        'type' => 'foreignId',
-                        'len' => $this->idParams['len'],
-                    ])
-                );
+        foreach ($midKeys as $midKey) {
+            $columnName = Util::toUnderScore($midKey);
 
-                $indexDefs = IndexDefs::fromRaw([], $columnName);
+            $table->addColumn(
+                $columnName,
+                $this->idParams['dbType'],
+                $this->getDbFieldParams([
+                    'type' => 'foreignId',
+                    'len' => $this->idParams['len'],
+                ])
+            );
 
-                $indexName = SchemaUtils::generateIndexName($indexDefs, $relationName);
+            /*$indexDefs = IndexDefs::fromRaw([], $columnName);
 
-                $table->addIndex([$columnName], $indexName);
+            $indexName = SchemaUtils::generateIndexName($indexDefs, $relationName);
 
-                $uniqueIndex[] = $columnName;
-            }
+            $table->addIndex([$columnName], $indexName);*/
+
+            $uniqueIndex[] = $columnName;
         }
 
-        if (!empty($relationParams['additionalColumns'])) {
-            foreach($relationParams['additionalColumns'] as $fieldName => $fieldParams) {
-                if (!isset($fieldParams['type'])) {
-                    $fieldParams = array_merge($fieldParams, [
-                        'type' => 'varchar',
-                        'len' => $this->defaultLength['varchar'],
-                    ]);
-                }
-
-                $table->addColumn(
-                    Util::toUnderScore($fieldName),
-                    $fieldParams['type'],
-                    $this->getDbFieldParams($fieldParams)
-                );
+        foreach (($relationParams['additionalColumns'] ?? []) as $fieldName => $fieldParams) {
+            if (!isset($fieldParams['type'])) {
+                $fieldParams = array_merge($fieldParams, [
+                    'type' => 'varchar',
+                    'len' => $this->defaultLength['varchar'],
+                ]);
             }
+
+            $table->addColumn(
+                Util::toUnderScore($fieldName),
+                $fieldParams['type'],
+                $this->getDbFieldParams($fieldParams)
+            );
         }
 
         $table->addColumn(
@@ -398,34 +398,32 @@ class Converter
 
         $table->setPrimaryKey(['id']);
 
-        // Add defined indexes.
         if (!empty($relationParams['indexes'])) {
             $normalizedIndexes = SchemaUtils::getIndexes([
-                $entityName => [
+                $entityType => [
                     'indexes' => $relationParams['indexes']
                 ]
             ]);
 
-            $this->addIndexes($table, $normalizedIndexes[$entityName]);
+            $this->addIndexes($table, $normalizedIndexes[$entityType]);
         }
 
-        // Add unique indexes.
-        if (!empty($relationParams['conditions'])) {
+        /*if (!empty($relationParams['conditions'])) {
             foreach ($relationParams['conditions'] as $fieldName => $fieldParams) {
                 $uniqueIndex[] = Util::toUnderScore($fieldName);
             }
-        }
+        }*/
 
-        if (!empty($uniqueIndex)) {
+        //if (!empty($uniqueIndex)) {
             /** @var string[] $uniqueIndex */
-            $uniqueIndexName = implode('_', $uniqueIndex);
+        /*    $uniqueIndexName = implode('_', $uniqueIndex);
 
             $indexDefs = IndexDefs::fromRaw(['type' => 'unique'], $uniqueIndexName);
 
             $indexName = SchemaUtils::generateIndexName($indexDefs, $relationName);
 
             $table->addUniqueIndex($uniqueIndex, $indexName);
-        }
+        }*/
 
         return $table;
     }
