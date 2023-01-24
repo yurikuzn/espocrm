@@ -161,6 +161,23 @@ class Converter
     }
 
     /**
+     * @todo Move to IndexHelper interface.
+     */
+    private function generateIndexName(IndexDefs $defs, string $entityType): string
+    {
+        $maxLength = 60;
+
+        $name = $defs->getName();
+        $prefix = $defs->isUnique() ? 'UNIQ' : 'IDX';
+
+        $parts = [$prefix, strtoupper(Util::toUnderScore($name))];
+
+        $key = implode('_', $parts);
+
+        return substr($key, 0, $maxLength);
+    }
+
+    /**
      * @param array<string, mixed> $entityMetadata
      * @return array<string, mixed>
      */
@@ -732,7 +749,7 @@ class Converter
             $indexDefs = IndexDefs::fromRaw($indexData, $indexName);
 
             if (!$indexDefs->getKey()) {
-                $indexData['key'] = SchemaUtils::generateIndexName($indexDefs, $entityType);
+                $indexData['key'] = $this->generateIndexName($indexDefs, $entityType);
             }
         }
 
@@ -757,7 +774,7 @@ class Converter
 
                     $relationData['indexes'][$indexName] = [
                         'columns' => $indexDefs->getColumnList(),
-                        'key' => SchemaUtils::generateIndexName($indexDefs, ucfirst($relationName)),
+                        'key' => $this->generateIndexName($indexDefs, ucfirst($relationName)),
                     ];
 
                     $uniqueColumnList[] = $midKey;
@@ -770,7 +787,7 @@ class Converter
 
                     $indexDefs = IndexDefs::fromRaw($indexData, $indexName);
 
-                    $indexData['key'] = SchemaUtils::generateIndexName($indexDefs, ucfirst($relationName));
+                    $indexData['key'] = $this->generateIndexName($indexDefs, ucfirst($relationName));
                 }
 
                 foreach (($relationData['conditions'] ?? []) as $column => $fieldParams) {
@@ -786,7 +803,7 @@ class Converter
                     $relationData['indexes'][$indexName] = [
                         'type' => 'unique',
                         'columns' => $indexDefs->getColumnList(),
-                        'key' => SchemaUtils::generateIndexName($indexDefs, ucfirst($relationName)),
+                        'key' => $this->generateIndexName($indexDefs, ucfirst($relationName)),
                     ];
                 }
             }

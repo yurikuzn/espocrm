@@ -110,23 +110,6 @@ class Utils
     }
 
     /**
-     * @todo Move to IndexHelper interface.
-     */
-    public static function generateIndexName(IndexDefs $defs, string $entityType): string
-    {
-        $maxLength = 60;
-
-        $name = $defs->getName();
-        $prefix = $defs->isUnique() ? 'UNIQ' : 'IDX';
-
-        $parts = [$prefix, strtoupper(Util::toUnderScore($name))];
-
-        $key = implode('_', $parts);
-
-        return substr($key, 0, $maxLength);
-    }
-
-    /**
      * @deprecated
      *
      * @param array<string,mixed> $ormMeta
