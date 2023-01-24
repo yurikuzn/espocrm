@@ -50,12 +50,12 @@ class Converter
     private ?DbalSchema $dbalSchema = null;
 
     private const DEFAULT_PLATFORM = 'Mysql';
+    private const ID_LENGTH = 24;
+    private const DEFAULT_VARCHAR_LENGTH = 255;
 
     private string $tablesPath = 'Core/Utils/Database/Schema/tables';
 
-    /**
-     * @var string[]
-     */
+    /** @var string[] */
     private $typeList;
 
     /**
@@ -69,24 +69,6 @@ class Converter
         'autoincrement' => 'autoincrement',
         'precision' => 'precision',
         'scale' => 'scale',
-    ];
-
-    /**
-     * @todo Same array in Converters\Orm.
-     * @var array<string,mixed>
-     */
-    private $idParams = [
-        'dbType' => 'varchar',
-        'len' => 24,
-    ];
-
-    /**
-     * @todo Same array in Converters\Orm.
-     * @var array<string,mixed>
-     */
-    private $defaultLength = [
-        'varchar' => 255,
-        'int' => 11,
     ];
 
     /** @var string[] */
@@ -345,9 +327,9 @@ class Converter
         foreach ($midKeys as $midKey) {
             $columnOptions = $this->columnOptionsPreparator->prepare(
                 AttributeDefs::fromRaw([
-                    'dbType' => $this->idParams['dbType'],
+                    'dbType' => Entity::VARCHAR,
                     'type' => Entity::FOREIGN_ID,
-                    'len' => $this->idParams['len'],
+                    'len' => self::ID_LENGTH,
                 ], $midKey)
             );
 
@@ -361,8 +343,8 @@ class Converter
         foreach (($relationParams['additionalColumns'] ?? []) as $fieldName => $fieldParams) {
             if (!isset($fieldParams['type'])) {
                 $fieldParams = array_merge($fieldParams, [
-                    'type' => 'varchar',
-                    'len' => $this->defaultLength['varchar'],
+                    'type' => Entity::VARCHAR,
+                    'len' => self::DEFAULT_VARCHAR_LENGTH,
                 ]);
             }
 
