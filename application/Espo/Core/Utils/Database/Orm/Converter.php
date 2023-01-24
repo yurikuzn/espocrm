@@ -38,6 +38,8 @@ use Espo\Core\Utils\Metadata\Helper as MetadataHelper;
 
 class Converter
 {
+    private const DEFAULT_PLATFORM = 'Mysql';
+
     /** @var ?array<string, mixed> */
     private $entityDefs = null;
 
@@ -100,12 +102,20 @@ class Converter
         'additionalTables',
     ];
 
+    private IndexHelper $indexHelper;
+
     public function __construct(
         private Metadata $metadata,
         private Config $config,
         private RelationManager $relationManager,
-        private MetadataHelper $metadataHelper
-    ) {}
+        private MetadataHelper $metadataHelper,
+        IndexHelperFactory $indexHelperFactory
+    ) {
+
+        $platform = $this->config->get('database.platform') ?? self::DEFAULT_PLATFORM;
+
+        $this->indexHelper = $indexHelperFactory->create($platform);
+    }
 
     /**
      * @param bool $reload
@@ -142,7 +152,7 @@ class Converter
 
         $ormMetadata = $this->afterFieldsProcess($ormMetadata);
 
-        foreach ($ormMetadata as $entityType => $entityOrmMetadata) {
+        foreach ($ormMetadata as $entityOrmMetadata) {
             /** @var array<string, array<string, mixed>> $ormMetadata */
             $ormMetadata = Util::merge(
                 $ormMetadata,
@@ -159,21 +169,9 @@ class Converter
         return $this->afterProcess($ormMetadata);
     }
 
-    /**
-     * @todo Move to IndexHelper interface.
-     */
-    private function generateIndexName(IndexDefs $defs, string $entityType): string
+    private function composeIndexKey(IndexDefs $defs, string $entityType): string
     {
-        $maxLength = 60;
-
-        $name = $defs->getName();
-        $prefix = $defs->isUnique() ? 'UNIQ' : 'IDX';
-
-        $parts = [$prefix, strtoupper(Util::toUnderScore($name))];
-
-        $key = implode('_', $parts);
-
-        return substr($key, 0, $maxLength);
+        return $this->indexHelper->composeKey($defs, $entityType);
     }
 
     /**
@@ -748,7 +746,7 @@ class Converter
             $indexDefs = IndexDefs::fromRaw($indexData, $indexName);
 
             if (!$indexDefs->getKey()) {
-                $indexData['key'] = $this->generateIndexName($indexDefs, $entityType);
+                $indexData['key'] = $this->composeIndexKey($indexDefs, $entityType);
             }
         }
 
@@ -773,7 +771,7 @@ class Converter
 
                     $relationData['indexes'][$indexName] = [
                         'columns' => $indexDefs->getColumnList(),
-                        'key' => $this->generateIndexName($indexDefs, ucfirst($relationName)),
+                        'key' => $this->composeIndexKey($indexDefs, ucfirst($relationName)),
                     ];
 
                     $uniqueColumnList[] = $midKey;
@@ -786,7 +784,7 @@ class Converter
 
                     $indexDefs = IndexDefs::fromRaw($indexData, $indexName);
 
-                    $indexData['key'] = $this->generateIndexName($indexDefs, ucfirst($relationName));
+                    $indexData['key'] = $this->composeIndexKey($indexDefs, ucfirst($relationName));
                 }
 
                 foreach (($relationData['conditions'] ?? []) as $column => $fieldParams) {
@@ -802,7 +800,7 @@ class Converter
                     $relationData['indexes'][$indexName] = [
                         'type' => 'unique',
                         'columns' => $indexDefs->getColumnList(),
-                        'key' => $this->generateIndexName($indexDefs, ucfirst($relationName)),
+                        'key' => $this->composeIndexKey($indexDefs, ucfirst($relationName)),
                     ];
                 }
             }
