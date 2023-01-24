@@ -31,6 +31,7 @@ namespace Espo\Core\Utils\Database\Schema;
 
 use Doctrine\DBAL\Schema\SchemaException;
 use Espo\Core\Utils\Config;
+use Espo\Core\Utils\Database\Helper;
 use Espo\Core\Utils\Database\Schema\Utils as SchemaUtils;
 use Espo\Core\Utils\File\Manager as FileManager;
 use Espo\Core\Utils\Log;
@@ -46,12 +47,8 @@ use Espo\ORM\Defs\IndexDefs;
 class Converter
 {
     private ?DbalSchema $dbalSchema = null;
-    private Schema $databaseSchema;
-    private FileManager $fileManager;
-    private Metadata $metadata;
-    private Config $config;
-    private Log $log;
-    private PathProvider $pathProvider;
+
+    private const DEFAULT_PLATFORM = 'Mysql';
 
     private string $tablesPath = 'Core/Utils/Database/Schema/tables';
 
@@ -91,34 +88,27 @@ class Converter
         'int' => 11,
     ];
 
-    /**
-     * @var string[]
-     */
+    /** @var string[] */
     private $notStorableTypes = [
         'foreign',
     ];
 
-    /**
-     * @var ?int
-     */
-    private $maxIndexLength = null;
+    private ColumnOptionsPreparator $columnOptionsPreparator;
 
     public function __construct(
-        Metadata $metadata,
-        FileManager $fileManager,
-        Schema $databaseSchema,
-        Config $config,
-        Log $log,
-        PathProvider $pathProvider
+        private Metadata $metadata,
+        private FileManager $fileManager,
+        private Config $config,
+        private Log $log,
+        private PathProvider $pathProvider,
+        ColumnOptionsPreparatorFactory $columnOptionsPreparatorFactory
     ) {
-        $this->metadata = $metadata;
-        $this->fileManager = $fileManager;
-        $this->databaseSchema = $databaseSchema;
-        $this->config = $config;
-        $this->log = $log;
-        $this->pathProvider = $pathProvider;
 
         $this->typeList = array_keys(DbalType::getTypesMap());
+
+        $platform = $this->config->get('database.platform') ?? self::DEFAULT_PLATFORM;
+
+        $this->columnOptionsPreparator = $columnOptionsPreparatorFactory->create($platform);
     }
 
     private function getSchema(bool $reload = false): DbalSchema
@@ -130,12 +120,12 @@ class Converter
         return $this->dbalSchema;
     }
 
-    private function getDatabaseSchema(): Schema
+    /*private function getDatabaseSchema(): Schema
     {
         return $this->databaseSchema;
-    }
+    }*/
 
-    private function getMaxIndexLength(): int
+    /*private function getMaxIndexLength(): int
     {
         if (!isset($this->maxIndexLength)) {
             $this->maxIndexLength = $this->getDatabaseSchema()
@@ -144,7 +134,7 @@ class Converter
         }
 
         return $this->maxIndexLength;
-    }
+    }*/
 
     /**
      * Schema conversation process.
@@ -420,6 +410,51 @@ class Converter
     }
 
     /**
+     * @todo Move to static class. Add unit test.
+     * @return array<string, mixed>
+     */
+    private static function convertColumnOptions(ColumnOptions $options): array
+    {
+        $result = [
+            'notnull' => $options->isNotNull(),
+        ];
+
+        if ($options->getLength() !== null) {
+            $result['length'] = $options->getLength();
+        }
+
+        if ($options->getDefault() !== null) {
+            $result['default'] = $options->getDefault();
+        }
+
+        if ($options->getAutoincrement() !== null) {
+            $result['autoincrement'] = $options->getAutoincrement();
+        }
+
+        if ($options->getPrecision() !== null) {
+            $result['precision'] = $options->getPrecision();
+        }
+
+        if ($options->getScale() !== null) {
+            $result['scale'] = $options->getScale();
+        }
+
+        if ($options->getUnsigned() !== null) {
+            $result['unsigned'] = $options->getUnsigned();
+        }
+
+        if ($options->getPlatformOptions()) {
+            $result['platformOptions'] = [];
+
+            if ($options->getPlatformOptions()->getCollation()) {
+                $result['platformOptions']['collation'] = $options->getPlatformOptions()->getCollation();
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * @param array<string, mixed> $fieldParams
      * @return array<string, mixed>
      */
@@ -447,9 +482,9 @@ class Converter
             case 'id':
             case 'foreignId':
             case 'foreignType':
-                if ($this->getMaxIndexLength() < 3072) {
+                /*if ($this->getMaxIndexLength() < 3072) {
                     $fieldParams['utf8mb3'] = true;
-                }
+                }*/
 
                 break;
 

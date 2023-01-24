@@ -36,17 +36,15 @@ use Doctrine\DBAL\Schema\SchemaDiff as DBALSchemaDiff;
 use Doctrine\DBAL\Schema\SchemaException;
 use Doctrine\DBAL\Types\Type;
 
+use Espo\Core\Binding\BindingContainerBuilder;
 use Espo\Core\InjectableFactory;
-use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Database\Converter as DatabaseConverter;
 use Espo\Core\Utils\Database\DBAL\Schema\Comparator;
 use Espo\Core\Utils\Database\Helper;
 use Espo\Core\Utils\File\ClassMap;
 use Espo\Core\Utils\File\Manager as FileManager;
 use Espo\Core\Utils\Log;
-use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Metadata\OrmMetadataData;
-use Espo\Core\Utils\Module\PathProvider;
 use Espo\Core\Utils\Util;
 
 use Throwable;
@@ -69,13 +67,10 @@ class Schema
     private $rebuildActions = null;
 
     public function __construct(
-        private Config $config,
-        private Metadata $metadata,
         private FileManager $fileManager,
         private ClassMap $classMap,
         protected OrmMetadataData $ormMetadataData,
         private Log $log,
-        PathProvider $pathProvider,
         DatabaseConverter $databaseConverter,
         private Helper $databaseHelper,
         private InjectableFactory $injectableFactory
@@ -86,14 +81,21 @@ class Schema
 
         $this->initFieldTypes();
 
-        $this->schemaConverter = new Converter(
+        $this->schemaConverter = $this->injectableFactory->createWithBinding(
+            Converter::class,
+            BindingContainerBuilder::create()
+                ->bindInstance(Helper::class, $this->databaseHelper)
+                ->build()
+        );
+
+        /*$this->schemaConverter = new Converter(
             $this->metadata,
             $this->fileManager,
             $this,
             $this->config,
             $this->log,
             $pathProvider
-        );
+        );*/
     }
 
     public function getDatabaseHelper(): Helper
@@ -123,7 +125,7 @@ class Schema
 
             $filePath = Util::concatPath($this->fieldTypePath, $typeName . 'Type');
 
-            /** @var class-string<\Doctrine\DBAL\Types\Type> $class */
+            /** @var class-string<Type> $class */
             $class = Util::getClassName($filePath);
 
             if (!Type::hasType($dbalTypeName)) {
