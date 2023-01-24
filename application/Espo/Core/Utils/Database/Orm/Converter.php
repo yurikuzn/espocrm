@@ -32,7 +32,6 @@ namespace Espo\Core\Utils\Database\Orm;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Defs\IndexDefs;
 use Espo\ORM\Entity;
-use Espo\Core\Utils\Database\Schema\Utils as SchemaUtils;
 use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Metadata\Helper as MetadataHelper;

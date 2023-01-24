@@ -339,8 +339,6 @@ class Converter
 
         $table->addColumn('id', 'bigint', $idColumnOptions);
 
-        //$uniqueIndex = [];
-
         $midKeys = $relationParams['midKeys'] ?? [];
 
         if ($midKeys === []) {
@@ -362,14 +360,6 @@ class Converter
                     'len' => $this->idParams['len'],
                 ])
             );
-
-            /*$indexDefs = IndexDefs::fromRaw([], $columnName);
-
-            $indexName = SchemaUtils::generateIndexName($indexDefs, $relationName);
-
-            $table->addIndex([$columnName], $indexName);*/
-
-            $uniqueIndex[] = $columnName;
         }
 
         foreach (($relationParams['additionalColumns'] ?? []) as $fieldName => $fieldParams) {
@@ -407,23 +397,6 @@ class Converter
 
             $this->addIndexes($table, $normalizedIndexes[$entityType]);
         }
-
-        /*if (!empty($relationParams['conditions'])) {
-            foreach ($relationParams['conditions'] as $fieldName => $fieldParams) {
-                $uniqueIndex[] = Util::toUnderScore($fieldName);
-            }
-        }*/
-
-        //if (!empty($uniqueIndex)) {
-            /** @var string[] $uniqueIndex */
-        /*    $uniqueIndexName = implode('_', $uniqueIndex);
-
-            $indexDefs = IndexDefs::fromRaw(['type' => 'unique'], $uniqueIndexName);
-
-            $indexName = SchemaUtils::generateIndexName($indexDefs, $relationName);
-
-            $table->addUniqueIndex($uniqueIndex, $indexName);
-        }*/
 
         return $table;
     }
