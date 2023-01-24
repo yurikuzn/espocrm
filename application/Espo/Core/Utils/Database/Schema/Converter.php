@@ -86,7 +86,6 @@ class Converter
         private PathProvider $pathProvider,
         ColumnOptionsPreparatorFactory $columnOptionsPreparatorFactory
     ) {
-
         $this->typeList = array_keys(DbalType::getTypesMap());
 
         $platform = $this->config->get('database.platform') ?? self::DEFAULT_PLATFORM;
