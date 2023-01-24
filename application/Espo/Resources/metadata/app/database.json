@@ -2,5 +2,9 @@
     "dbalConnectionFactoryClassNameMap": {
         "Mysql": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\MysqlConnectionFactory",
         "Postgresql": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\PostgresqlConnectionFactory"
+    },
+    "indexHelperClassNameMap": {
+        "Mysql": "Espo\\Core\\Utils\\Database\\Orm\\IndexHelpers\\MysqlIndexHelper",
+        "Postgresql": "Espo\\Core\\Utils\\Database\\Orm\\IndexHelpers\\PostgresqlIndexHelper"
     }
 }

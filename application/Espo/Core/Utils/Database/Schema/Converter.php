@@ -42,7 +42,6 @@ use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Types\Type as DbalType;
 use Espo\ORM\Defs\IndexDefs;
-use Espo\ORM\Entity;
 
 class Converter
 {
