@@ -30,7 +30,6 @@
 namespace Espo\Core\Utils\Database\Schema;
 
 use Espo\Core\Utils\Config;
-use Espo\Core\Utils\Database\Schema\Utils as SchemaUtils;
 use Espo\Core\Utils\File\Manager as FileManager;
 use Espo\Core\Utils\Log;
 use Espo\Core\Utils\Metadata;
@@ -86,16 +85,14 @@ class Processor
         $this->log->debug('Schema\Processor - Start');
 
         $ormMeta = $this->amendMetadata($ormMeta, $entityList);
-        $indexes = SchemaUtils::getIndexes($ormMeta);
         $tables = [];
 
         $schema = new DbalSchema();
 
         foreach ($ormMeta as $entityType => $entityParams) {
             $entityDefs = EntityDefs::fromRaw($entityParams, $entityType);
-            $itemIndexes = $indexes[$entityType] ?? [];
 
-            $this->processEntity($entityDefs, $schema, $tables, $itemIndexes);
+            $this->processEntity($entityDefs, $schema, $tables);
         }
 
         foreach ($ormMeta as $entityType => $entityParams) {
@@ -117,16 +114,10 @@ class Processor
 
     /**
      * @param array<string, Table> $tables
-     * @param array<string, array<string, mixed>> $indexes
      * @throws SchemaException
      */
-    private function processEntity(
-        EntityDefs $entityDefs,
-        DbalSchema $schema,
-        array &$tables,
-        array $indexes
-    ): void {
-
+    private function processEntity(EntityDefs $entityDefs, DbalSchema $schema, array &$tables): void
+    {
         if ($entityDefs->getParam('skipRebuild')) {
             return;
         }

@@ -27,31 +27,38 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Core\Utils\Database\Schema\rebuildActions;
+namespace Espo\Core\Rebuild\Actions;
 
-use Espo\Core\Utils\Database\Schema\BaseRebuildActions as Base;
+use Espo\Core\ApplicationUser;
+use Espo\Core\Rebuild\RebuildAction;
+use Espo\Core\Utils\Config;
+use Espo\Entities\User;
+use Espo\ORM\EntityManager;
 
-class AddSystemUser extends Base
+class AddSystemUser implements RebuildAction
 {
-    /**
-     * @return void
-     */
-    public function afterRebuild()
-    {
-        $userId = $this->getConfig()->get('systemUserAttributes.id');
+    public function __construct(
+        private EntityManager $entityManager,
+        private Config $config
+    ) {}
 
-        $user = $this->getEntityManager()->getEntity('User', $userId);
+    public function process(): void
+    {
+        $userId = ApplicationUser::SYSTEM_USER_ID;
+
+        $repository = $this->entityManager->getRDBRepositoryByClass(User::class);
+
+        $user = $repository->getById($userId);
 
         if ($user) {
             return;
         }
 
-        $systemUserAttributes = $this->getConfig()->get('systemUserAttributes');
+        /** @var array<string, mixed> $attributes */
+        $attributes = $this->config->get('systemUserAttributes');
 
-        $user = $this->getEntityManager()->getNewEntity('User');
-
-        $user->set($systemUserAttributes);
-
-        $this->getEntityManager()->saveEntity($user);
+        $user = $repository->getNew();
+        $user->set($attributes);
+        $repository->save($user);
     }
 }

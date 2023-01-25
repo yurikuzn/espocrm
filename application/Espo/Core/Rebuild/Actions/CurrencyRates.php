@@ -27,19 +27,17 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Core\Utils\Database\Schema\rebuildActions;
+namespace Espo\Core\Rebuild\Actions;
 
+use Espo\Core\Rebuild\RebuildAction;
 use Espo\Core\Utils\Currency\DatabasePopulator;
 
-class Currency extends \Espo\Core\Utils\Database\Schema\BaseRebuildActions
+class CurrencyRates implements RebuildAction
 {
-    /**
-     * @return void
-     */
-    public function afterRebuild()
-    {
-        $populator = new DatabasePopulator($this->getConfig(), $this->getEntityManager());
+    public function __construct(private DatabasePopulator $databasePopulator) {}
 
-        $populator->process();
+    public function process(): void
+    {
+        $this->databasePopulator->process();
     }
 }
