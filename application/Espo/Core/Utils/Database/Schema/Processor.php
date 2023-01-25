@@ -252,7 +252,7 @@ class Processor
         $table->addColumn(
             $column->getName(),
             $column->getType(),
-            self::convertColumnOptions($column)
+            self::convertColumn($column)
         );
     }
 
@@ -393,41 +393,41 @@ class Processor
      * @todo Move to static class. Add unit test.
      * @return array<string, mixed>
      */
-    private static function convertColumnOptions(Column $options): array
+    private static function convertColumn(Column $column): array
     {
         $result = [
-            'notnull' => $options->isNotNull(),
+            'notnull' => $column->isNotNull(),
         ];
 
-        if ($options->getLength() !== null) {
-            $result['length'] = $options->getLength();
+        if ($column->getLength() !== null) {
+            $result['length'] = $column->getLength();
         }
 
-        if ($options->getDefault() !== null) {
-            $result['default'] = $options->getDefault();
+        if ($column->getDefault() !== null) {
+            $result['default'] = $column->getDefault();
         }
 
-        if ($options->getAutoincrement() !== null) {
-            $result['autoincrement'] = $options->getAutoincrement();
+        if ($column->getAutoincrement() !== null) {
+            $result['autoincrement'] = $column->getAutoincrement();
         }
 
-        if ($options->getPrecision() !== null) {
-            $result['precision'] = $options->getPrecision();
+        if ($column->getPrecision() !== null) {
+            $result['precision'] = $column->getPrecision();
         }
 
-        if ($options->getScale() !== null) {
-            $result['scale'] = $options->getScale();
+        if ($column->getScale() !== null) {
+            $result['scale'] = $column->getScale();
         }
 
-        if ($options->getUnsigned() !== null) {
-            $result['unsigned'] = $options->getUnsigned();
+        if ($column->getUnsigned() !== null) {
+            $result['unsigned'] = $column->getUnsigned();
         }
 
-        if ($options->getPlatformOptions()) {
+        if ($column->getPlatformOptions()) {
             $result['platformOptions'] = [];
 
-            if ($options->getPlatformOptions()->getCollation()) {
-                $result['platformOptions']['collation'] = $options->getPlatformOptions()->getCollation();
+            if ($column->getPlatformOptions()->getCollation()) {
+                $result['platformOptions']['collation'] = $column->getPlatformOptions()->getCollation();
             }
         }
 
