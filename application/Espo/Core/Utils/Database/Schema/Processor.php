@@ -50,22 +50,13 @@ use Doctrine\DBAL\Types\Type as DbalType;
 
 class Processor
 {
-    private ?DbalSchema $dbalSchema = null;
-
     private const DEFAULT_PLATFORM = 'Mysql';
-    private const ID_LENGTH = 24;
+    private const ID_LENGTH = 24; // @todo Make configurable.
     private const DEFAULT_VARCHAR_LENGTH = 255;
 
     private string $tablesPath = 'Core/Utils/Database/Schema/tables';
-
     /** @var string[] */
     private $typeList;
-
-    /** @var string[] */
-    private $notStorableTypes = [
-        'foreign',
-    ];
-
     private ColumnPreparator $columnPreparator;
 
     public function __construct(
@@ -83,15 +74,6 @@ class Processor
         $this->columnPreparator = $columnPreparatorFactory->create($platform);
     }
 
-    private function getSchema(bool $reload = false): DbalSchema
-    {
-        if (!isset($this->dbalSchema) || $reload) {
-            $this->dbalSchema = new DbalSchema();
-        }
-
-        return $this->dbalSchema;
-    }
-
     /**
      * Schema conversation process.
      *
@@ -101,13 +83,13 @@ class Processor
      */
     public function process(array $ormMeta, $entityList = null): DbalSchema
     {
-        $this->log->debug('Schema\Processor - Start: building schema');
+        $this->log->debug('Schema\Processor - Start');
 
         $ormMeta = $this->amendMetadata($ormMeta, $entityList);
         $indexes = SchemaUtils::getIndexes($ormMeta);
         $tables = [];
 
-        $schema = $this->getSchema(true);
+        $schema = new DbalSchema();
 
         foreach ($ormMeta as $entityType => $entityParams) {
             $entityDefs = EntityDefs::fromRaw($entityParams, $entityType);
@@ -128,7 +110,7 @@ class Processor
             }
         }
 
-        $this->log->debug('Schema\Processor - End: building schema');
+        $this->log->debug('Schema\Processor - End');
 
         return $schema;
     }
@@ -156,7 +138,7 @@ class Processor
         if ($schema->hasTable($tableName)) {
             $tables[$entityType] ??= $schema->getTable($tableName);
 
-            $this->log->debug('DBAL: Table [' . $tableName . '] exists.');
+            $this->log->debug('Schema\Processor: Table [' . $tableName . '] exists.');
 
             return;
         }
@@ -177,7 +159,7 @@ class Processor
         foreach ($entityDefs->getAttributeList() as $attributeDefs) {
             if (
                 $attributeDefs->isNotStorable() ||
-                in_array($attributeDefs->getType(), $this->notStorableTypes)
+                $attributeDefs->getType() === Entity::FOREIGN
             ) {
                 continue;
             }
@@ -190,7 +172,7 @@ class Processor
 
             if (!in_array($column->getType(), $this->typeList)) {
                 $this->log->debug(
-                    'Converters\Schema::process(): Column type [' . $column->getType() . '] not supported, ' .
+                    'Schema\Processor: Column type [' . $column->getType() . '] not supported, ' .
                     $entityType . ':' . $attributeDefs->getName()
                 );
 
@@ -251,8 +233,8 @@ class Processor
             $dependentEntities = $this->getDependentEntities($entityList, $ormMeta);
 
             $this->log->debug(
-                'Rebuild Database for entities: [' .
-                implode(', ', $entityList) . '] with dependent entities: [' .
+                'Schema\Processor: Rebuild for entity types: [' .
+                implode(', ', $entityList) . '] with dependent entity types: [' .
                 implode(', ', $dependentEntities) . ']'
             );
 
@@ -306,7 +288,7 @@ class Processor
             return;
         }
 
-        $table = $this->getSchema()->createTable($tableName);
+        $table = $schema->createTable($tableName);
 
         $idColumn = $this->columnPreparator->prepare(
             AttributeDefs::fromRaw([
