@@ -31,7 +31,7 @@ namespace Espo\Core\Utils\Database\Schema;
 
 use Espo\ORM\Defs\AttributeDefs;
 
-interface ColumnOptionsPreparator
+interface ColumnPreparator
 {
-    public function prepare(AttributeDefs $defs): ColumnOptions;
+    public function prepare(AttributeDefs $defs): Column;
 }

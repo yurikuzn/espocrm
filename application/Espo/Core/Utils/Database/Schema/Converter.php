@@ -43,6 +43,7 @@ use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Types\Type as DbalType;
 use Espo\ORM\Defs\AttributeDefs;
 use Espo\ORM\Defs\IndexDefs;
+use Espo\ORM\Defs\RelationDefs;
 use Espo\ORM\Entity;
 
 class Converter
@@ -76,7 +77,7 @@ class Converter
         'foreign',
     ];
 
-    private ColumnOptionsPreparator $columnOptionsPreparator;
+    private ColumnPreparator $columnPreparator;
 
     public function __construct(
         private Metadata $metadata,
@@ -84,13 +85,13 @@ class Converter
         private Config $config,
         private Log $log,
         private PathProvider $pathProvider,
-        ColumnOptionsPreparatorFactory $columnOptionsPreparatorFactory
+        ColumnPreparatorFactory $columnPreparatorFactory
     ) {
         $this->typeList = array_keys(DbalType::getTypesMap());
 
         $platform = $this->config->get('database.platform') ?? self::DEFAULT_PLATFORM;
 
-        $this->columnOptionsPreparator = $columnOptionsPreparatorFactory->create($platform);
+        $this->columnPreparator = $columnPreparatorFactory->create($platform);
     }
 
     private function getSchema(bool $reload = false): DbalSchema
@@ -113,8 +114,6 @@ class Converter
     {
         $this->log->debug('Schema\Converter - Start: building schema');
 
-        // Check if exist files in "Tables" directory and merge with ormMetadata.
-
         /** @var array<string, mixed> $ormMeta */
         $ormMeta = Util::merge($ormMeta, $this->getCustomTables($ormMeta));
 
@@ -131,7 +130,7 @@ class Converter
             unset($ormMeta['unsetIgnore']);
         }
 
-        // unset some keys in orm
+        // Unset some keys.
         if (isset($ormMeta['unset'])) {
             /** @var array<string, mixed> $ormMeta */
             $ormMeta = Util::unsetInArray($ormMeta, $ormMeta['unset']);
@@ -164,29 +163,30 @@ class Converter
 
         $tables = [];
 
-        foreach ($ormMeta as $entityName => $entityParams) {
+        foreach ($ormMeta as $entityType => $entityParams) {
             if ($entityParams['skipRebuild'] ?? false) {
                 continue;
             }
 
-            $tableName = Util::toUnderScore($entityName);
+            $tableName = Util::toUnderScore($entityType);
 
             if ($schema->hasTable($tableName)) {
-                if (!isset($tables[$entityName])) {
-                    $tables[$entityName] = $schema->getTable($tableName);
-                }
+                $tables[$entityType] ??= $schema->getTable($tableName);
 
-                $this->log->debug('DBAL: Table ['.$tableName.'] exists.');
+                $this->log->debug('DBAL: Table [' . $tableName . '] exists.');
 
                 continue;
             }
 
-            $tables[$entityName] = $schema->createTable($tableName);
+            $table = $schema->createTable($tableName);
 
-            if (isset($entityParams['params']) && is_array($entityParams['params'])) {
-                foreach ($entityParams['params'] as $paramName => $paramValue) {
-                    $tables[$entityName]->addOption($paramName, $paramValue);
-                }
+            $tables[$entityType] = $table;
+
+            /** @var array<string, mixed> $tableParams */
+            $tableParams = $entityParams['params'] ?? [];
+
+            foreach ($tableParams as $paramName => $paramValue) {
+                $table->addOption($paramName, $paramValue);
             }
 
             $primaryColumns = [];
@@ -216,61 +216,68 @@ class Converter
                 if (!in_array($fieldType, $this->typeList)) {
                     $this->log->debug(
                         'Converters\Schema::process(): Field type [' . $fieldType . '] not supported, ' .
-                        $entityName . ':' . $fieldName
+                        $entityType . ':' . $fieldName
                     );
 
                     continue;
                 }
 
-                $columnName = Util::toUnderScore($fieldName);
+                $column = $this->columnPreparator->prepare($attributeDefs);
 
-                if ($tables[$entityName]->hasColumn($columnName)) {
+                if ($table->hasColumn($column->getName())) {
                     continue;
                 }
 
-                $columnOptions = $this->columnOptionsPreparator->prepare($attributeDefs);
-
-                $tables[$entityName]->addColumn(
-                    $columnName,
-                    $columnOptions->getType(),
-                    self::convertColumnOptions($columnOptions)
-                );
-
-                //$tables[$entityName]->addColumn($columnName, $fieldType, $this->getDbFieldParams($fieldParams));
+                $this->addColumn($table, $column);
             }
 
-            $tables[$entityName]->setPrimaryKey($primaryColumns);
+            $table->setPrimaryKey($primaryColumns);
 
-            if (!empty($indexes[$entityName])) {
-                $this->addIndexes($tables[$entityName], $indexes[$entityName]);
+            if (isset($indexes[$entityType])) {
+                $this->addIndexes($tables[$entityType], $indexes[$entityType]);
             }
         }
 
-        // Check and create columns/tables for relations.
+        // Check and create columns & tables for relations.
         foreach ($ormMeta as $entityType => $entityParams) {
             if (!isset($entityParams['relations'])) {
                 continue;
             }
 
             foreach ($entityParams['relations'] as $relationName => $relationParams) {
-                 switch ($relationParams['type']) {
-                    case Entity::MANY_MANY:
-                        $tableName = $relationParams['relationName'];
+                $relationDefs = RelationDefs::fromRaw($relationParams, $relationName);
 
-                        // Check for duplicate tables.
-                        if (!isset($tables[$tableName])) {
-                            // No needs to create a table if it already exists.
-                            $tables[$tableName] = $this->prepareManyMany($entityType, $relationParams);
-                        }
-
-                        break;
+                if ($relationDefs->getType() !== Entity::MANY_MANY) {
+                    continue;
                 }
+
+                $relationshipName = $relationDefs->getRelationshipName();
+
+                // No needs to create a table if already exists.
+                if (isset($tables[$relationshipName])) {
+                    continue;
+                }
+
+                // @todo Pass $relationDefs.
+                $tables[$relationshipName] = $this->prepareManyMany($entityType, $relationParams);
             }
         }
 
         $this->log->debug('Schema\Converter - End: building schema');
 
         return $schema;
+    }
+
+    /**
+     * @throws SchemaException
+     */
+    private function addColumn(Table $table, Column $column): void
+    {
+        $table->addColumn(
+            $column->getName(),
+            $column->getType(),
+            self::convertColumnOptions($column)
+        );
     }
 
     /**
@@ -298,7 +305,7 @@ class Converter
 
         $table = $this->getSchema()->createTable($tableName);
 
-        $idColumnOptions = $this->columnOptionsPreparator->prepare(
+        $idColumn = $this->columnPreparator->prepare(
             AttributeDefs::fromRaw([
                 'dbType' => 'bigint',
                 'type' => Entity::ID,
@@ -307,11 +314,7 @@ class Converter
             ], 'id')
         );
 
-        $table->addColumn(
-            'id',
-            $idColumnOptions->getType(),
-            self::convertColumnOptions($idColumnOptions)
-        );
+        $this->addColumn($table, $idColumn);
 
         $midKeys = $relationParams['midKeys'] ?? [];
 
@@ -324,7 +327,7 @@ class Converter
         }
 
         foreach ($midKeys as $midKey) {
-            $columnOptions = $this->columnOptionsPreparator->prepare(
+            $column = $this->columnPreparator->prepare(
                 AttributeDefs::fromRaw([
                     'dbType' => Entity::VARCHAR,
                     'type' => Entity::FOREIGN_ID,
@@ -332,11 +335,7 @@ class Converter
                 ], $midKey)
             );
 
-            $table->addColumn(
-                Util::toUnderScore($midKey),
-                $columnOptions->getType(),
-                self::convertColumnOptions($columnOptions)
-            );
+            $this->addColumn($table, $column);
         }
 
         foreach (($relationParams['additionalColumns'] ?? []) as $fieldName => $fieldParams) {
@@ -347,29 +346,21 @@ class Converter
                 ]);
             }
 
-            $columnOptions = $this->columnOptionsPreparator->prepare(
+            $column = $this->columnPreparator->prepare(
                 AttributeDefs::fromRaw($fieldParams, $fieldName)
             );
 
-            $table->addColumn(
-                Util::toUnderScore($fieldName),
-                $columnOptions->getType(),
-                self::convertColumnOptions($columnOptions)
-            );
+            $this->addColumn($table, $column);
         }
 
-        $deletedColumnOptions = $this->columnOptionsPreparator->prepare(
+        $deletedColumn = $this->columnPreparator->prepare(
             AttributeDefs::fromRaw([
                 'type' => Entity::BOOL,
                 'default' => false,
             ], 'deleted')
         );
 
-        $table->addColumn(
-            'deleted',
-            $deletedColumnOptions->getType(),
-            self::convertColumnOptions($deletedColumnOptions)
-        );
+        $this->addColumn($table, $deletedColumn);
 
         $table->setPrimaryKey(['id']);
 
@@ -409,7 +400,7 @@ class Converter
      * @todo Move to static class. Add unit test.
      * @return array<string, mixed>
      */
-    private static function convertColumnOptions(ColumnOptions $options): array
+    private static function convertColumnOptions(Column $options): array
     {
         $result = [
             'notnull' => $options->isNotNull(),

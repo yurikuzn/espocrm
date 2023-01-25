@@ -35,7 +35,7 @@ use Espo\Core\Utils\Database\Helper;
 use Espo\Core\Utils\Metadata;
 use RuntimeException;
 
-class ColumnOptionsPreparatorFactory
+class ColumnPreparatorFactory
 {
     public function __construct(
         private Metadata $metadata,
@@ -43,14 +43,14 @@ class ColumnOptionsPreparatorFactory
         private Helper $helper
     ) {}
 
-    public function create(string $platform): ColumnOptionsPreparator
+    public function create(string $platform): ColumnPreparator
     {
-        /** @var ?class-string<ColumnOptionsPreparator> $className */
+        /** @var ?class-string<ColumnPreparator> $className */
         $className = $this->metadata
-            ->get(['app', 'database', 'platforms', $platform, 'columnOptionsPreparatorClassName']);
+            ->get(['app', 'database', 'platforms', $platform, 'columnPreparatorClassName']);
 
         if (!$className) {
-            throw new RuntimeException("No Column-Options-Preparator for {$platform}");
+            throw new RuntimeException("No Column-Preparator for {$platform}.");
         }
 
         $binding = BindingContainerBuilder::create()

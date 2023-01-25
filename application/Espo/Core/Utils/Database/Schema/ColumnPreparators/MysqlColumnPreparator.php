@@ -27,16 +27,17 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Core\Utils\Database\Schema\ColumnOptionsPreparators;
+namespace Espo\Core\Utils\Database\Schema\ColumnPreparators;
 
 use Espo\Core\Utils\Database\Helper;
-use Espo\Core\Utils\Database\Schema\ColumnOptions;
-use Espo\Core\Utils\Database\Schema\ColumnOptionsPreparator;
+use Espo\Core\Utils\Database\Schema\Column;
+use Espo\Core\Utils\Database\Schema\ColumnPreparator;
 use Espo\Core\Utils\Database\Schema\PlatformOptions;
+use Espo\Core\Utils\Util;
 use Espo\ORM\Defs\AttributeDefs;
 use Espo\ORM\Entity;
 
-class MysqlColumnOptionsPreparator implements ColumnOptionsPreparator
+class MysqlColumnPreparator implements ColumnPreparator
 {
     private const PARAM_DB_TYPE = 'dbType';
     private const PARAM_DEFAULT = 'default';
@@ -55,11 +56,12 @@ class MysqlColumnOptionsPreparator implements ColumnOptionsPreparator
         private Helper $helper
     ) {}
 
-    public function prepare(AttributeDefs $defs): ColumnOptions
+    public function prepare(AttributeDefs $defs): Column
     {
         $columnType = $defs->getParam(self::PARAM_DB_TYPE) ?? $defs->getType();
+        $columnName = Util::toUnderScore($defs->getName());
 
-        $options = ColumnOptions::create(strtolower($columnType));
+        $options = Column::create($columnName, strtolower($columnType));
 
         $type = $defs->getType();
         $length = $defs->getLength();

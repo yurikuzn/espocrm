@@ -29,7 +29,7 @@
 
 namespace Espo\Core\Utils\Database\Schema;
 
-class ColumnOptions
+class Column
 {
     private bool $notNull = false;
     private ?int $length = null;
@@ -40,11 +40,19 @@ class ColumnOptions
     private ?bool $unsigned = null;
     private ?PlatformOptions $platformOptions = null;
 
-    private function __construct(private string $type) {}
+    private function __construct(
+        private string $name,
+        private string $type
+    ) {}
 
-    public static function create(string $type): self
+    public static function create(string $name, string $type): self
     {
-        return new self($type);
+        return new self($name, $type);
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
     }
 
     public function getType(): string
