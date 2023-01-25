@@ -133,6 +133,8 @@ class Processor
 
         $entityType = $entityDefs->getName();
 
+        $this->log->debug("Schema\Processor: Entity {$entityType}");
+
         $tableName = Util::toUnderScore($entityType);
 
         if ($schema->hasTable($tableName)) {
@@ -199,7 +201,10 @@ class Processor
     private function amendMetadata(array $ormMeta, $entityList): array
     {
         /** @var array<string, mixed> $ormMeta */
-        $ormMeta = Util::merge($ormMeta, $this->getCustomTables($ormMeta));
+        $ormMeta = Util::merge(
+            $ormMeta,
+            $this->getCustomTables()
+        );
 
         if (isset($ormMeta['unsetIgnore'])) {
             $protectedOrmMeta = [];
@@ -438,10 +443,9 @@ class Processor
      * Get custom table definition in `application/Espo/Core/Utils/Database/Schema/tables`.
      * This logic can be removed in the future. Usage of table files in not recommended.
      *
-     * @param array<string, mixed> $ormMeta
      * @return array<string, array<string, mixed>>
      */
-    private function getCustomTables(array $ormMeta): array
+    private function getCustomTables(): array
     {
         $customTables = $this->loadData($this->pathProvider->getCore() . $this->tablesPath);
 
