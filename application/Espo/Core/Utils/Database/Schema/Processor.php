@@ -435,11 +435,11 @@ class Processor
     }
 
     /**
-     * Get custom table definition in
-     * `application/Espo/Core/Utils/Database/Schema/tables/` and in metadata 'additionalTables'.
+     * Get custom table definition in `application/Espo/Core/Utils/Database/Schema/tables`.
+     * This logic can be removed in the future. Usage of table files in not recommended.
      *
-     * @param array<string,mixed> $ormMeta
-     * @return array<string,array<string,mixed>>
+     * @param array<string, mixed> $ormMeta
+     * @return array<string, array<string, mixed>>
      */
     private function getCustomTables(array $ormMeta): array
     {
@@ -454,27 +454,26 @@ class Processor
             );
         }
 
-        /** @var array<string,mixed> $customTables */
+        /** @var array<string, mixed> $customTables */
         $customTables = Util::merge(
             $customTables,
             $this->loadData($this->pathProvider->getCustom() . $this->tablesPath)
         );
 
         // Get custom tables from metadata 'additionalTables'.
-        foreach ($ormMeta as $entityParams) {
-            if (isset($entityParams['additionalTables']) && is_array($entityParams['additionalTables'])) {
-                /** @var array<string,mixed> $customTables */
-                $customTables = Util::merge($customTables, $entityParams['additionalTables']);
+        //foreach ($ormMeta as $entityParams) {
+        //    if (isset($entityParams['additionalTables']) && is_array($entityParams['additionalTables'])) {
+                /** @var array<string, mixed> $customTables */
+        /*        $customTables = Util::merge($customTables, $entityParams['additionalTables']);
             }
-        }
+        }*/
 
         return $customTables;
     }
 
     /**
-     *
      * @param string[]|string $entityList
-     * @param array<string,mixed> $ormMeta
+     * @param array<string, mixed> $ormMeta
      * @param string[] $dependentEntities
      * @return string[]
      */

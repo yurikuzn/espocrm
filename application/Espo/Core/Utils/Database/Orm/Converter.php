@@ -147,7 +147,10 @@ class Converter
             }
 
             /** @var array<string, array<string, mixed>> $ormMetadata */
-            $ormMetadata = Util::merge($ormMetadata, $this->convertEntity($entityType, $entityMetadata));
+            $ormMetadata = Util::merge(
+                $ormMetadata,
+                $this->convertEntity($entityType, $entityMetadata)
+            );
         }
 
         $ormMetadata = $this->afterFieldsProcess($ormMetadata);
