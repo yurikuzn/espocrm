@@ -46,7 +46,7 @@ use Espo\ORM\Defs\IndexDefs;
 use Espo\ORM\Defs\RelationDefs;
 use Espo\ORM\Entity;
 
-class Converter
+class Processor
 {
     private ?DbalSchema $dbalSchema = null;
 
@@ -298,7 +298,7 @@ class Converter
         ]);
 
         if ($this->getSchema()->hasTable($tableName)) {
-            $this->log->debug('DBAL: Table ['.$tableName.'] exists.');
+            $this->log->debug('DBAL: Table [' . $tableName . '] exists.');
 
             return $this->getSchema()->getTable($tableName);
         }

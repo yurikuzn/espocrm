@@ -55,7 +55,7 @@ class Schema
     private string $rebuildActionsPath = 'Core/Utils/Database/Schema/rebuildActions';
 
     private Comparator $comparator;
-    private Converter $schemaConverter;
+    private Processor $processor;
 
     /**
      * @var ?array{
@@ -79,8 +79,8 @@ class Schema
 
         $this->initFieldTypes();
 
-        $this->schemaConverter = $this->injectableFactory->createWithBinding(
-            Converter::class,
+        $this->processor = $this->injectableFactory->createWithBinding(
+            Processor::class,
             BindingContainerBuilder::create()
                 ->bindInstance(Helper::class, $this->databaseHelper)
                 ->build()
@@ -154,7 +154,7 @@ class Schema
 
         $currentSchema = $this->getCurrentSchema();
 
-        $metadataSchema = $this->schemaConverter->process($this->ormMetadataData->getData(), $entityList);
+        $metadataSchema = $this->processor->process($this->ormMetadataData->getData(), $entityList);
 
         $this->initRebuildActions($currentSchema, $metadataSchema);
 
