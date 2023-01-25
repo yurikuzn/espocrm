@@ -29,7 +29,6 @@
 
 namespace Espo\Core\Utils\Database\Schema;
 
-use Doctrine\DBAL\Schema\SchemaException;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Database\Schema\Utils as SchemaUtils;
 use Espo\Core\Utils\File\Manager as FileManager;
@@ -38,13 +37,16 @@ use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Module\PathProvider;
 use Espo\Core\Utils\Util;
 
-use Doctrine\DBAL\Schema\Table;
-use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Types\Type as DbalType;
 use Espo\ORM\Defs\AttributeDefs;
+use Espo\ORM\Defs\EntityDefs;
 use Espo\ORM\Defs\IndexDefs;
 use Espo\ORM\Defs\RelationDefs;
 use Espo\ORM\Entity;
+
+use Doctrine\DBAL\Schema\SchemaException;
+use Doctrine\DBAL\Schema\Table;
+use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Types\Type as DbalType;
 
 class Processor
 {
@@ -58,19 +60,6 @@ class Processor
 
     /** @var string[] */
     private $typeList;
-
-    /**
-     * ORM => doctrine
-     * @var array<string,string>
-     */
-    private $allowedDbFieldParams = [
-        'len' => 'length',
-        'default' => 'default',
-        'notNull' => 'notnull',
-        'autoincrement' => 'autoincrement',
-        'precision' => 'precision',
-        'scale' => 'scale',
-    ];
 
     /** @var string[] */
     private $notStorableTypes = [
@@ -112,8 +101,121 @@ class Processor
      */
     public function process(array $ormMeta, $entityList = null): DbalSchema
     {
-        $this->log->debug('Schema\Converter - Start: building schema');
+        $this->log->debug('Schema\Processor - Start: building schema');
 
+        $ormMeta = $this->amendMetadata($ormMeta, $entityList);
+        $indexes = SchemaUtils::getIndexes($ormMeta);
+        $tables = [];
+
+        $schema = $this->getSchema(true);
+
+        foreach ($ormMeta as $entityType => $entityParams) {
+            $entityDefs = EntityDefs::fromRaw($entityParams, $entityType);
+            $itemIndexes = $indexes[$entityType] ?? [];
+
+            $this->processEntity($entityDefs, $schema, $tables, $itemIndexes);
+        }
+
+        foreach ($ormMeta as $entityType => $entityParams) {
+            foreach (($entityParams['relations'] ?? []) as $relationName => $relationParams) {
+                $relationDefs = RelationDefs::fromRaw($relationParams, $relationName);
+
+                if ($relationDefs->getType() !== Entity::MANY_MANY) {
+                    continue;
+                }
+
+                $this->processManyMany($entityType, $relationDefs, $schema, $tables);
+            }
+        }
+
+        $this->log->debug('Schema\Processor - End: building schema');
+
+        return $schema;
+    }
+
+    /**
+     * @param array<string, Table> $tables
+     * @param array<string, array<string, mixed>> $indexes
+     * @throws SchemaException
+     */
+    private function processEntity(
+        EntityDefs $entityDefs,
+        DbalSchema $schema,
+        array &$tables,
+        array $indexes
+    ): void {
+
+        if ($entityDefs->getParam('skipRebuild')) {
+            return;
+        }
+
+        $entityType = $entityDefs->getName();
+
+        $tableName = Util::toUnderScore($entityType);
+
+        if ($schema->hasTable($tableName)) {
+            $tables[$entityType] ??= $schema->getTable($tableName);
+
+            $this->log->debug('DBAL: Table [' . $tableName . '] exists.');
+
+            return;
+        }
+
+        $table = $schema->createTable($tableName);
+
+        $tables[$entityType] = $table;
+
+        /** @var array<string, mixed> $tableParams */
+        $tableParams = $entityDefs->getParam('params') ?? [];
+
+        foreach ($tableParams as $paramName => $paramValue) {
+            $table->addOption($paramName, $paramValue);
+        }
+
+        $primaryColumns = [];
+
+        foreach ($entityDefs->getAttributeList() as $attributeDefs) {
+            if (
+                $attributeDefs->isNotStorable() ||
+                in_array($attributeDefs->getType(), $this->notStorableTypes)
+            ) {
+                continue;
+            }
+
+            $column = $this->columnPreparator->prepare($attributeDefs);
+
+            if ($attributeDefs->getType() === Entity::ID) {
+                $primaryColumns[] = $column->getName();
+            }
+
+            if (!in_array($column->getType(), $this->typeList)) {
+                $this->log->debug(
+                    'Converters\Schema::process(): Column type [' . $column->getType() . '] not supported, ' .
+                    $entityType . ':' . $attributeDefs->getName()
+                );
+
+                continue;
+            }
+
+            if ($table->hasColumn($column->getName())) {
+                continue;
+            }
+
+            $this->addColumn($table, $column);
+        }
+
+        $table->setPrimaryKey($primaryColumns);
+
+        $this->addIndexes($table, $indexes);
+    }
+
+    /**
+     * @param array<string, mixed> $ormMeta
+     * @param string[]|string|null $entityList
+     * @return array<string, mixed>
+     */
+    private function amendMetadata(array $ormMeta, $entityList): array
+    {
         /** @var array<string, mixed> $ormMeta */
         $ormMeta = Util::merge($ormMeta, $this->getCustomTables($ormMeta));
 
@@ -157,115 +259,7 @@ class Processor
             $ormMeta = array_intersect_key($ormMeta, array_flip($dependentEntities));
         }
 
-        $schema = $this->getSchema(true);
-
-        $indexes = SchemaUtils::getIndexes($ormMeta);
-
-        $tables = [];
-
-        foreach ($ormMeta as $entityType => $entityParams) {
-            if ($entityParams['skipRebuild'] ?? false) {
-                continue;
-            }
-
-            $tableName = Util::toUnderScore($entityType);
-
-            if ($schema->hasTable($tableName)) {
-                $tables[$entityType] ??= $schema->getTable($tableName);
-
-                $this->log->debug('DBAL: Table [' . $tableName . '] exists.');
-
-                continue;
-            }
-
-            $table = $schema->createTable($tableName);
-
-            $tables[$entityType] = $table;
-
-            /** @var array<string, mixed> $tableParams */
-            $tableParams = $entityParams['params'] ?? [];
-
-            foreach ($tableParams as $paramName => $paramValue) {
-                $table->addOption($paramName, $paramValue);
-            }
-
-            $primaryColumns = [];
-
-            foreach ($entityParams['fields'] as $fieldName => $fieldParams) {
-                $attributeDefs = AttributeDefs::fromRaw($fieldParams, $fieldName);
-
-                if (
-                    $attributeDefs->isNotStorable() ||
-                    in_array($attributeDefs->getType(), $this->notStorableTypes)
-                ) {
-                    continue;
-                }
-
-                switch ($attributeDefs->getType()) {
-                    case Entity::ID:
-                        $primaryColumns[] = Util::toUnderScore($fieldName);
-
-                        break;
-                }
-
-                $fieldType = $attributeDefs->getParam('dbType') ?? $attributeDefs->getType();
-
-                /** Doctrine uses lower case for all field types. */
-                $fieldType = strtolower($fieldType);
-
-                if (!in_array($fieldType, $this->typeList)) {
-                    $this->log->debug(
-                        'Converters\Schema::process(): Field type [' . $fieldType . '] not supported, ' .
-                        $entityType . ':' . $fieldName
-                    );
-
-                    continue;
-                }
-
-                $column = $this->columnPreparator->prepare($attributeDefs);
-
-                if ($table->hasColumn($column->getName())) {
-                    continue;
-                }
-
-                $this->addColumn($table, $column);
-            }
-
-            $table->setPrimaryKey($primaryColumns);
-
-            if (isset($indexes[$entityType])) {
-                $this->addIndexes($tables[$entityType], $indexes[$entityType]);
-            }
-        }
-
-        // Check and create columns & tables for relations.
-        foreach ($ormMeta as $entityType => $entityParams) {
-            if (!isset($entityParams['relations'])) {
-                continue;
-            }
-
-            foreach ($entityParams['relations'] as $relationName => $relationParams) {
-                $relationDefs = RelationDefs::fromRaw($relationParams, $relationName);
-
-                if ($relationDefs->getType() !== Entity::MANY_MANY) {
-                    continue;
-                }
-
-                $relationshipName = $relationDefs->getRelationshipName();
-
-                // No needs to create a table if already exists.
-                if (isset($tables[$relationshipName])) {
-                    continue;
-                }
-
-                // @todo Pass $relationDefs.
-                $tables[$relationshipName] = $this->prepareManyMany($entityType, $relationParams);
-            }
-        }
-
-        $this->log->debug('Schema\Converter - End: building schema');
-
-        return $schema;
+        return $ormMeta;
     }
 
     /**
@@ -284,23 +278,32 @@ class Processor
      * Prepare a relation table for the manyMany relation.
      *
      * @param string $entityType
-     * @param array<string, mixed> $relationParams
+     * @param array<string, Table> $tables
      * @throws SchemaException
      */
-    private function prepareManyMany(string $entityType, $relationParams): Table
-    {
-        $relationName = $relationParams['relationName'];
+    private function processManyMany(
+        string $entityType,
+        RelationDefs $relationDefs,
+        DbalSchema $schema,
+        array &$tables
+    ): void {
 
-        $tableName = Util::toUnderScore($relationName);
+        $relationshipName = $relationDefs->getRelationshipName();
 
-        $this->log->debug('DBAL: prepareManyMany invoked for ' . $entityType, [
-            'tableName' => $tableName, 'parameters' => $relationParams
-        ]);
+        if (isset($tables[$relationshipName])) {
+            return;
+        }
 
-        if ($this->getSchema()->hasTable($tableName)) {
-            $this->log->debug('DBAL: Table [' . $tableName . '] exists.');
+        $tableName = Util::toUnderScore($relationshipName);
 
-            return $this->getSchema()->getTable($tableName);
+        $this->log->debug("Schema\Processor: ManyMany for {$entityType}.{$relationDefs->getName()}");
+
+        if ($schema->hasTable($tableName)) {
+            $this->log->debug('Schema\Processor: Table [' . $tableName . '] exists.');
+
+            $tables[$relationshipName] ??= $schema->getTable($tableName);
+
+            return;
         }
 
         $table = $this->getSchema()->createTable($tableName);
@@ -316,15 +319,19 @@ class Processor
 
         $this->addColumn($table, $idColumn);
 
-        $midKeys = $relationParams['midKeys'] ?? [];
-
-        if ($midKeys === []) {
-            $this->log->warning('REBUILD: Relationship midKeys are empty.', [
-                'scope' => $entityType,
-                'tableName' => $tableName,
-                'parameters' => $relationParams,
+        if (!$relationDefs->hasMidKey() || !$relationDefs->getForeignMidKey()) {
+            $this->log->error('Schema\Processor: Relationship midKeys are empty.', [
+                'entityType' => $entityType,
+                'relationName' => $relationDefs->getName(),
             ]);
+
+            return;
         }
+
+        $midKeys = [
+            $relationDefs->getMidKey(),
+            $relationDefs->getForeignMidKey(),
+        ];
 
         foreach ($midKeys as $midKey) {
             $column = $this->columnPreparator->prepare(
@@ -338,7 +345,10 @@ class Processor
             $this->addColumn($table, $column);
         }
 
-        foreach (($relationParams['additionalColumns'] ?? []) as $fieldName => $fieldParams) {
+        /** @var array<string, array<string, mixed>> $additionalColumns */
+        $additionalColumns = $relationDefs->getParam('additionalColumns') ?? [];
+
+        foreach ($additionalColumns as $fieldName => $fieldParams) {
             if (!isset($fieldParams['type'])) {
                 $fieldParams = array_merge($fieldParams, [
                     'type' => Entity::VARCHAR,
@@ -364,17 +374,18 @@ class Processor
 
         $table->setPrimaryKey(['id']);
 
-        if (!empty($relationParams['indexes'])) {
+        /** @var ?array<string, array<string, mixed>> $indexes */
+        $indexes = $relationDefs->getParam('indexes');
+
+        if ($indexes) {
             $normalizedIndexes = SchemaUtils::getIndexes([
-                $entityType => [
-                    'indexes' => $relationParams['indexes']
-                ]
+                $entityType => ['indexes' => $indexes]
             ]);
 
             $this->addIndexes($table, $normalizedIndexes[$entityType]);
         }
 
-        return $table;
+        $tables[$relationshipName] = $table;
     }
 
     /**
@@ -439,87 +450,6 @@ class Processor
         }
 
         return $result;
-    }
-
-    /**
-     * @param array<string, mixed> $fieldParams
-     * @return array<string, mixed>
-     */
-    private function getDbFieldParams($fieldParams)
-    {
-        $dbFieldParams = [
-            'notnull' => false,
-        ];
-
-        foreach ($this->allowedDbFieldParams as $espoName => $dbalName) {
-            if (isset($fieldParams[$espoName])) {
-                $dbFieldParams[$dbalName] = $fieldParams[$espoName];
-            }
-        }
-
-        $databaseParams = $this->config->get('database');
-
-        if (!isset($databaseParams['charset']) || $databaseParams['charset'] == 'utf8mb4') {
-            $dbFieldParams['platformOptions'] = [
-                'collation' => 'utf8mb4_unicode_ci',
-            ];
-        }
-
-        switch ($fieldParams['type']) {
-            case 'id':
-            case 'foreignId':
-            case 'foreignType':
-                /*if ($this->getMaxIndexLength() < 3072) {
-                    $fieldParams['utf8mb3'] = true;
-                }*/
-
-                break;
-
-            case 'array':
-            case 'jsonArray':
-            case 'text':
-            case 'longtext':
-                unset($dbFieldParams['default']); // for db type TEXT can't be defined a default value
-
-                break;
-
-            case 'bool':
-                $default = false;
-
-                if (array_key_exists('default', $dbFieldParams)) {
-                    $default = $dbFieldParams['default'];
-                }
-
-                $dbFieldParams['default'] = intval($default);
-
-                break;
-        }
-
-        if (
-            $fieldParams['type'] != 'id' &&
-            isset($fieldParams['autoincrement']) &&
-            $fieldParams['autoincrement']
-        ) {
-            $dbFieldParams['notnull'] = true;
-            $dbFieldParams['unsigned'] = true;
-        }
-
-        if (isset($fieldParams['binary']) && $fieldParams['binary']) {
-            $dbFieldParams['platformOptions'] = [
-                'collation' => 'utf8mb4_bin',
-            ];
-        }
-
-        if (isset($fieldParams['utf8mb3']) && $fieldParams['utf8mb3']) {
-            $dbFieldParams['platformOptions'] = [
-                'collation' =>
-                    (isset($fieldParams['binary']) && $fieldParams['binary']) ?
-                    'utf8_bin' :
-                    'utf8_unicode_ci',
-            ];
-        }
-
-        return $dbFieldParams;
     }
 
     /**
@@ -594,7 +524,6 @@ class Processor
                     }
                 }
             }
-
         }
 
         return $dependentEntities;
@@ -628,7 +557,7 @@ class Processor
                 continue;
             }
 
-            /** @var array<string,array<string,mixed>> $tables */
+            /** @var array<string, array<string, mixed>> $tables */
             $tables = Util::merge($tables, $fileData);
         }
 
