@@ -190,7 +190,7 @@ class Processor
 
         $table->setPrimaryKey($primaryColumns);
 
-        $this->addIndexes($table, $indexes);
+        $this->addIndexes($table, $entityDefs->getIndexList());
     }
 
     /**
@@ -361,36 +361,30 @@ class Processor
 
         $table->setPrimaryKey(['id']);
 
-        /** @var ?array<string, array<string, mixed>> $indexes */
-        $indexes = $relationDefs->getParam('indexes');
-
-        if ($indexes) {
-            $normalizedIndexes = SchemaUtils::getIndexes([
-                $entityType => ['indexes' => $indexes]
-            ]);
-
-            $this->addIndexes($table, $normalizedIndexes[$entityType]);
-        }
+        $this->addIndexes($table, $relationDefs->getIndexList());
 
         $tables[$relationshipName] = $table;
     }
 
     /**
-     * @param array<string, array<string, mixed>> $indexes
+     * @param IndexDefs[] $indexDefsList
      * @throws SchemaException
      */
-    private function addIndexes(Table $table, array $indexes): void
+    private function addIndexes(Table $table, array $indexDefsList): void
     {
-        foreach ($indexes as $indexName => $indexParams) {
-            $indexDefs = IndexDefs::fromRaw($indexParams, $indexName);
+        foreach ($indexDefsList as $indexDefs) {
+            $columns = array_map(
+                fn($item) => Util::toUnderScore($item),
+                $indexDefs->getColumnList()
+            );
 
             if ($indexDefs->isUnique()) {
-                $table->addUniqueIndex($indexDefs->getColumnList(), $indexName);
+                $table->addUniqueIndex($columns, $indexDefs->getKey());
 
                 continue;
             }
 
-            $table->addIndex($indexDefs->getColumnList(), $indexName, $indexDefs->getFlagList());
+            $table->addIndex($columns, $indexDefs->getKey(), $indexDefs->getFlagList());
         }
     }
 

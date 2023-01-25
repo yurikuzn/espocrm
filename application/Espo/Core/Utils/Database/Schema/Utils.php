@@ -36,6 +36,7 @@ class Utils
 {
     /**
      * Get indexes in specific format.
+     * @deprecated
      *
      * @param array<string, mixed> $defs
      * @param string[] $ignoreFlags @todo Remove parameter?
