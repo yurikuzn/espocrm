@@ -52,7 +52,8 @@ class MetadataProvider
     public function getPreRebuildActionClassNameList(): array
     {
         /** @var class-string<RebuildAction>[] */
-        return $this->metadata->get(['app', 'database', $this->getPlatform(), 'preRebuildActionClassNameList']) ?? [];
+        return $this->metadata
+            ->get(['app', 'database', 'platforms', $this->getPlatform(), 'preRebuildActionClassNameList']) ?? [];
     }
 
     /**
@@ -61,6 +62,7 @@ class MetadataProvider
     public function getPostRebuildActionClassNameList(): array
     {
         /** @var class-string<RebuildAction>[] */
-        return $this->metadata->get(['app', 'database', $this->getPlatform(), 'postRebuildActionClassNameList']) ?? [];
+        return $this->metadata
+            ->get(['app', 'database', 'platforms', $this->getPlatform(), 'postRebuildActionClassNameList']) ?? [];
     }
 }
