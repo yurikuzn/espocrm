@@ -159,7 +159,7 @@ class DataManager
     public function rebuildMetadata(): void
     {
         $this->metadata->init(true);
-        $this->ormMetadataData->getData(true);
+        $this->ormMetadataData->update();
         $this->entityManager->getMetadata()->updateData();
 
         $this->updateCacheTimestamp();

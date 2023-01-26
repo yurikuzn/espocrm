@@ -62,12 +62,27 @@ class OrmMetadataData
     }
 
     /**
-     * Get all data.
+     * Reloads data.
+     */
+    public function update(): void
+    {
+        $this->getDataInternal(true);
+    }
+
+    /**
+     * Get raw data.
      *
-     * @param bool $reload Reload metadata, converts to ORM specific format and stores in cache.
      * @return array<string, array<string, mixed>>
      */
-    public function getData(bool $reload = false): array
+    public function getData(): array
+    {
+        return $this->getDataInternal();
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private function getDataInternal(bool $reload = false): array
     {
         if (isset($this->data) && !$reload) {
             return $this->data;
