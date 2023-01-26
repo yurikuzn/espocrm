@@ -80,26 +80,7 @@ class Helper
         $this->pdo = $pdo;
     }
 
-    public function createDbalConnection(): DbalConnection
-    {
-        /** @var ?array<string, mixed> $params */
-        $params = $this->config->get('database');
-
-        if (empty($params)) {
-            throw new RuntimeException('Database params cannot be empty for DBAL connection.');
-        }
-
-        $databaseParams = $this->createDatabaseParams($params);
-
-        $platform = $databaseParams->getPlatform() ?? self::DEFAULT_PLATFORM;
-
-        return $this->dbalConnectionFactoryFactory
-            ->create($platform, $this->getPDO())
-            ->create($databaseParams);
-    }
-
     /**
-     * Create PDO connection.
      * @deprecated
      *
      * @param array<string, mixed> $params
@@ -122,6 +103,24 @@ class Helper
         $pdoFactory = $this->pdoFactoryFactory->create($platform ?? '');
 
         return $pdoFactory->create($databaseParams);
+    }
+
+    public function createDbalConnection(): DbalConnection
+    {
+        /** @var ?array<string, mixed> $params */
+        $params = $this->config->get('database');
+
+        if (empty($params)) {
+            throw new RuntimeException('Database params cannot be empty for DBAL connection.');
+        }
+
+        $databaseParams = $this->createDatabaseParams($params);
+
+        $platform = $databaseParams->getPlatform() ?? self::DEFAULT_PLATFORM;
+
+        return $this->dbalConnectionFactoryFactory
+            ->create($platform, $this->getPDO())
+            ->create($databaseParams);
     }
 
     /**
@@ -188,6 +187,6 @@ class Helper
     {
         $platform = $this->configDataProvider->getPlatform();
 
-        return $this->detailsProviderFactory->create($platform, $this->pdo);
+        return $this->detailsProviderFactory->create($platform, $this->getPDO());
     }
 }

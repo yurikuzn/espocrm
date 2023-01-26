@@ -139,9 +139,7 @@ class MysqlColumnPreparator implements ColumnPreparator
                 'utf8_unicode_ci';
         }
 
-        $platformOptions = PlatformOptions::create()->withCollation($collation);
-
-        return $options->withPlatformOptions($platformOptions);
+        return $options->withCollation($collation);
     }
 
     private function getMaxIndexLength(): int

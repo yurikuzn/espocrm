@@ -38,7 +38,7 @@ class Column
     private ?int $precision = null;
     private ?int $scale = null;
     private ?bool $unsigned = null;
-    private ?PlatformOptions $platformOptions = null;
+    private ?string $collation = null;
 
     private function __construct(
         private string $name,
@@ -95,9 +95,9 @@ class Column
         return $this->scale;
     }
 
-    public function getPlatformOptions(): ?PlatformOptions
+    public function getCollation(): ?string
     {
-        return $this->platformOptions;
+        return $this->collation;
     }
 
     public function withNotNull(bool $notNull = true): self
@@ -132,6 +132,9 @@ class Column
         return $obj;
     }
 
+    /**
+     * Supported only by MySQL.
+     */
     public function withUnsigned(?bool $unsigned = true): self
     {
         $obj = clone $this;
@@ -156,10 +159,10 @@ class Column
         return $obj;
     }
 
-    public function withPlatformOptions(?PlatformOptions $platformOptions): self
+    public function withCollation(?string $collation): self
     {
         $obj = clone $this;
-        $obj->platformOptions = $platformOptions;
+        $obj->collation = $collation;
 
         return $obj;
     }

@@ -410,12 +410,10 @@ class Builder
             $result['unsigned'] = $column->getUnsigned();
         }
 
-        if ($column->getPlatformOptions()) {
-            $result['platformOptions'] = [];
+        $result['customSchemaOptions'] = [];
 
-            if ($column->getPlatformOptions()->getCollation()) {
-                $result['platformOptions']['collation'] = $column->getPlatformOptions()->getCollation();
-            }
+        if ($column->getCollation()) {
+            $result['customSchemaOptions']['collation'] = $column->getCollation();
         }
 
         return $result;
