@@ -36,6 +36,11 @@ use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Log;
 use Espo\Core\Utils\Metadata;
 
+/**
+ * @deprecated
+ *
+ * @todo Remove in v7.5.
+ */
 abstract class BaseRebuildActions
 {
     /** @var ?DbalSchema  */
