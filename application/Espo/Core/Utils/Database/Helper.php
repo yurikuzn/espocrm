@@ -41,19 +41,17 @@ use RuntimeException;
 
 class Helper
 {
-    public const TYPE_MYSQL = 'MySQL';
-    public const TYPE_MARIADB = 'MariaDB';
-    public const TYPE_POSTGRESQL = 'PostgreSQL';
-
     private const DEFAULT_PLATFORM = 'Mysql';
 
     private ?DbalConnection $dbalConnection = null;
-    private ?PDO $pdoConnection = null;
+    private ?PDO $pdo = null;
 
     public function __construct(
         private Config $config,
         private PDOFactoryFactory $pdoFactoryFactory,
-        private DBALConnectionFactoryFactory $dbalConnectionFactoryFactory
+        private DBALConnectionFactoryFactory $dbalConnectionFactoryFactory,
+        private ConfigDataProvider $configDataProvider,
+        private DetailsProviderFactory $detailsProviderFactory
     ) {}
 
     public function getDbalConnection(): DbalConnection
@@ -65,18 +63,21 @@ class Helper
         return $this->dbalConnection;
     }
 
-    public function getPdoConnection(): PDO
+    public function getPDO(): PDO
     {
-        if (!isset($this->pdoConnection)) {
-            $this->pdoConnection = $this->createPdoConnection();
+        if (!isset($this->pdo)) {
+            $this->pdo = $this->createPDO();
         }
 
-        return $this->pdoConnection;
+        return $this->pdo;
     }
 
-    public function setPdoConnection(PDO $pdoConnection): void
+    /**
+     * @deprecated
+     */
+    public function setPDO(PDO $pdo): void
     {
-        $this->pdoConnection = $pdoConnection;
+        $this->pdo = $pdo;
     }
 
     public function createDbalConnection(): DbalConnection
@@ -93,16 +94,17 @@ class Helper
         $platform = $databaseParams->getPlatform() ?? self::DEFAULT_PLATFORM;
 
         return $this->dbalConnectionFactoryFactory
-            ->create($platform, $this->getPdoConnection())
+            ->create($platform, $this->getPDO())
             ->create($databaseParams);
     }
 
     /**
      * Create PDO connection.
+     * @deprecated
      *
      * @param array<string, mixed> $params
      */
-    public function createPdoConnection(array $params = [], bool $skipDatabaseName = false): PDO
+    public function createPDO(array $params = [], bool $skipDatabaseName = false): PDO
     {
         $params = array_merge(
             $this->config->get('database') ?? [],
@@ -152,99 +154,40 @@ class Helper
 
     /**
      * Get a database type (MySQL, MariaDB, PostgreSQL).
-     *
-     * @todo Refactor.
      */
-    public function getDatabaseType(): string
+    public function getType(): string
     {
-        $version = $this->getFullDatabaseVersion() ?? '';
-
-        if (preg_match('/mariadb/i', $version)) {
-            return self::TYPE_MARIADB;
-        }
-
-        if (preg_match('/postgresql/i', $version)) {
-            return self::TYPE_POSTGRESQL;
-        }
-
-        return self::TYPE_MYSQL;
-    }
-
-    private function getFullDatabaseVersion(): ?string
-    {
-        $connection = $this->getPdoConnection();
-
-        $sth = $connection->prepare("select version()");
-
-        $sth->execute();
-
-        /** @var string|null|false $result */
-        $result = $sth->fetchColumn();
-
-        if ($result === false || $result === null) {
-            return null;
-        }
-
-        return $result;
+        return $this->createDetailsProvider()->getType();
     }
 
     /**
      * Get a database version.
-     *
-     * @todo Add PostgreSQL support.
      */
-    public function getDatabaseVersion(): ?string
+    public function getVersion(): string
     {
-        $fullVersion = $this->getFullDatabaseVersion() ?? '';
-
-        if (preg_match('/[0-9]+\.[0-9]+\.[0-9]+/', $fullVersion, $match)) {
-            return $match[0];
-        }
-
-        return null;
+        return $this->createDetailsProvider()->getVersion();
     }
 
     /**
-     * @todo Refactor.
+     * Get a database parameter.
      */
-    public function getDatabaseParam(string $name): ?string
+    public function getParam(string $name): ?string
     {
-        $databaseType = $this->getDatabaseType();
-
-        if ($databaseType === self::TYPE_POSTGRESQL) {
-            // @todo Implement.
-            return null;
-        }
-
-        $sql = "SHOW VARIABLES LIKE :param";;
-
-        $sth = $this->getPdoConnection()->prepare($sql);
-        $sth->execute([':param' => $name]);
-
-        $row = $sth->fetch(PDO::FETCH_NUM);
-
-        $index = 1;
-
-        $value = $row[$index] ?: null;
-
-        if ($value === null) {
-            return null;
-        }
-
-        return (string) $value;
+        return $this->createDetailsProvider()->getParam($name);
     }
 
     /**
-     * @todo Refactor.
+     * Get a database server version string.
      */
-    public function getDatabaseServerVersion(): string
+    public function getServerVersion(): string
     {
-        $databaseType = $this->getDatabaseType();
+        return $this->createDetailsProvider()->getServerVersion();
+    }
 
-        $param = $databaseType === self::TYPE_POSTGRESQL ?
-            'server_version' :
-            'version';
+    private function createDetailsProvider(): DetailsProvider
+    {
+        $platform = $this->configDataProvider->getPlatform();
 
-        return (string) $this->getDatabaseParam($param);
+        return $this->detailsProviderFactory->create($platform, $this->pdo);
     }
 }

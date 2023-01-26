@@ -54,7 +54,7 @@ class PrepareForFulltextIndex implements RebuildAction
         }
 
         $connection = $this->helper->getDbalConnection();
-        $pdo = $this->helper->getPdoConnection();
+        $pdo = $this->helper->getPDO();
 
         foreach ($newSchema->getTables() as $table) {
             $tableName = $table->getName();

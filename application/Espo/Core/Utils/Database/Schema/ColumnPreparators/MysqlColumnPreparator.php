@@ -158,7 +158,7 @@ class MysqlColumnPreparator implements ColumnPreparator
      */
     private function detectMaxIndexLength(): int
     {
-        $databaseType = $this->helper->getDatabaseType();
+        $databaseType = $this->helper->getType();
 
         $tableEngine = $this->getTableEngine();
 
@@ -168,7 +168,7 @@ class MysqlColumnPreparator implements ColumnPreparator
 
         switch ($tableEngine) {
             case 'InnoDB':
-                $version = $this->helper->getDatabaseVersion() ?? '';
+                $version = $this->helper->getVersion();
 
                 switch ($databaseType) {
                     case self::TYPE_MARIADB:
@@ -193,7 +193,7 @@ class MysqlColumnPreparator implements ColumnPreparator
      */
     private function getTableEngine(): ?string
     {
-        $databaseType = $this->helper->getDatabaseType();
+        $databaseType = $this->helper->getType();
 
         if (!in_array($databaseType, [self::TYPE_MYSQL, self::TYPE_MARIADB])) {
             return null;
@@ -203,7 +203,7 @@ class MysqlColumnPreparator implements ColumnPreparator
 
         $vars = [];
 
-        $pdo = $this->helper->getPdoConnection();
+        $pdo = $this->helper->getPDO();
 
         $sth = $pdo->prepare($query);
         $sth->execute($vars);

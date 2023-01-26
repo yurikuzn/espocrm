@@ -32,8 +32,6 @@ namespace Espo\Core\Utils;
 use Espo\Core\Utils\Database\Helper as DatabaseHelper;
 use Espo\Core\Utils\File\Manager as FileManager;
 
-use PDO;
-
 class SystemRequirements
 {
     public function __construct(
@@ -121,12 +119,11 @@ class SystemRequirements
         $databaseHelper =  $this->databaseHelper;
         $databaseParams = $additionalData['database'] ?? [];
 
-        $pdoConnection = $databaseHelper->createPdoConnection($databaseParams);
+        $pdoConnection = $databaseHelper->createPDO($databaseParams);
 
-        $databaseHelper->setPdoConnection($pdoConnection);
-        $databaseType = $databaseHelper->getDatabaseType();
+        $databaseHelper->setPDO($pdoConnection);
+        $databaseType = $databaseHelper->getType();
         $databaseTypeName = ucfirst(strtolower($databaseType));
-
 
         $requiredList = [
             'required' . $databaseTypeName . 'Version',
@@ -285,7 +282,7 @@ class SystemRequirements
             case 'requiredMariadbVersion':
                 /** @var string $data */
 
-                $actualVersion = $databaseHelper->getDatabaseServerVersion();
+                $actualVersion = $databaseHelper->getServerVersion();
 
                 $requiredVersion = $data;
 
@@ -309,7 +306,7 @@ class SystemRequirements
                 foreach ($data as $name => $value) {
                     $requiredValue = $value;
 
-                    $actualValue = $databaseHelper->getDatabaseParam($name);
+                    $actualValue = $databaseHelper->getParam($name);
 
                     $acceptable = false;
 

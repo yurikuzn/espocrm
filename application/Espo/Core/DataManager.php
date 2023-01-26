@@ -131,7 +131,7 @@ class DataManager
             throw new Error("Error while rebuilding database. See log file for details.");
         }
 
-        $databaseType = strtolower($schemaManager->getDatabaseHelper()->getDatabaseType());
+        $databaseType = strtolower($schemaManager->getDatabaseHelper()->getType());
 
         if (
             !$this->config->get('actualDatabaseType') ||
@@ -140,7 +140,7 @@ class DataManager
             $this->configWriter->set('actualDatabaseType', $databaseType);
         }
 
-        $databaseVersion = $schemaManager->getDatabaseHelper()->getDatabaseVersion();
+        $databaseVersion = $schemaManager->getDatabaseHelper()->getVersion();
 
         if (
             !$this->config->get('actualDatabaseVersion') ||

@@ -310,12 +310,12 @@ class Installer
         bool $createDatabase = false
     ) {
         try {
-            $pdo = $this->getDatabaseHelper()->createPdoConnection($params);
+            $pdo = $this->getDatabaseHelper()->createPDO($params);
         }
         catch (Exception $e) {
             if ($createDatabase && $e->getCode() == '1049') {
                 $pdo = $this->getDatabaseHelper()
-                    ->createPdoConnection($params, true);
+                    ->createPDO($params, true);
 
                 $dbname = preg_replace('/[^A-Za-z0-9_\-@$#\(\)]+/', '', $params['dbname']);
 
