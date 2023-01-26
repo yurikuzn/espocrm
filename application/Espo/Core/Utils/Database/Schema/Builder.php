@@ -47,6 +47,9 @@ use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Types\Type as DbalType;
 
+/**
+ * Schema representation builder.
+ */
 class Builder
 {
     private const ID_LENGTH = 24; // @todo Make configurable.
@@ -73,10 +76,10 @@ class Builder
     }
 
     /**
-     * Schema conversation process.
+     * Build a schema representation for an ORM metadata.
      *
-     * @param array<string, mixed> $ormMeta
-     * @param ?string[] $entityTypeList
+     * @param array<string, mixed> $ormMeta Raw ORM metadata.
+     * @param ?string[] $entityTypeList Specific entity types.
      * @throws SchemaException
      */
     public function build(array $ormMeta, ?array $entityTypeList = null): DbalSchema

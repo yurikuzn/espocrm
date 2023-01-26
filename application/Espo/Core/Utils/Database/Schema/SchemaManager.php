@@ -47,6 +47,9 @@ use Espo\Core\Utils\Util;
 
 use Throwable;
 
+/**
+ * A database schema manager.
+ */
 class SchemaManager
 {
     private string $fieldTypePath = 'application/Espo/Core/Utils/Database/DBAL/FieldTypes';
@@ -128,9 +131,10 @@ class SchemaManager
     }
 
     /**
-     * Rebuild database schema.
+     * Rebuild database schema. Creates and alters needed tables and columns.
+     * Does not remove columns, does not decrease column lengths.
      *
-     * @param ?string[] $entityTypeList
+     * @param ?string[] $entityTypeList Specific entity types.
      * @throws SchemaException
      */
     public function rebuild(?array $entityTypeList = null): bool
