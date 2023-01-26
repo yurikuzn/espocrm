@@ -114,9 +114,9 @@ class RateService
         }
 
         $this->configWriter->set('currencyRates', $rates);
-
         $this->configWriter->save();
-        $this->dataManager->rebuildDatabase([]);
+
+        $this->dataManager->rebuildDatabase();
 
         return (object) (
             $config->get('currencyRates') ?? []

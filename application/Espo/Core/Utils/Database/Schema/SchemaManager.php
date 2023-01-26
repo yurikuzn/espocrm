@@ -132,10 +132,10 @@ class SchemaManager
     /**
      * Rebuild database schema.
      *
-     * @param ?string[] $entityList
+     * @param ?string[] $entityTypeList
      * @throws SchemaException
      */
-    public function rebuild(?array $entityList = null): bool
+    public function rebuild(?array $entityTypeList = null): bool
     {
         if (!$this->databaseConverter->process()) {
             return false;
@@ -143,7 +143,7 @@ class SchemaManager
 
         $currentSchema = $this->getCurrentSchema();
 
-        $schema = $this->builder->build($this->ormMetadataData->getData(), $entityList);
+        $schema = $this->builder->build($this->ormMetadataData->getData(), $entityTypeList);
 
         try {
             $this->processPreRebuildActions($currentSchema, $schema);

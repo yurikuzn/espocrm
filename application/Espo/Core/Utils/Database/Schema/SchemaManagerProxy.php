@@ -44,12 +44,12 @@ class SchemaManagerProxy
     }
 
     /**
-     * @param ?string[] $entityList
+     * @param ?string[] $entityTypeList
      * @throws SchemaException
      */
-    public function rebuild(?array $entityList = null): bool
+    public function rebuild(?array $entityTypeList = null): bool
     {
-        return $this->getSchemaManager()->rebuild($entityList);
+        return $this->getSchemaManager()->rebuild($entityTypeList);
     }
 
     public function getDatabaseHelper(): Helper

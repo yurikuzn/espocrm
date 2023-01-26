@@ -76,14 +76,14 @@ class Builder
      * Schema conversation process.
      *
      * @param array<string, mixed> $ormMeta
-     * @param ?string[] $entityList
+     * @param ?string[] $entityTypeList
      * @throws SchemaException
      */
-    public function build(array $ormMeta, $entityList = null): DbalSchema
+    public function build(array $ormMeta, ?array $entityTypeList = null): DbalSchema
     {
         $this->log->debug('Schema\Builder - Start');
 
-        $ormMeta = $this->amendMetadata($ormMeta, $entityList);
+        $ormMeta = $this->amendMetadata($ormMeta, $entityTypeList);
         $tables = [];
 
         $schema = new DbalSchema();
@@ -185,10 +185,10 @@ class Builder
 
     /**
      * @param array<string, mixed> $ormMeta
-     * @param ?string[] $entityList
+     * @param ?string[] $entityTypeList
      * @return array<string, mixed>
      */
-    private function amendMetadata(array $ormMeta, $entityList): array
+    private function amendMetadata(array $ormMeta, ?array $entityTypeList): array
     {
         /** @var array<string, mixed> $ormMeta */
         $ormMeta = Util::merge(
@@ -222,16 +222,16 @@ class Builder
             $ormMeta = Util::merge($ormMeta, $protectedOrmMeta);
         }
 
-        if (isset($entityList)) {
-            $dependentEntities = $this->getDependentEntities($entityList, $ormMeta);
+        if (isset($entityTypeList)) {
+            $dependentEntityTypeList = $this->getDependentEntityTypeList($entityTypeList, $ormMeta);
 
             $this->log->debug(
                 'Schema\Builder: Rebuild for entity types: [' .
-                implode(', ', $entityList) . '] with dependent entity types: [' .
-                implode(', ', $dependentEntities) . ']'
+                implode(', ', $entityTypeList) . '] with dependent entity types: [' .
+                implode(', ', $dependentEntityTypeList) . ']'
             );
 
-            $ormMeta = array_intersect_key($ormMeta, array_flip($dependentEntities));
+            $ormMeta = array_intersect_key($ormMeta, array_flip($dependentEntityTypeList));
         }
 
         return $ormMeta;
@@ -377,7 +377,7 @@ class Builder
     }
 
     /**
-     * @todo Move to static class. Add unit test.
+     * @todo Move to a class. Add unit test.
      * @return array<string, mixed>
      */
     private static function convertColumn(Column $column): array
@@ -450,38 +450,38 @@ class Builder
     }
 
     /**
-     * @param string[] $entityList
+     * @param string[] $entityTypeList
      * @param array<string, mixed> $ormMeta
-     * @param string[] $dependentEntities
+     * @param string[] $depList
      * @return string[]
      */
-    private function getDependentEntities(array $entityList, array $ormMeta, array $dependentEntities = []): array
+    private function getDependentEntityTypeList(array $entityTypeList, array $ormMeta, array $depList = []): array
     {
-        foreach ($entityList as $entityName) {
-            if (in_array($entityName, $dependentEntities)) {
+        foreach ($entityTypeList as $entityType) {
+            if (in_array($entityType, $depList)) {
                 continue;
             }
 
-            $dependentEntities[] = $entityName;
+            $depList[] = $entityType;
 
-            if (array_key_exists('relations', $ormMeta[$entityName])) {
-                foreach ($ormMeta[$entityName]['relations'] as $relationName => $relationParams) {
-                    if (isset($relationParams['entity'])) {
-                        $relationEntity = $relationParams['entity'];
+            $entityDefs = EntityDefs::fromRaw($ormMeta[$entityType] ?? [], $entityType);
 
-                        if (!in_array($relationEntity, $dependentEntities)) {
-                            $dependentEntities = $this->getDependentEntities(
-                                [$relationEntity],
-                                $ormMeta,
-                                $dependentEntities
-                            );
-                        }
-                    }
+            foreach ($entityDefs->getRelationList() as $relationDefs) {
+                if (!$relationDefs->hasForeignEntityType()) {
+                    continue;
                 }
+
+                $itemEntityType = $relationDefs->getForeignEntityType();
+
+                if (in_array($itemEntityType, $depList)) {
+                    continue;
+                }
+
+                $depList = $this->getDependentEntityTypeList([$itemEntityType], $ormMeta, $depList);
             }
         }
 
-        return $dependentEntities;
+        return $depList;
     }
 
     /**

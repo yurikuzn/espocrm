@@ -71,17 +71,17 @@ class DataManager
     /**
      * Rebuild the system with metadata, database and cache clearing.
      *
-     * @param ?string[] $entityList
+     * @param ?string[] $entityTypeList
      * @throws Error
      */
-    public function rebuild(?array $entityList = null): void
+    public function rebuild(?array $entityTypeList = null): void
     {
         $this->clearCache();
         $this->disableHooks();
         $this->checkModules();
         $this->rebuildMetadata();
         $this->populateConfigParameters();
-        $this->rebuildDatabase($entityList);
+        $this->rebuildDatabase($entityTypeList);
         $this->rebuildActionProcessor->process();
         $this->configMissingDefaultParamsSaver->process();
         $this->enableHooks();
@@ -108,15 +108,15 @@ class DataManager
     /**
      * Rebuild database.
      *
-     * @param ?string[] $entityList
+     * @param ?string[] $entityTypeList
      * @throws Error
      */
-    public function rebuildDatabase(?array $entityList = null): void
+    public function rebuildDatabase(?array $entityTypeList = null): void
     {
         $schemaManager = $this->schemaManager;
 
         try {
-            $result = $schemaManager->rebuild($entityList);
+            $result = $schemaManager->rebuild($entityTypeList);
         }
         catch (Throwable $e) {
             $result = false;
