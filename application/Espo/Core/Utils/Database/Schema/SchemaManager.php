@@ -38,7 +38,6 @@ use Doctrine\DBAL\Types\Type;
 
 use Espo\Core\Binding\BindingContainerBuilder;
 use Espo\Core\InjectableFactory;
-use Espo\Core\Utils\Database\Converter as DatabaseConverter;
 use Espo\Core\Utils\Database\DBAL\Schema\Comparator;
 use Espo\Core\Utils\Database\Helper;
 use Espo\Core\Utils\File\Manager as FileManager;
@@ -59,7 +58,6 @@ class SchemaManager
         private FileManager $fileManager,
         private OrmMetadataData $ormMetadataData,
         private Log $log,
-        private DatabaseConverter $databaseConverter,
         private Helper $helper,
         private MetadataProvider $metadataProvider,
         private InjectableFactory $injectableFactory
@@ -137,10 +135,6 @@ class SchemaManager
      */
     public function rebuild(?array $entityTypeList = null): bool
     {
-        if (!$this->databaseConverter->process()) {
-            return false;
-        }
-
         $currentSchema = $this->getCurrentSchema();
 
         $schema = $this->builder->build($this->ormMetadataData->getData(), $entityTypeList);

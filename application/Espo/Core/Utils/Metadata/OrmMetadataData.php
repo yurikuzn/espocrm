@@ -31,42 +31,28 @@ namespace Espo\Core\Utils\Metadata;
 
 use Espo\Core\InjectableFactory;
 use Espo\Core\Utils\Config;
-use Espo\Core\Utils\Database\Converter;
+use Espo\Core\Utils\Database\Orm\Converter;
 use Espo\Core\Utils\DataCache;
-use Espo\Core\Utils\File\Manager as FileManager;
-use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Util;
 
 class OrmMetadataData
 {
     /** @var ?array<string, array<string, mixed>> */
-    protected $data = null;
-
-    protected string $cacheKey = 'ormMetadata';
-
-    protected bool $useCache;
-    protected Metadata $metadata;
-    protected FileManager $fileManager;
-    protected DataCache $dataCache;
-    protected Config $config;
+    private $data = null;
+    private string $cacheKey = 'ormMetadata';
+    private bool $useCache;
     private ?Converter $converter = null;
 
     public function __construct(
-        Metadata $metadata,
-        FileManager $fileManager,
-        DataCache $dataCache,
-        Config $config,
+        private DataCache $dataCache,
+        private Config $config,
         private InjectableFactory $injectableFactory
     ) {
-        $this->metadata = $metadata;
-        $this->fileManager = $fileManager;
-        $this->dataCache = $dataCache;
-        $this->config = $config;
 
         $this->useCache = (bool) $this->config->get('useCache', false);
     }
 
-    protected function getConverter(): Converter
+    private function getConverter(): Converter
     {
         if (!isset($this->converter)) {
             $this->converter = $this->injectableFactory->create(Converter::class);
@@ -76,6 +62,9 @@ class OrmMetadataData
     }
 
     /**
+     * Get all data.
+     *
+     * @param bool $reload Reload metadata, converts to ORM specific format and stores in cache.
      * @return array<string, array<string, mixed>>
      */
     public function getData(bool $reload = false): array

@@ -410,10 +410,11 @@ class Builder
             $result['unsigned'] = $column->getUnsigned();
         }
 
-        $result['customSchemaOptions'] = [];
+        // Can't use customSchemaOptions as it causes unwanted ALTER TABLE.
+        $result['platformOptions'] = [];
 
         if ($column->getCollation()) {
-            $result['customSchemaOptions']['collation'] = $column->getCollation();
+            $result['platformOptions']['collation'] = $column->getCollation();
         }
 
         return $result;

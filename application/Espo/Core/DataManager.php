@@ -155,24 +155,14 @@ class DataManager
 
     /**
      * Rebuild metadata.
-     *
-     * @throws Error
      */
     public function rebuildMetadata(): void
     {
-        $metadata = $this->metadata;
-
-        $metadata->init(true);
-
-        $ormData = $this->ormMetadataData->getData(true);
-
+        $this->metadata->init(true);
+        $this->ormMetadataData->getData(true);
         $this->entityManager->getMetadata()->updateData();
 
         $this->updateCacheTimestamp();
-
-        if (empty($ormData)) {
-            throw new Error("Error while rebuilding metadata. See log file for details.");
-        }
     }
 
     /**
