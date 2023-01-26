@@ -32,7 +32,6 @@ namespace Espo\Core\Utils\Database\Schema\ColumnPreparators;
 use Espo\Core\Utils\Database\Helper;
 use Espo\Core\Utils\Database\Schema\Column;
 use Espo\Core\Utils\Database\Schema\ColumnPreparator;
-use Espo\Core\Utils\Database\Schema\PlatformOptions;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Defs\AttributeDefs;
 use Espo\ORM\Entity;
