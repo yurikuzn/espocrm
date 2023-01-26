@@ -155,6 +155,9 @@ define('model', [], function () {
          */
         defs: null,
 
+        /** @private */
+        _isBeingFetched: false,
+
         /**
          * Initialize.
          *
@@ -570,6 +573,9 @@ define('model', [], function () {
          */
         fetch: function (options) {
             this.lastXhr = Dep.prototype.fetch.call(this, options);
+            this._isBeingFetched = true;
+
+            this.once('sync', () => this._isBeingFetched = false);
 
             return this.lastXhr;
         },
@@ -580,7 +586,17 @@ define('model', [], function () {
         abortLastFetch: function () {
             if (this.lastXhr && this.lastXhr.readyState < 4) {
                 this.lastXhr.abort();
+                this._isBeingFetched = false;
             }
+        },
+
+        /**
+         * Is being fetched.
+         *
+         * @return {boolean}
+         */
+        isBeingFetched: function () {
+            return this._isBeingFetched;
         },
     });
 });

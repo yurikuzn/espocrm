@@ -2098,6 +2098,12 @@ function (Dep, ViewRecordHelper, ActionItemSetup) {
                 this.getMetadata().get(['clientDefs', this.scope, 'dynamicHandler']);
 
             let init = dynamicHandler => {
+                if (this.model.isBeingFetched()) {
+                    this.listenToOnce(this.model, 'sync', () => init(dynamicHandler));
+
+                    return;
+                }
+
                 this.listenTo(this.model, 'change', (model, o) => {
                     if ('onChange' in dynamicHandler) {
                         dynamicHandler.onChange.call(dynamicHandler, model, o);
