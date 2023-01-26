@@ -39,7 +39,7 @@ use Espo\Core\Utils\Util;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Config\ConfigWriter;
 use Espo\Core\Utils\Metadata\OrmMetadataData;
-use Espo\Core\Utils\Database\Schema\SchemaProxy;
+use Espo\Core\Utils\Database\Schema\SchemaProxy as SchemaProxy;
 use Espo\Core\Utils\Log;
 use Espo\Core\Utils\Module;
 use Espo\Core\Rebuild\RebuildActionProcessor;
@@ -51,48 +51,22 @@ use Throwable;
  */
 class DataManager
 {
-    private Config $config;
-    private ConfigWriter $configWriter;
-    private EntityManagerProxy $entityManager;
-    private Metadata $metadata;
-    private OrmMetadataData $ormMetadataData;
-    private HookManager $hookManager;
-    private SchemaProxy $schemaProxy;
-    private Log $log;
-    private Module $module;
-    private RebuildActionProcessor $rebuildActionProcessor;
-    private ConfigMissingDefaultParamsSaver $configMissingDefaultParamsSaver;
-    private FileManager $fileManager;
-
     private string $cachePath = 'data/cache';
 
     public function __construct(
-        EntityManagerProxy $entityManager,
-        Config $config,
-        ConfigWriter $configWriter,
-        Metadata $metadata,
-        OrmMetadataData $ormMetadataData,
-        HookManager $hookManager,
-        SchemaProxy $schemaProxy,
-        Log $log,
-        Module $module,
-        RebuildActionProcessor $rebuildActionProcessor,
-        ConfigMissingDefaultParamsSaver $configMissingDefaultParamsSaver,
-        FileManager $fileManager
-    ) {
-        $this->entityManager = $entityManager;
-        $this->config = $config;
-        $this->configWriter = $configWriter;
-        $this->metadata = $metadata;
-        $this->ormMetadataData = $ormMetadataData;
-        $this->hookManager = $hookManager;
-        $this->schemaProxy = $schemaProxy;
-        $this->log = $log;
-        $this->module = $module;
-        $this->rebuildActionProcessor = $rebuildActionProcessor;
-        $this->configMissingDefaultParamsSaver = $configMissingDefaultParamsSaver;
-        $this->fileManager = $fileManager;
-    }
+        private EntityManagerProxy $entityManager,
+        private Config $config,
+        private ConfigWriter $configWriter,
+        private Metadata $metadata,
+        private OrmMetadataData $ormMetadataData,
+        private HookManager $hookManager,
+        private SchemaProxy $schema,
+        private Log $log,
+        private Module $module,
+        private RebuildActionProcessor $rebuildActionProcessor,
+        private ConfigMissingDefaultParamsSaver $configMissingDefaultParamsSaver,
+        private FileManager $fileManager
+    ) {}
 
     /**
      * Rebuild the system with metadata, database and cache clearing.
@@ -139,7 +113,7 @@ class DataManager
      */
     public function rebuildDatabase(?array $entityList = null): void
     {
-        $schema = $this->schemaProxy;
+        $schema = $this->schema;
 
         try {
             $result = $schema->rebuild($entityList);

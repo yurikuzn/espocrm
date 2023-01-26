@@ -3,7 +3,11 @@
         "Mysql": {
             "dbalConnectionFactoryClassName": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\MysqlConnectionFactory",
             "indexHelperClassName": "Espo\\Core\\Utils\\Database\\Orm\\IndexHelpers\\MysqlIndexHelper",
-            "columnPreparatorClassName": "Espo\\Core\\Utils\\Database\\Schema\\ColumnPreparators\\MysqlColumnPreparator"
+            "columnPreparatorClassName": "Espo\\Core\\Utils\\Database\\Schema\\ColumnPreparators\\MysqlColumnPreparator",
+            "preRebuildActionClassNameList": [
+                "Espo\\Core\\Utils\\Database\\Schema\\RebuildActions\\PrepareForFulltextIndex"
+            ],
+            "postRebuildActionClassNameList": []
         },
         "Postgresql": {
             "dbalConnectionFactoryClassName": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\PostgresqlConnectionFactory"

@@ -29,32 +29,9 @@
 
 namespace Espo\Core\Utils\Database\Schema;
 
-use Espo\Core\Container;
-use Espo\Core\Utils\Database\Helper;
+use Doctrine\DBAL\Schema\Schema as DbalSchema;
 
-use Doctrine\DBAL\Schema\SchemaException;
-
-class SchemaProxy
+interface RebuildAction
 {
-    public function __construct(private Container $container) {}
-
-    private function getSchema(): Schema
-    {
-        /** @var Schema */
-        return $this->container->get('schema');
-    }
-
-    /**
-     * @param ?string[] $entityList
-     * @throws SchemaException
-     */
-    public function rebuild(?array $entityList = null): bool
-    {
-        return $this->getSchema()->rebuild($entityList);
-    }
-
-    public function getDatabaseHelper(): Helper
-    {
-        return $this->getSchema()->getDatabaseHelper();
-    }
+    public function process(DbalSchema $oldSchema, DbalSchema $newSchema): void;
 }

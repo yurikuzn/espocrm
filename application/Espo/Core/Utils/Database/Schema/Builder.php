@@ -47,7 +47,7 @@ use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Types\Type as DbalType;
 
-class Processor
+class Builder
 {
     private const DEFAULT_PLATFORM = 'Mysql';
     private const ID_LENGTH = 24; // @todo Make configurable.
@@ -77,12 +77,12 @@ class Processor
      * Schema conversation process.
      *
      * @param array<string, mixed> $ormMeta
-     * @param string[]|string|null $entityList
+     * @param ?string[] $entityList
      * @throws SchemaException
      */
-    public function process(array $ormMeta, $entityList = null): DbalSchema
+    public function build(array $ormMeta, $entityList = null): DbalSchema
     {
-        $this->log->debug('Schema\Processor - Start');
+        $this->log->debug('Schema\Builder - Start');
 
         $ormMeta = $this->amendMetadata($ormMeta, $entityList);
         $tables = [];
@@ -92,7 +92,7 @@ class Processor
         foreach ($ormMeta as $entityType => $entityParams) {
             $entityDefs = EntityDefs::fromRaw($entityParams, $entityType);
 
-            $this->processEntity($entityDefs, $schema, $tables);
+            $this->buildEntity($entityDefs, $schema, $tables);
         }
 
         foreach ($ormMeta as $entityType => $entityParams) {
@@ -103,11 +103,11 @@ class Processor
                     continue;
                 }
 
-                $this->processManyMany($entityType, $relationDefs, $schema, $tables);
+                $this->buildManyMany($entityType, $relationDefs, $schema, $tables);
             }
         }
 
-        $this->log->debug('Schema\Processor - End');
+        $this->log->debug('Schema\Builder - End');
 
         return $schema;
     }
@@ -116,7 +116,7 @@ class Processor
      * @param array<string, Table> $tables
      * @throws SchemaException
      */
-    private function processEntity(EntityDefs $entityDefs, DbalSchema $schema, array &$tables): void
+    private function buildEntity(EntityDefs $entityDefs, DbalSchema $schema, array &$tables): void
     {
         if ($entityDefs->getParam('skipRebuild')) {
             return;
@@ -124,14 +124,14 @@ class Processor
 
         $entityType = $entityDefs->getName();
 
-        $this->log->debug("Schema\Processor: Entity {$entityType}");
+        $this->log->debug("Schema\Builder: Entity {$entityType}");
 
         $tableName = Util::toUnderScore($entityType);
 
         if ($schema->hasTable($tableName)) {
             $tables[$entityType] ??= $schema->getTable($tableName);
 
-            $this->log->debug('Schema\Processor: Table [' . $tableName . '] exists.');
+            $this->log->debug('Schema\Builder: Table [' . $tableName . '] exists.');
 
             return;
         }
@@ -165,7 +165,7 @@ class Processor
 
             if (!in_array($column->getType(), $this->typeList)) {
                 $this->log->debug(
-                    'Schema\Processor: Column type [' . $column->getType() . '] not supported, ' .
+                    'Schema\Builder: Column type [' . $column->getType() . '] not supported, ' .
                     $entityType . ':' . $attributeDefs->getName()
                 );
 
@@ -186,7 +186,7 @@ class Processor
 
     /**
      * @param array<string, mixed> $ormMeta
-     * @param string[]|string|null $entityList
+     * @param ?string[] $entityList
      * @return array<string, mixed>
      */
     private function amendMetadata(array $ormMeta, $entityList): array
@@ -224,12 +224,10 @@ class Processor
         }
 
         if (isset($entityList)) {
-            $entityList = is_string($entityList) ? (array) $entityList : $entityList;
-
             $dependentEntities = $this->getDependentEntities($entityList, $ormMeta);
 
             $this->log->debug(
-                'Schema\Processor: Rebuild for entity types: [' .
+                'Schema\Builder: Rebuild for entity types: [' .
                 implode(', ', $entityList) . '] with dependent entity types: [' .
                 implode(', ', $dependentEntities) . ']'
             );
@@ -259,7 +257,7 @@ class Processor
      * @param array<string, Table> $tables
      * @throws SchemaException
      */
-    private function processManyMany(
+    private function buildManyMany(
         string $entityType,
         RelationDefs $relationDefs,
         DbalSchema $schema,
@@ -274,10 +272,10 @@ class Processor
 
         $tableName = Util::toUnderScore($relationshipName);
 
-        $this->log->debug("Schema\Processor: ManyMany for {$entityType}.{$relationDefs->getName()}");
+        $this->log->debug("Schema\Builder: ManyMany for {$entityType}.{$relationDefs->getName()}");
 
         if ($schema->hasTable($tableName)) {
-            $this->log->debug('Schema\Processor: Table [' . $tableName . '] exists.');
+            $this->log->debug('Schema\Builder: Table [' . $tableName . '] exists.');
 
             $tables[$relationshipName] ??= $schema->getTable($tableName);
 
@@ -298,7 +296,7 @@ class Processor
         $this->addColumn($table, $idColumn);
 
         if (!$relationDefs->hasMidKey() || !$relationDefs->getForeignMidKey()) {
-            $this->log->error('Schema\Processor: Relationship midKeys are empty.', [
+            $this->log->error('Schema\Builder: Relationship midKeys are empty.', [
                 'entityType' => $entityType,
                 'relationName' => $relationDefs->getName(),
             ]);
@@ -449,29 +447,17 @@ class Processor
             $this->loadData($this->pathProvider->getCustom() . $this->tablesPath)
         );
 
-        // Get custom tables from metadata 'additionalTables'.
-        //foreach ($ormMeta as $entityParams) {
-        //    if (isset($entityParams['additionalTables']) && is_array($entityParams['additionalTables'])) {
-                /** @var array<string, mixed> $customTables */
-        /*        $customTables = Util::merge($customTables, $entityParams['additionalTables']);
-            }
-        }*/
-
         return $customTables;
     }
 
     /**
-     * @param string[]|string $entityList
+     * @param string[] $entityList
      * @param array<string, mixed> $ormMeta
      * @param string[] $dependentEntities
      * @return string[]
      */
-    private function getDependentEntities($entityList, $ormMeta, $dependentEntities = [])
+    private function getDependentEntities(array $entityList, array $ormMeta, array $dependentEntities = []): array
     {
-        if (is_string($entityList)) {
-            $entityList = (array) $entityList;
-        }
-
         foreach ($entityList as $entityName) {
             if (in_array($entityName, $dependentEntities)) {
                 continue;
@@ -486,7 +472,7 @@ class Processor
 
                         if (!in_array($relationEntity, $dependentEntities)) {
                             $dependentEntities = $this->getDependentEntities(
-                                $relationEntity,
+                                [$relationEntity],
                                 $ormMeta,
                                 $dependentEntities
                             );

@@ -29,32 +29,38 @@
 
 namespace Espo\Core\Utils\Database\Schema;
 
-use Espo\Core\Container;
-use Espo\Core\Utils\Database\Helper;
+use Espo\Core\Utils\Config;
+use Espo\Core\Utils\Metadata;
 
-use Doctrine\DBAL\Schema\SchemaException;
-
-class SchemaProxy
+class MetadataProvider
 {
-    public function __construct(private Container $container) {}
+    private const DEFAULT_PLATFORM = 'Mysql';
 
-    private function getSchema(): Schema
+    public function __construct(
+        private Config $config,
+        private Metadata $metadata
+    ) {}
+
+    public function getPlatform(): string
     {
-        /** @var Schema */
-        return $this->container->get('schema');
+        return $this->config->get('database.platform') ?? self::DEFAULT_PLATFORM;
     }
 
     /**
-     * @param ?string[] $entityList
-     * @throws SchemaException
+     * @return class-string<RebuildAction>[]
      */
-    public function rebuild(?array $entityList = null): bool
+    public function getPreRebuildActionClassNameList(): array
     {
-        return $this->getSchema()->rebuild($entityList);
+        /** @var class-string<RebuildAction>[] */
+        return $this->metadata->get(['app', 'database', $this->getPlatform(), 'preRebuildActionClassNameList']) ?? [];
     }
 
-    public function getDatabaseHelper(): Helper
+    /**
+     * @return class-string<RebuildAction>[]
+     */
+    public function getPostRebuildActionClassNameList(): array
     {
-        return $this->getSchema()->getDatabaseHelper();
+        /** @var class-string<RebuildAction>[] */
+        return $this->metadata->get(['app', 'database', $this->getPlatform(), 'postRebuildActionClassNameList']) ?? [];
     }
 }
