@@ -29,7 +29,7 @@
 
 namespace Espo\Core\Utils\Database\Schema;
 
-use Espo\Core\Utils\Config;
+use Espo\Core\Utils\Database\ConfigDataProvider;
 use Espo\Core\Utils\File\Manager as FileManager;
 use Espo\Core\Utils\Log;
 use Espo\Core\Utils\Metadata;
@@ -49,7 +49,6 @@ use Doctrine\DBAL\Types\Type as DbalType;
 
 class Builder
 {
-    private const DEFAULT_PLATFORM = 'Mysql';
     private const ID_LENGTH = 24; // @todo Make configurable.
     private const DEFAULT_VARCHAR_LENGTH = 255;
 
@@ -61,14 +60,14 @@ class Builder
     public function __construct(
         private Metadata $metadata,
         private FileManager $fileManager,
-        private Config $config,
         private Log $log,
         private PathProvider $pathProvider,
+        ConfigDataProvider $configDataProvider,
         ColumnPreparatorFactory $columnPreparatorFactory
     ) {
         $this->typeList = array_keys(DbalType::getTypesMap());
 
-        $platform = $this->config->get('database.platform') ?? self::DEFAULT_PLATFORM;
+        $platform = $configDataProvider->getPlatform();
 
         $this->columnPreparator = $columnPreparatorFactory->create($platform);
     }

@@ -29,6 +29,7 @@
 
 namespace Espo\Core\Utils\Database\Orm;
 
+use Espo\Core\Utils\Database\ConfigDataProvider;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Defs\IndexDefs;
 use Espo\ORM\Entity;
@@ -38,8 +39,6 @@ use Espo\Core\Utils\Metadata\Helper as MetadataHelper;
 
 class Converter
 {
-    private const DEFAULT_PLATFORM = 'Mysql';
-
     /** @var ?array<string, mixed> */
     private $entityDefs = null;
 
@@ -109,10 +108,10 @@ class Converter
         private Config $config,
         private RelationManager $relationManager,
         private MetadataHelper $metadataHelper,
+        ConfigDataProvider $configDataProvider,
         IndexHelperFactory $indexHelperFactory
     ) {
-
-        $platform = $this->config->get('database.platform') ?? self::DEFAULT_PLATFORM;
+        $platform = $configDataProvider->getPlatform();
 
         $this->indexHelper = $indexHelperFactory->create($platform);
     }

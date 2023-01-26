@@ -27,40 +27,18 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Core\Utils\Database\Schema;
+namespace Espo\Core\Utils\Database;
 
-use Espo\Core\Utils\Database\ConfigDataProvider;
-use Espo\Core\Utils\Metadata;
+use Espo\Core\Utils\Config;
 
-class MetadataProvider
+class ConfigDataProvider
 {
-    public function __construct(
-        private ConfigDataProvider $configDataProvider,
-        private Metadata $metadata
-    ) {}
+    private const DEFAULT_PLATFORM = 'Mysql';
 
-    private function getPlatform(): string
-    {
-        return $this->configDataProvider->getPlatform();
-    }
+    public function __construct(private Config $config) {}
 
-    /**
-     * @return class-string<RebuildAction>[]
-     */
-    public function getPreRebuildActionClassNameList(): array
+    public function getPlatform(): string
     {
-        /** @var class-string<RebuildAction>[] */
-        return $this->metadata
-            ->get(['app', 'database', 'platforms', $this->getPlatform(), 'preRebuildActionClassNameList']) ?? [];
-    }
-
-    /**
-     * @return class-string<RebuildAction>[]
-     */
-    public function getPostRebuildActionClassNameList(): array
-    {
-        /** @var class-string<RebuildAction>[] */
-        return $this->metadata
-            ->get(['app', 'database', 'platforms', $this->getPlatform(), 'postRebuildActionClassNameList']) ?? [];
+        return $this->config->get('database.platform') ?? self::DEFAULT_PLATFORM;
     }
 }
