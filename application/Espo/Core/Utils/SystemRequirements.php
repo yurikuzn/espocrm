@@ -120,8 +120,8 @@ class SystemRequirements
         $databaseParams = $additionalData['database'] ?? [];
 
         $pdoConnection = $databaseHelper->createPDO($databaseParams);
-
         $databaseHelper->setPDO($pdoConnection);
+
         $databaseType = $databaseHelper->getType();
         $databaseTypeName = ucfirst(strtolower($databaseType));
 

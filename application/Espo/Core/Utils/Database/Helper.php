@@ -81,7 +81,7 @@ class Helper
     }
 
     /**
-     * @deprecated
+     * Create a PDO connection.
      *
      * @param array<string, mixed> $params
      */
@@ -105,7 +105,7 @@ class Helper
         return $pdoFactory->create($databaseParams);
     }
 
-    public function createDbalConnection(): DbalConnection
+    private function createDbalConnection(): DbalConnection
     {
         /** @var ?array<string, mixed> $params */
         $params = $this->config->get('database');

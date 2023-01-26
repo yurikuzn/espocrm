@@ -310,7 +310,7 @@ class Installer
         bool $createDatabase = false
     ) {
         try {
-            $pdo = $this->getDatabaseHelper()->createPDO($params);
+            $this->getDatabaseHelper()->createPDO($params);
         }
         catch (Exception $e) {
             if ($createDatabase && $e->getCode() == '1049') {
