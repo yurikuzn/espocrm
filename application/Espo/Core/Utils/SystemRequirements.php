@@ -269,7 +269,7 @@ class SystemRequirements
 
         $databaseHelper = $this->databaseHelper;
 
-        $databaseParams = $additionalData['database'] ?? [];
+        $databaseParams = $additionalData['databaseParams'] ?? [];
 
         switch ($type) {
             case 'requiredMysqlVersion':
