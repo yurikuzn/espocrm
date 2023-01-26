@@ -29,6 +29,7 @@
 
 namespace Espo\Services;
 
+use Espo\Core\Utils\Database\Schema\SchemaManager;
 use Espo\Core\Utils\Database\Schema\Utils as SchemaUtils;
 
 /**
@@ -59,7 +60,7 @@ class MysqlCharacter extends \Espo\Core\Services\Base
 
         $ormMeta = $container->get('ormMetadata')->getData(true);
 
-        $databaseSchema = $container->get('schema');
+        $databaseSchema = $this->getContainer()->get('injectableFactory')->create(SchemaManager::class);
         $maxIndexLength = $databaseSchema->getDatabaseHelper()->getMaxIndexLength();
 
         if ($maxIndexLength > 1000) {

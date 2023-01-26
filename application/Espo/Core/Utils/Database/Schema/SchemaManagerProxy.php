@@ -29,19 +29,18 @@
 
 namespace Espo\Core\Utils\Database\Schema;
 
-use Espo\Core\Container;
+use Espo\Core\InjectableFactory;
 use Espo\Core\Utils\Database\Helper;
 
 use Doctrine\DBAL\Schema\SchemaException;
 
-class SchemaProxy
+class SchemaManagerProxy
 {
-    public function __construct(private Container $container) {}
+    public function __construct(private InjectableFactory $injectableFactory) {}
 
-    private function getSchema(): Schema
+    private function getSchemaManager(): SchemaManager
     {
-        /** @var Schema */
-        return $this->container->get('schema');
+        return $this->injectableFactory->create(SchemaManager::class);
     }
 
     /**
@@ -50,11 +49,11 @@ class SchemaProxy
      */
     public function rebuild(?array $entityList = null): bool
     {
-        return $this->getSchema()->rebuild($entityList);
+        return $this->getSchemaManager()->rebuild($entityList);
     }
 
     public function getDatabaseHelper(): Helper
     {
-        return $this->getSchema()->getDatabaseHelper();
+        return $this->getSchemaManager()->getDatabaseHelper();
     }
 }

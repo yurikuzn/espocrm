@@ -33,13 +33,13 @@ use Espo\Core\Utils\Config\MissingDefaultParamsSaver as ConfigMissingDefaultPara
 
 use Espo\Core\Exceptions\Error;
 use Espo\Core\ORM\EntityManagerProxy;
+use Espo\Core\Utils\Database\Schema\SchemaManagerProxy;
 use Espo\Core\Utils\File\Manager as FileManager;
 use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Util;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Config\ConfigWriter;
 use Espo\Core\Utils\Metadata\OrmMetadataData;
-use Espo\Core\Utils\Database\Schema\SchemaProxy as SchemaProxy;
 use Espo\Core\Utils\Log;
 use Espo\Core\Utils\Module;
 use Espo\Core\Rebuild\RebuildActionProcessor;
@@ -60,7 +60,7 @@ class DataManager
         private Metadata $metadata,
         private OrmMetadataData $ormMetadataData,
         private HookManager $hookManager,
-        private SchemaProxy $schema,
+        private SchemaManagerProxy $schemaManager,
         private Log $log,
         private Module $module,
         private RebuildActionProcessor $rebuildActionProcessor,
@@ -113,10 +113,10 @@ class DataManager
      */
     public function rebuildDatabase(?array $entityList = null): void
     {
-        $schema = $this->schema;
+        $schemaManager = $this->schemaManager;
 
         try {
-            $result = $schema->rebuild($entityList);
+            $result = $schemaManager->rebuild($entityList);
         }
         catch (Throwable $e) {
             $result = false;
@@ -131,7 +131,7 @@ class DataManager
             throw new Error("Error while rebuilding database. See log file for details.");
         }
 
-        $databaseType = strtolower($schema->getDatabaseHelper()->getDatabaseType());
+        $databaseType = strtolower($schemaManager->getDatabaseHelper()->getDatabaseType());
 
         if (
             !$this->config->get('actualDatabaseType') ||
@@ -140,7 +140,7 @@ class DataManager
             $this->configWriter->set('actualDatabaseType', $databaseType);
         }
 
-        $databaseVersion = $schema->getDatabaseHelper()->getDatabaseVersion();
+        $databaseVersion = $schemaManager->getDatabaseHelper()->getDatabaseVersion();
 
         if (
             !$this->config->get('actualDatabaseVersion') ||

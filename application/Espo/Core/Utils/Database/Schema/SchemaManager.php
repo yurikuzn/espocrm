@@ -29,7 +29,7 @@
 
 namespace Espo\Core\Utils\Database\Schema;
 
-use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaDiff as DbalSchemaDiff;
@@ -48,7 +48,7 @@ use Espo\Core\Utils\Util;
 
 use Throwable;
 
-class Schema
+class SchemaManager
 {
     private string $fieldTypePath = 'application/Espo/Core/Utils/Database/DBAL/FieldTypes';
 
@@ -60,7 +60,7 @@ class Schema
         private OrmMetadataData $ormMetadataData,
         private Log $log,
         private DatabaseConverter $databaseConverter,
-        private Helper $databaseHelper,
+        private Helper $helper,
         private MetadataProvider $metadataProvider,
         private InjectableFactory $injectableFactory
     ) {
@@ -71,22 +71,22 @@ class Schema
         $this->builder = $this->injectableFactory->createWithBinding(
             Builder::class,
             BindingContainerBuilder::create()
-                ->bindInstance(Helper::class, $this->databaseHelper)
+                ->bindInstance(Helper::class, $this->helper)
                 ->build()
         );
     }
 
     public function getDatabaseHelper(): Helper
     {
-        return $this->databaseHelper;
+        return $this->helper;
     }
 
-    public function getPlatform(): AbstractPlatform
+    private function getPlatform(): AbstractPlatform
     {
-        return $this->getConnection()->getDatabasePlatform();
+        return $this->getDbalConnection()->getDatabasePlatform();
     }
 
-    public function getConnection(): Connection
+    private function getDbalConnection(): DbalConnection
     {
         return $this->getDatabaseHelper()->getDbalConnection();
     }
@@ -123,7 +123,7 @@ class Schema
                 $dbTypeName = $dbalTypeName;
             }
 
-            $this->getConnection()
+            $this->getDbalConnection()
                 ->getDatabasePlatform()
                 ->registerDoctrineTypeMapping($dbTypeName, $dbalTypeName);
         }
@@ -158,7 +158,7 @@ class Schema
 
         $result = true;
 
-        $connection = $this->getConnection();
+        $connection = $this->getDbalConnection();
 
         foreach ($queries as $sql) {
             $this->log->info('SCHEMA, Execute Query: '. $sql);
@@ -190,7 +190,7 @@ class Schema
      */
     private function getCurrentSchema(): DbalSchema
     {
-        return $this->getConnection()
+        return $this->getDbalConnection()
             ->getSchemaManager()
             ->createSchema();
     }
@@ -200,7 +200,7 @@ class Schema
      *
      * @return string[] Array of SQL queries.
      */
-    public function toSql(DbalSchemaDiff $schema)
+    private function toSql(DbalSchemaDiff $schema)
     {
         return $schema->toSaveSql($this->getPlatform());
     }
@@ -211,7 +211,7 @@ class Schema
      * @return string[] Array of SQL queries.
      * @throws SchemaException
      */
-    public function getDiffSql(DbalSchema $fromSchema, DbalSchema $toSchema)
+    private function getDiffSql(DbalSchema $fromSchema, DbalSchema $toSchema)
     {
         $schemaDiff = $this->comparator->compare($fromSchema, $toSchema);
 
@@ -221,7 +221,7 @@ class Schema
     private function processPreRebuildActions(DbalSchema $actualSchema, DbalSchema $schema): void
     {
         $binding = BindingContainerBuilder::create()
-            ->bindInstance(Helper::class, $this->databaseHelper)
+            ->bindInstance(Helper::class, $this->helper)
             ->build();
 
         foreach ($this->metadataProvider->getPreRebuildActionClassNameList() as $className) {
@@ -234,7 +234,7 @@ class Schema
     private function processPostRebuildActions(DbalSchema $actualSchema, DbalSchema $schema): void
     {
         $binding = BindingContainerBuilder::create()
-            ->bindInstance(Helper::class, $this->databaseHelper)
+            ->bindInstance(Helper::class, $this->helper)
             ->build();
 
         foreach ($this->metadataProvider->getPostRebuildActionClassNameList() as $className) {
