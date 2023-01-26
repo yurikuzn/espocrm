@@ -109,14 +109,13 @@ class SystemRequirements
      */
     private function getDatabaseRequiredList(bool $requiredOnly, ?array $additionalData = null): array
     {
-        $databaseHelper =  $this->databaseHelper;
         $databaseParams = $additionalData['databaseParams'] ?? [];
 
-        $pdoConnection = $databaseHelper->createPDO($databaseParams);
-        $databaseHelper->setPDO($pdoConnection);
+        $pdo = $this->databaseHelper->createPDO($databaseParams);
 
-        $databaseType = $databaseHelper->getType();
-        $databaseTypeName = ucfirst(strtolower($databaseType));
+        $this->databaseHelper = $this->databaseHelper->withPDO($pdo);
+
+        $databaseTypeName = ucfirst(strtolower($this->databaseHelper->getType()));
 
         $requiredList = [
             'required' . $databaseTypeName . 'Version',

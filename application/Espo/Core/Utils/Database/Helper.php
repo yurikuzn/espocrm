@@ -73,11 +73,15 @@ class Helper
     }
 
     /**
-     * @deprecated
+     * Clone with another PDO connection.
      */
-    public function setPDO(PDO $pdo): void
+    public function withPDO(PDO $pdo): self
     {
-        $this->pdo = $pdo;
+        $obj = clone $this;
+        $obj->pdo = $pdo;
+        $obj->dbalConnection = null;
+
+        return $obj;
     }
 
     /**
