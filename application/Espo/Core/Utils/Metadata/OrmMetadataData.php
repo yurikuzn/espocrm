@@ -64,7 +64,7 @@ class OrmMetadataData
     /**
      * Reloads data.
      */
-    public function update(): void
+    public function reload(): void
     {
         $this->getDataInternal(true);
     }
