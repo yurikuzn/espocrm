@@ -29,12 +29,12 @@
 
 namespace Espo\Core\Utils\Database;
 
+use Doctrine\DBAL\Connection as DbalConnection;
+
 use Espo\Core\ORM\PDO\PDOFactoryFactory;
 use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Database\DBAL\ConnectionFactoryFactory as DBALConnectionFactoryFactory;
 use Espo\ORM\DatabaseParams;
-
-use Doctrine\DBAL\Connection as DBALConnection;
 
 use PDO;
 use RuntimeException;
@@ -47,9 +47,7 @@ class Helper
 
     private const DEFAULT_PLATFORM = 'Mysql';
 
-    private const DEFAULT_INDEX_LIMIT = 1000;
-
-    private ?DBALConnection $dbalConnection = null;
+    private ?DbalConnection $dbalConnection = null;
     private ?PDO $pdoConnection = null;
 
     public function __construct(
@@ -58,7 +56,7 @@ class Helper
         private DBALConnectionFactoryFactory $dbalConnectionFactoryFactory
     ) {}
 
-    public function getDbalConnection(): DBALConnection
+    public function getDbalConnection(): DbalConnection
     {
         if (!isset($this->dbalConnection)) {
             $this->dbalConnection = $this->createDbalConnection();
@@ -81,7 +79,7 @@ class Helper
         $this->pdoConnection = $pdoConnection;
     }
 
-    public function createDbalConnection(): DBALConnection
+    public function createDbalConnection(): DbalConnection
     {
         /** @var ?array<string, mixed> $params */
         $params = $this->config->get('database');
@@ -153,47 +151,9 @@ class Helper
     }
 
     /**
-     * Get maximum index length. If a table name is null, then get a value for all database tables.
-     */
-    public function getMaxIndexLength(?string $tableName = null): int
-    {
-        $databaseType = $this->getDatabaseType();
-
-        if ($databaseType === self::TYPE_POSTGRESQL) {
-            return 2704; // @todo Revise.
-        }
-
-        $tableEngine = $this->getTableEngine($tableName);
-
-        if (!$tableEngine) {
-            return self::DEFAULT_INDEX_LIMIT;
-        }
-
-        switch ($tableEngine) {
-            case 'InnoDB':
-                $databaseType = $this->getDatabaseType();
-                $version = $this->getDatabaseVersion() ?? '';
-
-                switch ($databaseType) {
-                    case self::TYPE_MARIADB:
-                        if (version_compare($version, '10.2.2') >= 0) {
-                            return 3072; // InnoDB, MariaDB 10.2.2+
-                        }
-
-                        break;
-
-                    case self::TYPE_MYSQL:
-                        return 3072;
-                }
-
-                return 767; // InnoDB
-        }
-
-        return 1000; // MyISAM
-    }
-
-    /**
      * Get a database type (MySQL, MariaDB, PostgreSQL).
+     *
+     * @todo Refactor.
      */
     public function getDatabaseType(): string
     {
@@ -245,38 +205,8 @@ class Helper
     }
 
     /**
-     * Get a table or default engine. If a table name is null, get a value for all database tables.
+     * @todo Refactor.
      */
-    private function getTableEngine(?string $tableName = null): ?string
-    {
-        $databaseType = $this->getDatabaseType();
-
-        if (!in_array($databaseType, [self::TYPE_MYSQL, self::TYPE_MARIADB])) {
-            return null;
-        }
-
-        $query = $tableName ?
-            "SHOW TABLE STATUS WHERE Engine = 'MyISAM' AND Name = :tableName" :
-            "SHOW TABLE STATUS WHERE Engine = 'MyISAM'";
-
-        $vars = [];
-
-        if ($tableName) {
-            $vars[':tableName'] = $tableName;
-        }
-
-        $sth = $this->getPdoConnection()->prepare($query);
-        $sth->execute($vars);
-
-        $result = $sth->fetchColumn();
-
-        if (!empty($result)) {
-            return 'MyISAM';
-        }
-
-        return 'InnoDB';
-    }
-
     public function getDatabaseParam(string $name): ?string
     {
         $databaseType = $this->getDatabaseType();
@@ -304,6 +234,9 @@ class Helper
         return (string) $value;
     }
 
+    /**
+     * @todo Refactor.
+     */
     public function getDatabaseServerVersion(): string
     {
         $databaseType = $this->getDatabaseType();

@@ -47,12 +47,15 @@ class MysqlColumnPreparator implements ColumnPreparator
     private const PARAM_SCALE = 'scale';
     private const PARAM_BINARY = 'binary';
 
-    private ?int $maxIndexLength = null;
+    public const TYPE_MYSQL = 'MySQL';
+    public const TYPE_MARIADB = 'MariaDB';
 
     private const MB4_INDEX_LENGTH_LIMIT = 3072;
+    private const DEFAULT_INDEX_LIMIT = 1000;
+
+    private ?int $maxIndexLength = null;
 
     public function __construct(
-        // Pass in a binding container.
         private Helper $helper
     ) {}
 
@@ -144,9 +147,73 @@ class MysqlColumnPreparator implements ColumnPreparator
     private function getMaxIndexLength(): int
     {
         if (!isset($this->maxIndexLength)) {
-            $this->maxIndexLength = $this->helper->getMaxIndexLength();
+            $this->maxIndexLength = $this->detectMaxIndexLength();
         }
 
         return $this->maxIndexLength;
+    }
+
+    /**
+     * Get maximum index length.
+     */
+    private function detectMaxIndexLength(): int
+    {
+        $databaseType = $this->helper->getDatabaseType();
+
+        $tableEngine = $this->getTableEngine();
+
+        if (!$tableEngine) {
+            return self::DEFAULT_INDEX_LIMIT;
+        }
+
+        switch ($tableEngine) {
+            case 'InnoDB':
+                $version = $this->helper->getDatabaseVersion() ?? '';
+
+                switch ($databaseType) {
+                    case self::TYPE_MARIADB:
+                        if (version_compare($version, '10.2.2') >= 0) {
+                            return 3072; // InnoDB, MariaDB 10.2.2+
+                        }
+
+                        break;
+
+                    case self::TYPE_MYSQL:
+                        return 3072;
+                }
+
+                return 767; // InnoDB
+        }
+
+        return 1000; // MyISAM
+    }
+
+    /**
+     * Get a table or default engine.
+     */
+    private function getTableEngine(): ?string
+    {
+        $databaseType = $this->helper->getDatabaseType();
+
+        if (!in_array($databaseType, [self::TYPE_MYSQL, self::TYPE_MARIADB])) {
+            return null;
+        }
+
+        $query = "SHOW TABLE STATUS WHERE Engine = 'MyISAM'";
+
+        $vars = [];
+
+        $pdo = $this->helper->getPdoConnection();
+
+        $sth = $pdo->prepare($query);
+        $sth->execute($vars);
+
+        $result = $sth->fetchColumn();
+
+        if (!empty($result)) {
+            return 'MyISAM';
+        }
+
+        return 'InnoDB';
     }
 }
