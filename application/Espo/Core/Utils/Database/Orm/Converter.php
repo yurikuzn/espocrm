@@ -111,7 +111,7 @@ class Converter
     public function __construct(
         private Metadata $metadata,
         private Config $config,
-        private RelationConverted $relationConverter,
+        private RelationConverter $relationConverter,
         private MetadataHelper $metadataHelper,
         ConfigDataProvider $configDataProvider,
         IndexHelperFactory $indexHelperFactory

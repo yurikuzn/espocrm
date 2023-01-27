@@ -33,7 +33,7 @@ use Espo\Core\Utils\Util;
 use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Config;
 
-class RelationConverted
+class RelationConverter
 {
     public function __construct(
         private Metadata $metadata,
