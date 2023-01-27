@@ -29,6 +29,7 @@
 
 namespace Espo\Core\Utils\Database\Orm;
 
+use Doctrine\DBAL\Types\Types;
 use Espo\Core\Utils\Database\ConfigDataProvider;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Defs\IndexDefs;
@@ -518,7 +519,7 @@ class Converter
         if ($this->metadata->get(['entityDefs', $entityType, 'optimisticConcurrencyControl'])) {
             $ormMetadata[$entityType]['fields']['versionNumber'] = [
                 'type' => Entity::INT,
-                'dbType' => 'bigint',
+                'dbType' => Types::BIGINT,
                 'notExportable' => true,
             ];
         }
@@ -853,7 +854,7 @@ class Converter
                     'id' => [
                         'type' => 'id',
                         'autoincrement' => true,
-                        'dbType' => 'bigint', // ignored because of `skipRebuild`
+                        'dbType' => Types::BIGINT, // ignored because of `skipRebuild`
                     ],
                     'deleted' => [
                         'type' => 'bool'

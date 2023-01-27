@@ -42,6 +42,7 @@ use Espo\ORM\Defs\IndexDefs;
 use Espo\ORM\Defs\RelationDefs;
 use Espo\ORM\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\DBAL\Schema\SchemaException;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
@@ -54,6 +55,9 @@ class Builder
 {
     private const ID_LENGTH = 24; // @todo Make configurable.
     private const DEFAULT_VARCHAR_LENGTH = 255;
+
+    private const ATTR_ID = 'id';
+    private const ATTR_DELETED = 'deleted';
 
     private string $tablesPath = 'Core/Utils/Database/Schema/tables';
     /** @var string[] */
@@ -288,11 +292,11 @@ class Builder
 
         $idColumn = $this->columnPreparator->prepare(
             AttributeDefs::fromRaw([
-                'dbType' => 'bigint',
+                'dbType' => Types::BIGINT,
                 'type' => Entity::ID,
                 'len' => 20,
                 'autoincrement' => true,
-            ], 'id')
+            ], self::ATTR_ID)
         );
 
         $this->addColumn($table, $idColumn);
@@ -345,12 +349,12 @@ class Builder
             AttributeDefs::fromRaw([
                 'type' => Entity::BOOL,
                 'default' => false,
-            ], 'deleted')
+            ], self::ATTR_DELETED)
         );
 
         $this->addColumn($table, $deletedColumn);
 
-        $table->setPrimaryKey(['id']);
+        $table->setPrimaryKey([self::ATTR_ID]);
 
         $this->addIndexes($table, $relationDefs->getIndexList());
 
