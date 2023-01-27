@@ -32,6 +32,7 @@ namespace Espo\Core\Utils\Database\Orm;
 use Doctrine\DBAL\Types\Types;
 use Espo\Core\Utils\Database\ConfigDataProvider;
 use Espo\Core\Utils\Util;
+use Espo\ORM\Defs\AttributeDefs;
 use Espo\ORM\Defs\IndexDefs;
 use Espo\ORM\Entity;
 use Espo\Core\Utils\Metadata;
@@ -737,7 +738,7 @@ class Converter
         $defs['indexes'] ??= [];
 
         if (isset($defs['fields'])) {
-            $indexList = self::getEntityIndexListByAttributeDefs($defs['fields']);
+            $indexList = self::getEntityIndexListFromAttributes($defs['fields']);
 
             foreach ($indexList as $indexName => $indexParams) {
                 if (!isset($defs['indexes'][$indexName])) {
@@ -882,36 +883,36 @@ class Converter
     }
 
     /**
-     * @param array<string, mixed> $attributeDefs
+     * @param array<string, mixed> $attributesMetadata
      * @return array<string, mixed>
      */
-    private static function getEntityIndexListByAttributeDefs(array $attributeDefs): array
+    private static function getEntityIndexListFromAttributes(array $attributesMetadata): array
     {
         $indexList = [];
 
-        foreach ($attributeDefs as $fieldName => $fieldParams) {
-            if (isset($fieldParams['notStorable']) && $fieldParams['notStorable']) {
+        foreach ($attributesMetadata as $attributeName => $rawParams) {
+            $attributeDefs = AttributeDefs::fromRaw($rawParams, $attributeName);
+
+            if ($attributeDefs->isNotStorable()) {
                 continue;
             }
 
-            $indexType = self::getIndexTypeByAttributeDefs($fieldParams);
-            $indexName = self::getIndexNameByAttributeDefs($fieldName, $fieldParams);
+            $indexType = self::getIndexTypeByAttributeDefs($attributeDefs);
+            $indexName = self::getIndexNameByAttributeDefs($attributeDefs);
 
             if (!$indexType || !$indexName) {
                 continue;
             }
 
-            $keyValue = $fieldParams[$indexType];
-
-            $columnName = $fieldName;
+            $keyValue = $attributeDefs->getParam($indexType);
 
             if ($keyValue === true) {
                 $indexList[$indexName]['type'] = $indexType;
-                $indexList[$indexName]['columns'] = [$columnName];
+                $indexList[$indexName]['columns'] = [$attributeName];
             }
             else if (is_string($keyValue)) {
                 $indexList[$indexName]['type'] = $indexType;
-                $indexList[$indexName]['columns'][] = $columnName;
+                $indexList[$indexName]['columns'][] = $attributeName;
             }
         }
 
@@ -919,42 +920,39 @@ class Converter
         return $indexList;
     }
 
-    /**
-     * @param array<string, mixed> $attributeDefs
-     */
-    private static function getIndexTypeByAttributeDefs(array $attributeDefs): ?string
+
+    private static function getIndexTypeByAttributeDefs(AttributeDefs $attributeDefs): ?string
     {
         if (
-            $attributeDefs['type'] !== Entity::ID &&
-            isset($attributeDefs['unique']) && $attributeDefs['unique']
+            $attributeDefs->getType() !== Entity::ID &&
+            $attributeDefs->getParam('unique')
         ) {
             return 'unique';
         }
 
-        if (isset($attributeDefs['index']) && $attributeDefs['index']) {
+        if ($attributeDefs->getParam('index')) {
             return 'index';
         }
 
         return null;
     }
 
-    /**
-     * @param array<string, mixed> $attributeDefs
-     */
-    private static function getIndexNameByAttributeDefs(string $attributeName, array $attributeDefs): ?string
+    private static function getIndexNameByAttributeDefs(AttributeDefs $attributeDefs): ?string
     {
         $indexType = self::getIndexTypeByAttributeDefs($attributeDefs);
 
-        if ($indexType) {
-            $keyValue = $attributeDefs[$indexType];
+        if (!$indexType) {
+            return null;
+        }
 
-            if ($keyValue === true) {
-                return $attributeName;
-            }
+        $keyValue = $attributeDefs->getParam($indexType);
 
-            if (is_string($keyValue)) {
-                return $keyValue;
-            }
+        if ($keyValue === true) {
+            return $attributeDefs->getName();
+        }
+
+        if (is_string($keyValue)) {
+            return $keyValue;
         }
 
         return null;
