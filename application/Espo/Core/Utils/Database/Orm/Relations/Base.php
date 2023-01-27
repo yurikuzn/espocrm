@@ -30,9 +30,12 @@
 namespace Espo\Core\Utils\Database\Orm\Relations;
 
 use Espo\Core\Utils\Util;
+use Espo\ORM\Entity;
 
 class Base extends \Espo\Core\Utils\Database\Orm\Base
 {
+    private const DEFAULT_VARCHAR_LENGTH = 255;
+
     /**
      * @var array<string,mixed>
      */
@@ -148,25 +151,29 @@ class Base extends \Espo\Core\Utils\Database\Orm\Base
     /**
      *
      * @param string $linkName
-     * @param string $entityName
+     * @param string $entityType
      * @param ?string $foreignLinkName
      * @param ?string $foreignEntityName
-     * @return array<string,mixed>
+     * @return array<string, mixed>
      */
-    public function process($linkName, $entityName, $foreignLinkName, $foreignEntityName)
+    public function process($linkName, $entityType, $foreignLinkName, $foreignEntityName)
     {
         $inputs = [
             'itemName' => $linkName,
-            'entityName' => $entityName,
+            'entityName' => $entityType,
             'foreignLinkName' => $foreignLinkName,
             'foreignEntityName' => $foreignEntityName,
         ];
 
         $this->setMethods($inputs);
 
-        $convertedDefs = $this->load($linkName, $entityName);
+        $convertedDefs = $this->load($linkName, $entityType);
 
         $convertedDefs = $this->mergeAllowedParams($convertedDefs);
+
+        if (isset($convertedDefs[$entityType]['relations'][$linkName])) {
+            $this->correct($convertedDefs[$entityType]['relations'][$linkName]);
+        }
 
         $inputs = $this->setArrayValue(null, $inputs);
 
@@ -176,8 +183,34 @@ class Base extends \Espo\Core\Utils\Database\Orm\Base
     }
 
     /**
-     * @param array<string,mixed> $loads
-     * @return array<string,mixed>'
+     * @param array<string, mixed> $relationDefs
+     */
+    private function correct(array &$relationDefs): void
+    {
+        if (!isset($relationDefs['additionalColumns'])) {
+            return;
+        }
+
+        /** @var array<string, array<string, mixed>> $additionalColumns */
+        $additionalColumns = &$relationDefs['additionalColumns'];
+
+        foreach ($additionalColumns as &$columnDefs) {
+            $columnDefs['type'] ??= Entity::VARCHAR;
+
+            if (
+                $columnDefs['type'] === Entity::VARCHAR &&
+                !isset($columnDefs['len'])
+            ) {
+                $columnDefs['len'] = self::DEFAULT_VARCHAR_LENGTH;
+            }
+        }
+
+        $relationDefs['additionalColumns'] = $additionalColumns;
+    }
+
+    /**
+     * @param array<string, mixed> $loads
+     * @return array<string, mixed>
      */
     private function mergeAllowedParams($loads)
     {

@@ -54,7 +54,6 @@ use Doctrine\DBAL\Types\Type as DbalType;
 class Builder
 {
     private const ID_LENGTH = 24; // @todo Make configurable.
-    private const DEFAULT_VARCHAR_LENGTH = 255;
 
     private const ATTR_ID = 'id';
     private const ATTR_DELETED = 'deleted';
@@ -331,13 +330,6 @@ class Builder
         $additionalColumns = $relationDefs->getParam('additionalColumns') ?? [];
 
         foreach ($additionalColumns as $fieldName => $fieldParams) {
-            if (!isset($fieldParams['type'])) {
-                $fieldParams = array_merge($fieldParams, [
-                    'type' => Entity::VARCHAR,
-                    'len' => self::DEFAULT_VARCHAR_LENGTH,
-                ]);
-            }
-
             $column = $this->columnPreparator->prepare(
                 AttributeDefs::fromRaw($fieldParams, $fieldName)
             );
