@@ -43,7 +43,7 @@ class Converter
     /** @var ?array<string, mixed> */
     private $entityDefs = null;
 
-    private string $defaultFieldType = 'varchar';
+    private string $defaultAttributeType = Entity::VARCHAR;
 
     /** @var array<string, int> */
     private $defaultLength = [
@@ -61,7 +61,7 @@ class Converter
      *
      * @var array<string, string>
      */
-    private $fieldAccordances = [
+    private $paramMap = [
         'type' => 'type',
         'dbType' => 'dbType',
         'maxLength' => 'len',
@@ -89,7 +89,7 @@ class Converter
     /** @var array<string, mixed> */
     private $idParams = [
         'dbType' => 'varchar',
-        'len' => 24,
+        'len' => 24, // @todo Make configurable.
     ];
 
     /**
@@ -107,7 +107,7 @@ class Converter
     public function __construct(
         private Metadata $metadata,
         private Config $config,
-        private RelationManager $relationManager,
+        private RelationConverted $relationConverter,
         private MetadataHelper $metadataHelper,
         ConfigDataProvider $configDataProvider,
         IndexHelperFactory $indexHelperFactory
@@ -285,7 +285,7 @@ class Converter
                         $constName = strtoupper(Util::toUnderScore($attributeParams['type']));
 
                         if (!defined('Espo\\ORM\\Entity::' . $constName)) {
-                            $attributeParams['type'] = $this->defaultFieldType;
+                            $attributeParams['type'] = $this->defaultAttributeType;
                         }
 
                         break;
@@ -490,25 +490,26 @@ class Converter
             }
         }
 
-        // @todo move to separate file
-        $scopeDefs = $this->metadata->get('scopes.'.$entityType);
+        // @todo Refactor.
+        /** @var array<string, mixed> $scopeDefs */
+        $scopeDefs = $this->metadata->get(['scopes', $entityType]) ?? [];
 
-        if (isset($scopeDefs['stream']) && $scopeDefs['stream']) {
+        if ($scopeDefs['stream'] ?? false) {
             if (!isset($entityMetadata['fields']['isFollowed'])) {
                 $ormMetadata[$entityType]['fields']['isFollowed'] = [
-                    'type' => 'varchar',
+                    'type' => Entity::VARCHAR,
                     'notStorable' => true,
                     'notExportable' => true,
                 ];
 
                 $ormMetadata[$entityType]['fields']['followersIds'] = [
-                    'type' => 'jsonArray',
+                    'type' => Entity::JSON_ARRAY,
                     'notStorable' => true,
                     'notExportable' => true,
                 ];
 
                 $ormMetadata[$entityType]['fields']['followersNames'] = [
-                    'type' => 'jsonObject',
+                    'type' => Entity::JSON_OBJECT,
                     'notStorable' => true,
                     'notExportable' => true,
                 ];
@@ -545,7 +546,7 @@ class Converter
         $this->prepareFieldParamsBeforeConvert($fieldParams);
 
         if (isset($fieldTypeMetadata['fieldDefs'])) {
-            /** @var array<string,mixed> $fieldParams */
+            /** @var array<string, mixed> $fieldParams */
             $fieldParams = Util::merge($fieldParams, $fieldTypeMetadata['fieldDefs']);
         }
 
@@ -581,7 +582,7 @@ class Converter
     }
 
     /**
-     * @param array<string,mixed> $fieldParams
+     * @param array<string, mixed> $fieldParams
      */
     private function prepareFieldParamsBeforeConvert(array &$fieldParams): void
     {
@@ -606,16 +607,16 @@ class Converter
         }
 
         $relationships = [];
-        foreach ($entityMetadata['links'] as $linkName => $linkParams) {
 
+        foreach ($entityMetadata['links'] as $linkName => $linkParams) {
             if (isset($linkParams['skipOrmDefs']) && $linkParams['skipOrmDefs'] === true) {
                 continue;
             }
 
-            $convertedLink = $this->relationManager->convert($linkName, $linkParams, $entityType, $ormMetadata);
+            $convertedLink = $this->relationConverter->convert($linkName, $linkParams, $entityType, $ormMetadata);
 
-            if (isset($convertedLink)) {
-                /** @var array<string,mixed> $relationships */
+            if ($convertedLink) {
+                /** @var array<string, mixed> $relationships */
                 $relationships = Util::merge($convertedLink, $relationships);
             }
         }
@@ -631,7 +632,7 @@ class Converter
     {
         $values = [];
 
-        foreach ($this->fieldAccordances as $espoType => $ormType) {
+        foreach ($this->paramMap as $espoType => $ormType) {
             if (!array_key_exists($espoType, $attributeParams)) {
                 continue;
             }
@@ -729,14 +730,14 @@ class Converter
     /**
      * @param array<string, mixed> $ormMetadata
      */
-    private function applyIndexes(&$ormMetadata, string $entityType): void
+    private function applyIndexes(array &$ormMetadata, string $entityType): void
     {
         $defs = &$ormMetadata[$entityType];
 
         $defs['indexes'] ??= [];
 
         if (isset($defs['fields'])) {
-            $indexList = self::getEntityIndexListByFieldsDefs($defs['fields']);
+            $indexList = self::getEntityIndexListByAttributeDefs($defs['fields']);
 
             foreach ($indexList as $indexName => $indexParams) {
                 if (!isset($defs['indexes'][$indexName])) {
@@ -842,7 +843,7 @@ class Converter
         $result = [];
 
         foreach ($defs['relations'] as $relationParams) {
-            if ($relationParams['type'] !== 'manyMany') {
+            if ($relationParams['type'] !== Entity::MANY_MANY) {
                 continue;
             }
 
@@ -852,25 +853,25 @@ class Converter
                 'skipRebuild' => true,
                 'fields' => [
                     'id' => [
-                        'type' => 'id',
+                        'type' => Entity::ID,
                         'autoincrement' => true,
                         'dbType' => Types::BIGINT, // ignored because of `skipRebuild`
                     ],
                     'deleted' => [
-                        'type' => 'bool'
+                        'type' => Entity::BOOL,
                     ],
                 ],
             ];
 
             foreach ($relationParams['midKeys'] ?? [] as $key) {
                 $itemDefs['fields'][$key] = [
-                    'type' => 'foreignId',
+                    'type' => Entity::FOREIGN_ID,
                 ];
             }
 
             foreach ($relationParams['additionalColumns'] ?? [] as $columnName => $columnItem) {
                 $itemDefs['fields'][$columnName] = [
-                    'type' => $columnItem['type'] ?? 'varchar',
+                    'type' => $columnItem['type'] ?? Entity::VARCHAR,
                 ];
             }
 
@@ -881,20 +882,20 @@ class Converter
     }
 
     /**
-     * @param array<string, mixed> $fieldsDefs
+     * @param array<string, mixed> $attributeDefs
      * @return array<string, mixed>
      */
-    private static function getEntityIndexListByFieldsDefs(array $fieldsDefs): array
+    private static function getEntityIndexListByAttributeDefs(array $attributeDefs): array
     {
         $indexList = [];
 
-        foreach ($fieldsDefs as $fieldName => $fieldParams) {
+        foreach ($attributeDefs as $fieldName => $fieldParams) {
             if (isset($fieldParams['notStorable']) && $fieldParams['notStorable']) {
                 continue;
             }
 
-            $indexType = self::getIndexTypeByFieldDefs($fieldParams);
-            $indexName = self::getIndexNameByFieldDefs($fieldName, $fieldParams);
+            $indexType = self::getIndexTypeByAttributeDefs($fieldParams);
+            $indexName = self::getIndexNameByAttributeDefs($fieldName, $fieldParams);
 
             if (!$indexType || !$indexName) {
                 continue;
@@ -919,18 +920,18 @@ class Converter
     }
 
     /**
-     * @param array<string, mixed> $fieldDefs
+     * @param array<string, mixed> $attributeDefs
      */
-    private static function getIndexTypeByFieldDefs(array $fieldDefs): ?string
+    private static function getIndexTypeByAttributeDefs(array $attributeDefs): ?string
     {
         if (
-            $fieldDefs['type'] !== 'id' &&
-            isset($fieldDefs['unique']) && $fieldDefs['unique']
+            $attributeDefs['type'] !== Entity::ID &&
+            isset($attributeDefs['unique']) && $attributeDefs['unique']
         ) {
             return 'unique';
         }
 
-        if (isset($fieldDefs['index']) && $fieldDefs['index']) {
+        if (isset($attributeDefs['index']) && $attributeDefs['index']) {
             return 'index';
         }
 
@@ -938,17 +939,17 @@ class Converter
     }
 
     /**
-     * @param array<string, mixed> $fieldDefs
+     * @param array<string, mixed> $attributeDefs
      */
-    private static function getIndexNameByFieldDefs(string $fieldName, array $fieldDefs): ?string
+    private static function getIndexNameByAttributeDefs(string $attributeName, array $attributeDefs): ?string
     {
-        $indexType = self::getIndexTypeByFieldDefs($fieldDefs);
+        $indexType = self::getIndexTypeByAttributeDefs($attributeDefs);
 
         if ($indexType) {
-            $keyValue = $fieldDefs[$indexType];
+            $keyValue = $attributeDefs[$indexType];
 
             if ($keyValue === true) {
-                return $fieldName;
+                return $attributeName;
             }
 
             if (is_string($keyValue)) {
