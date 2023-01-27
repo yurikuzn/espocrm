@@ -46,13 +46,16 @@ class Converter
 
     private string $defaultAttributeType = Entity::VARCHAR;
 
+    private const INDEX_TYPE_UNIQUE = 'unique';
+    private const INDEX_TYPE_INDEX = 'index';
+
     /** @var array<string, int> */
     private $defaultLength = [
         'varchar' => 255,
         'int' => 11,
     ];
 
-    /** @var array<string, mixed>  */
+    /** @var array<string, mixed> */
     private $defaultValue = [
         'bool' => false,
     ];
@@ -800,10 +803,13 @@ class Converter
                     $indexName = implode('_', $uniqueColumnList);
 
                     $indexDefs = IndexDefs
-                        ::fromRaw(['columns' => $uniqueColumnList, 'type' => 'unique'], $indexName);
+                        ::fromRaw([
+                            'columns' => $uniqueColumnList,
+                            'type' => self::INDEX_TYPE_UNIQUE,
+                        ], $indexName);
 
                     $relationData['indexes'][$indexName] = [
-                        'type' => 'unique',
+                        'type' => self::INDEX_TYPE_UNIQUE,
                         'columns' => $indexDefs->getColumnList(),
                         'key' => $this->composeIndexKey($indexDefs, ucfirst($relationName)),
                     ];
@@ -925,13 +931,13 @@ class Converter
     {
         if (
             $attributeDefs->getType() !== Entity::ID &&
-            $attributeDefs->getParam('unique')
+            $attributeDefs->getParam(self::INDEX_TYPE_UNIQUE)
         ) {
-            return 'unique';
+            return self::INDEX_TYPE_UNIQUE;
         }
 
-        if ($attributeDefs->getParam('index')) {
-            return 'index';
+        if ($attributeDefs->getParam(self::INDEX_TYPE_INDEX)) {
+            return self::INDEX_TYPE_INDEX;
         }
 
         return null;
