@@ -34,6 +34,7 @@ use Espo\Core\Utils\Database\ConfigDataProvider;
 use Espo\Core\Utils\Util;
 use Espo\ORM\Defs\AttributeDefs;
 use Espo\ORM\Defs\IndexDefs;
+use Espo\ORM\Defs\RelationDefs;
 use Espo\ORM\Entity;
 use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Config;
@@ -163,7 +164,7 @@ class Converter
             /** @var array<string, array<string, mixed>> $ormMetadata */
             $ormMetadata = Util::merge(
                 $ormMetadata,
-                $this->createRelationsEntityDefs($entityOrmMetadata)
+                $this->createEntityTypesFromRelations($entityOrmMetadata)
             );
 
             /** @var array<string, array<string, mixed>> $ormMetadata */
@@ -520,7 +521,7 @@ class Converter
             }
         }
 
-        // @todo move to separate file
+        // @todo Refactor.
         if ($this->metadata->get(['entityDefs', $entityType, 'optimisticConcurrencyControl'])) {
             $ormMetadata[$entityType]['fields']['versionNumber'] = [
                 'type' => Entity::INT,
@@ -533,9 +534,9 @@ class Converter
     }
 
     /**
-     * @param array<string,mixed> $fieldParams
-     * @param ?array<string,mixed> $fieldTypeMetadata
-     * @return array<string,mixed>|false
+     * @param array<string, mixed> $fieldParams
+     * @param ?array<string, mixed> $fieldTypeMetadata
+     * @return array<string, mixed>|false
      */
     private function convertField(
         string $entityType,
@@ -617,7 +618,7 @@ class Converter
                 continue;
             }
 
-            $convertedLink = $this->relationConverter->convert($linkName, $linkParams, $entityType, $ormMetadata);
+            $convertedLink = $this->relationConverter->process($linkName, $linkParams, $entityType, $ormMetadata);
 
             if ($convertedLink) {
                 /** @var array<string, mixed> $relationships */
@@ -845,16 +846,18 @@ class Converter
      * @param array<string, mixed> $defs
      * @return array<string, mixed>
      */
-    private function createRelationsEntityDefs(array $defs): array
+    private function createEntityTypesFromRelations(array $defs): array
     {
         $result = [];
 
-        foreach ($defs['relations'] as $relationParams) {
-            if ($relationParams['type'] !== Entity::MANY_MANY) {
+        foreach ($defs['relations'] as $name => $relationParams) {
+            $relationDefs = RelationDefs::fromRaw($relationParams, $name);
+
+            if ($relationDefs->getType() !== Entity::MANY_MANY) {
                 continue;
             }
 
-            $relationEntityType = ucfirst($relationParams['relationName']);
+            $relationEntityType = ucfirst($relationDefs->getRelationshipName());
 
             $itemDefs = [
                 'skipRebuild' => true,
@@ -870,19 +873,40 @@ class Converter
                 ],
             ];
 
-            foreach ($relationParams['midKeys'] ?? [] as $key) {
+            $key1 = $relationDefs->getMidKey();
+            $key2 = $relationDefs->getForeignMidKey();
+
+            $midKeys = [$key1, $key2];
+
+            foreach ($midKeys as $key) {
                 $itemDefs['fields'][$key] = [
                     'type' => Entity::FOREIGN_ID,
                 ];
             }
 
-            foreach ($relationParams['additionalColumns'] ?? [] as $columnName => $columnItem) {
-                $itemDefs['fields'][$columnName] = [
-                    'type' => $columnItem['type'] ?? Entity::VARCHAR,
+            foreach ($relationDefs->getParam('additionalColumns') ?? [] as $columnName => $columnItem) {
+                $columnItem['type'] ??= Entity::VARCHAR;
+
+                $attributeDefs = AttributeDefs::fromRaw($columnItem, $columnName);
+
+                $columnDefs = [
+                    'type' => $attributeDefs->getType(),
                 ];
+
+                if ($attributeDefs->getLength()) {
+                    $columnDefs['len'] = $attributeDefs->getLength();
+                }
+
+                if ($attributeDefs->getParam('default') !== null) {
+                    $columnDefs['default'] = $attributeDefs->getParam('default');
+                }
+
+                $itemDefs['fields'][$columnName] = $columnDefs;
             }
 
             $result[$relationEntityType] = $itemDefs;
+
+            print_r($itemDefs);
         }
 
         return $result;

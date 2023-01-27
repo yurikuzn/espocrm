@@ -77,9 +77,9 @@ class RelationConverter
     /**
      * Get a foreign link.
      *
-     * @param array<string,mixed> $parentLinkParams
-     * @param array<string,mixed> $currentEntityDefs
-     * @return array{name:string,params:array<string,mixed>}|false
+     * @param array<string, mixed> $parentLinkParams
+     * @param array<string, mixed> $currentEntityDefs
+     * @return array{name: string, params: array<string, mixed>}|false
      */
     private function getForeignLink($parentLinkParams, $currentEntityDefs)
     {
@@ -100,7 +100,7 @@ class RelationConverter
      * @param array<string, mixed> $ormMetadata
      * @return ?array<string, mixed>
      */
-    public function convert(string $linkName, array $linkParams, string $entityType, array $ormMetadata): ?array
+    public function process(string $linkName, array $linkParams, string $entityType, array $ormMetadata): ?array
     {
         $entityDefs = $this->metadata->get('entityDefs');
 
