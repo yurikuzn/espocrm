@@ -905,8 +905,6 @@ class Converter
             }
 
             $result[$relationEntityType] = $itemDefs;
-
-            print_r($itemDefs);
         }
 
         return $result;
