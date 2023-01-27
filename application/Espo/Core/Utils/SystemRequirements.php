@@ -29,6 +29,7 @@
 
 namespace Espo\Core\Utils;
 
+use Espo\Core\ORM\DatabaseParamsFactory;
 use Espo\Core\Utils\Database\Helper as DatabaseHelper;
 use Espo\Core\Utils\File\Manager as FileManager;
 
@@ -38,7 +39,8 @@ class SystemRequirements
         private Config $config,
         private FileManager $fileManager,
         private System $systemHelper,
-        private DatabaseHelper $databaseHelper
+        private DatabaseHelper $databaseHelper,
+        private DatabaseParamsFactory $databaseParamsFactory
     ) {}
 
     /**
@@ -109,7 +111,8 @@ class SystemRequirements
      */
     private function getDatabaseRequiredList(bool $requiredOnly, ?array $additionalData = null): array
     {
-        $databaseParams = $additionalData['databaseParams'] ?? [];
+        $databaseParams = $this->databaseParamsFactory
+            ->createWithMergedAssoc($additionalData['databaseParams'] ?? []);
 
         $pdo = $this->databaseHelper->createPDO($databaseParams);
 

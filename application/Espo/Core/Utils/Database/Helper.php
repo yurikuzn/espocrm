@@ -31,8 +31,8 @@ namespace Espo\Core\Utils\Database;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 
+use Espo\Core\ORM\DatabaseParamsFactory;
 use Espo\Core\ORM\PDO\PDOFactoryFactory;
-use Espo\Core\Utils\Config;
 use Espo\Core\Utils\Database\DBAL\ConnectionFactoryFactory as DBALConnectionFactoryFactory;
 use Espo\ORM\DatabaseParams;
 
@@ -41,17 +41,15 @@ use RuntimeException;
 
 class Helper
 {
-    private const DEFAULT_PLATFORM = 'Mysql';
-
     private ?DbalConnection $dbalConnection = null;
     private ?PDO $pdo = null;
 
     public function __construct(
-        private Config $config,
         private PDOFactoryFactory $pdoFactoryFactory,
         private DBALConnectionFactoryFactory $dbalConnectionFactoryFactory,
         private ConfigDataProvider $configDataProvider,
-        private DetailsProviderFactory $detailsProviderFactory
+        private DetailsProviderFactory $detailsProviderFactory,
+        private DatabaseParamsFactory $databaseParamsFactory
     ) {}
 
     public function getDbalConnection(): DbalConnection
@@ -86,73 +84,33 @@ class Helper
 
     /**
      * Create a PDO connection.
-     *
-     * @param array<string, mixed> $params
      */
-    public function createPDO(array $params = [], bool $skipDatabaseName = false): PDO
+    public function createPDO(?DatabaseParams $params = null, bool $skipDatabaseName = false): PDO
     {
-        $params = array_merge(
-            $this->config->get('database') ?? [],
-            $params
-        );
+        $params = $params ?? $this->databaseParamsFactory->create();
 
-        if ($skipDatabaseName && isset($params['dbname'])) {
-            unset($params['dbname']);
+        if ($skipDatabaseName) {
+            $params = $params->withName(null);
         }
 
-        $databaseParams = $this->createDatabaseParams($params);
-
-        $platform = $databaseParams->getPlatform();
-
-        $pdoFactory = $this->pdoFactoryFactory->create($platform ?? '');
-
-        return $pdoFactory->create($databaseParams);
+        return $this->pdoFactoryFactory
+            ->create($params->getPlatform() ?? '')
+            ->create($params);
     }
 
     private function createDbalConnection(): DbalConnection
     {
-        /** @var ?array<string, mixed> $params */
-        $params = $this->config->get('database');
+        $params = $this->databaseParamsFactory->create();
 
-        if (empty($params)) {
-            throw new RuntimeException('Database params cannot be empty for DBAL connection.');
+        $platform = $params->getPlatform();
+
+        if (!$platform) {
+            throw new RuntimeException("No database platform.");
         }
-
-        $databaseParams = $this->createDatabaseParams($params);
-
-        $platform = $databaseParams->getPlatform() ?? self::DEFAULT_PLATFORM;
 
         return $this->dbalConnectionFactoryFactory
             ->create($platform, $this->getPDO())
-            ->create($databaseParams);
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     * @throws RuntimeException
-     */
-    private function createDatabaseParams(array $params): DatabaseParams
-    {
-        $databaseParams = DatabaseParams::create()
-            ->withHost($params['host'] ?? null)
-            ->withPort(isset($params['port']) ? (int) $params['port'] : null)
-            ->withName($params['dbname'] ?? null)
-            ->withUsername($params['user'] ?? null)
-            ->withPassword($params['password'] ?? null)
-            ->withCharset($params['charset'] ?? 'utf8')
-            ->withPlatform($params['platform'] ?? null)
-            ->withSslCa($params['sslCA'] ?? null)
-            ->withSslCert($params['sslCert'] ?? null)
-            ->withSslKey($params['sslKey'] ?? null)
-            ->withSslCaPath($params['sslCAPath'] ?? null)
-            ->withSslCipher($params['sslCipher'] ?? null)
-            ->withSslVerifyDisabled($params['sslVerifyDisabled'] ?? false);
-
-        if (!$databaseParams->getPlatform()) {
-            $databaseParams = $databaseParams->withPlatform(self::DEFAULT_PLATFORM);
-        }
-
-        return $databaseParams;
+            ->create($params);
     }
 
     /**
