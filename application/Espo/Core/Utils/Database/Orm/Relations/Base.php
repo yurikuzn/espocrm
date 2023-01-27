@@ -69,7 +69,7 @@ class Base extends \Espo\Core\Utils\Database\Orm\Base
     ];
 
     /**
-     * @return array<string mixed>
+     * @return array<string, mixed>
      */
     protected function getParams()
     {
