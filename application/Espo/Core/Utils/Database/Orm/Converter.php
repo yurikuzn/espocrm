@@ -904,10 +904,28 @@ class Converter
                 $itemDefs['fields'][$columnName] = $columnDefs;
             }
 
+            foreach ($relationDefs->getIndexList() as $indexDefs) {
+                $itemDefs['indexes'] ??= [];
+                $itemDefs['indexes'][] = self::convertIndexDefsToRaw($indexDefs);
+            }
+
             $result[$relationEntityType] = $itemDefs;
         }
 
         return $result;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function convertIndexDefsToRaw(IndexDefs $indexDefs): array
+    {
+        return [
+            'type' => $indexDefs->isUnique() ? self::INDEX_TYPE_UNIQUE : self::INDEX_TYPE_INDEX,
+            'columns' => $indexDefs->getColumnList(),
+            'flags' => $indexDefs->getFlagList(),
+            'key' => $indexDefs->getKey(),
+        ];
     }
 
     /**
