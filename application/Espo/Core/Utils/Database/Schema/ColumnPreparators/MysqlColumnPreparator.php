@@ -63,7 +63,7 @@ class MysqlColumnPreparator implements ColumnPreparator
         $columnType = $defs->getParam(self::PARAM_DB_TYPE) ?? $defs->getType();
         $columnName = Util::toUnderScore($defs->getName());
 
-        $options = Column::create($columnName, strtolower($columnType));
+        $column = Column::create($columnName, strtolower($columnType));
 
         $type = $defs->getType();
         $length = $defs->getLength();
@@ -75,27 +75,27 @@ class MysqlColumnPreparator implements ColumnPreparator
         $binary = $defs->getParam(self::PARAM_BINARY);
 
         if ($length !== null) {
-            $options = $options->withLength($length);
+            $column = $column->withLength($length);
         }
 
         if ($default !== null) {
-            $options = $options->withDefault($default);
+            $column = $column->withDefault($default);
         }
 
         if ($notNull !== null) {
-            $options = $options->withNotNull($notNull);
+            $column = $column->withNotNull($notNull);
         }
 
         if ($autoincrement !== null) {
-            $options = $options->withAutoincrement($autoincrement);
+            $column = $column->withAutoincrement($autoincrement);
         }
 
         if ($precision !== null) {
-            $options = $options->withPrecision($precision);
+            $column = $column->withPrecision($precision);
         }
 
         if ($scale !== null) {
-            $options = $options->withScale($scale);
+            $column = $column->withScale($scale);
         }
 
         $mb3 = false;
@@ -110,20 +110,20 @@ class MysqlColumnPreparator implements ColumnPreparator
 
             case Entity::TEXT:
             case Entity::JSON_ARRAY:
-                $options = $options->withDefault(null);
+                $column = $column->withDefault(null);
 
                 break;
 
             case Entity::BOOL:
                 $default = intval($default ?? false);
 
-                $options = $options->withDefault($default);
+                $column = $column->withDefault($default);
 
                 break;
         }
 
         if ($type !== Entity::ID && $autoincrement) {
-            $options = $options
+            $column = $column
                 ->withNotNull()
                 ->withUnsigned();
         }
@@ -138,7 +138,7 @@ class MysqlColumnPreparator implements ColumnPreparator
                 'utf8_unicode_ci';
         }
 
-        return $options->withCollation($collation);
+        return $column->withCollation($collation);
     }
 
     private function getMaxIndexLength(): int
