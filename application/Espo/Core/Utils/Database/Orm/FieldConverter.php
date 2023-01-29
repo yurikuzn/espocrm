@@ -32,6 +32,9 @@ namespace Espo\Core\Utils\Database\Orm;
 use Espo\ORM\Defs\FieldDefs;
 use Espo\Core\Utils\Database\Orm\Defs\EntityDefs;
 
+/**
+ * Converts field definitions to ORM definitions.
+ */
 interface FieldConverter
 {
     public function convert(FieldDefs $fieldDefs): EntityDefs;

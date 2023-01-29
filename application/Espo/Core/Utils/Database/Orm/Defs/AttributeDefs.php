@@ -58,11 +58,11 @@ class AttributeDefs
     /**
      * Get a type.
      *
-     * @return AttributeType::* $type
+     * @return AttributeType::*
      */
     public function getType(): ?string
     {
-        /** @var ?AttributeType::* $type $value */
+        /** @var ?AttributeType::* $value */
         $value = $this->getParam('type');
 
         return $value;
@@ -124,7 +124,11 @@ class AttributeDefs
     public function withParamsMerged(array $params): self
     {
         $obj = clone $this;
-        $obj->params = Util::merge($this->params, $params);
+
+        /** @var array<string, mixed> $params */
+        $params = Util::merge($this->params, $params);
+
+        $obj->params = $params;
 
         return $obj;
     }

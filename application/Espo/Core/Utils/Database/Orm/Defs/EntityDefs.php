@@ -34,11 +34,11 @@ namespace Espo\Core\Utils\Database\Orm\Defs;
  */
 class EntityDefs
 {
-    /** @var array<string, AttributeDefs */
+    /** @var array<string, AttributeDefs> */
     private array $attributes = [];
-    /** @var array<string, RelationDefs */
+    /** @var array<string, RelationDefs> */
     private array $relations = [];
-    /** @var array<string, IndexDefs */
+    /** @var array<string, IndexDefs> */
     private array $indexes = [];
 
     private function __construct() {}

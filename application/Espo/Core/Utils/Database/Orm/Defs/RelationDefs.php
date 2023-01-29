@@ -55,14 +55,12 @@ class RelationDefs
     /**
      * Get a type.
      *
-     * @return RelationType::* $type
+     * @return RelationType::*
      */
     public function getType(): ?string
     {
-        /** @var ?RelationType::* $type $value */
-        $value = $this->getParam('type');
-
-        return $value;
+        /** @var ?RelationType::* */
+        return $this->getParam('type');
     }
 
     /**
@@ -121,7 +119,11 @@ class RelationDefs
     public function withParamsMerged(array $params): self
     {
         $obj = clone $this;
-        $obj->params = Util::merge($this->params, $params);
+
+        /** @var array<string, mixed> $params */
+        $params = Util::merge($this->params, $params);
+
+        $obj->params = $params;
 
         return $obj;
     }

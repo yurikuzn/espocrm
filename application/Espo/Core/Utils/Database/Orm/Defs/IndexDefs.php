@@ -97,7 +97,11 @@ class IndexDefs
     public function withParamsMerged(array $params): self
     {
         $obj = clone $this;
-        $obj->params = Util::merge($this->params, $params);
+
+        /** @var array<string, mixed> $params */
+        $params = Util::merge($this->params, $params);
+
+        $obj->params = $params;
 
         return $obj;
     }
