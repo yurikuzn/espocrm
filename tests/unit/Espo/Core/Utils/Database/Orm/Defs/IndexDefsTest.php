@@ -68,4 +68,30 @@ class IndexDefsTest extends TestCase
 
         $this->assertEquals($params, $defs->toAssoc());
     }
+
+    public function testUnique(): void
+    {
+        $defs = IndexDefs::create('test')
+            ->withUnique();
+
+        $this->assertEquals(['type' => 'unique'], $defs->toAssoc());
+
+        $defs = IndexDefs::create('test')
+            ->withoutUnique();
+
+        $this->assertEquals([], $defs->toAssoc());
+    }
+
+    public function testWithFlag(): void
+    {
+        $defs = IndexDefs::create('test')
+            ->withFlag('fulltext');
+
+        $this->assertEquals(['flags' => ['fulltext']], $defs->toAssoc());
+
+        $defs = IndexDefs::create('test')
+            ->withoutFlag('fulltext');
+
+        $this->assertEquals([], $defs->toAssoc());
+    }
 }
