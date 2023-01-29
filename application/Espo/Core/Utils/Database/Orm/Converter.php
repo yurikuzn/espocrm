@@ -464,6 +464,14 @@ class Converter
             ) {
                 /** @var class-string<FieldConverter> $className */
 
+                $toUnset =
+                    !in_array('', $this->metadata->get(['fields', $fieldType, 'actualFields']) ?? []) &&
+                    !in_array('', $this->metadata->get(['fields', $fieldType, 'notActualFields']) ?? []);
+
+                if ($toUnset) {
+                    $ormMetadata = Util::unsetInArray($ormMetadata, [$entityType => ['fields.' . $field]]);
+                }
+
                 $converter = $this->injectableFactory->createWith($className, ['entityType' => $entityType]);
 
                 /** @var array<string, mixed> $rawFieldDefs */

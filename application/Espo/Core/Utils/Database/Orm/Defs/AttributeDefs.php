@@ -78,6 +78,16 @@ class AttributeDefs
         return $this->withParam('type', $type);
     }
 
+    public function withNotStorable(): self
+    {
+        return $this->withParam('notStorable', true);
+    }
+
+    public function withoutNotStorable(): self
+    {
+        return $this->withoutParam('notStorable');
+    }
+
     /**
      * Whether a parameter is set.
      */
