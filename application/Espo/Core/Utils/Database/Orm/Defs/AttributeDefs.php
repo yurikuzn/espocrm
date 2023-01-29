@@ -78,14 +78,28 @@ class AttributeDefs
         return $this->withParam('type', $type);
     }
 
+    /**
+     * Clone with not-storable.
+     */
     public function withNotStorable(): self
     {
         return $this->withParam('notStorable', true);
     }
 
-    public function withoutNotStorable(): self
+    /**
+     * Clone with a length.
+     */
+    public function withLength(int $length): self
     {
-        return $this->withoutParam('notStorable');
+        return $this->withParam('len', $length);
+    }
+
+    /**
+     * Clone with a default value.
+     */
+    public function withDefault(mixed $value): self
+    {
+        return $this->withParam('default', $value);
     }
 
     /**

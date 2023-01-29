@@ -29,7 +29,9 @@
 
 namespace tests\unit\Espo\Core\Utils\Database\Orm\Defs;
 
+use Espo\Core\Utils\Database\Orm\Defs\AttributeDefs;
 use Espo\Core\Utils\Database\Orm\Defs\RelationDefs;
+use Espo\ORM\Type\AttributeType;
 use Espo\ORM\Type\RelationType;
 use PHPUnit\Framework\TestCase;
 
@@ -70,10 +72,46 @@ class RelationDefsTest extends TestCase
         $this->assertEquals($params, $defs->toAssoc());
     }
 
-    public function testType(): void
+    public function testParams(): void
     {
-        $defs = RelationDefs::create('test')->withType(RelationType::MANY_MANY);
+        $defs = RelationDefs::create('test')
+            ->withType(RelationType::MANY_MANY)
+            ->withForeignEntityType('Test')
+            ->withForeignRelationName('foreign')
+            ->withRelationshipName('Name')
+            ->withKey('key')
+            ->withForeignKey('foreignKey')
+            ->withMidKeys('k1', 'k2')
+            ->withAdditionalColumn(
+                AttributeDefs::create('entityType')
+                    ->withType(AttributeType::VARCHAR)
+                    ->withLength(100)
+            )
+            ->withAdditionalColumn(
+                AttributeDefs::create('primary')
+                    ->withType(AttributeType::BOOL)
+                    ->withDefault(false)
+            );
 
         $this->assertEquals(RelationType::MANY_MANY, $defs->getType());
+        $this->assertEquals('Test', $defs->getForeignEntityType());
+        $this->assertEquals('foreign', $defs->getForeignRelationName());
+        $this->assertEquals('Name', $defs->getRelationshipName());
+        $this->assertEquals('key', $defs->getKey());
+        $this->assertEquals('foreignKey', $defs->getForeignKey());
+        $this->assertEquals(['k1', 'k2'], $defs->getParam('midKeys'));
+
+        $params = $defs->toAssoc();
+
+        $this->assertEquals([
+            'entityType' => [
+                'type' => AttributeType::VARCHAR,
+                'len' => 100,
+            ],
+            'primary' => [
+                'type' => AttributeType::BOOL,
+                'default' => false,
+            ],
+        ], $params['additionalColumns']);
     }
 }

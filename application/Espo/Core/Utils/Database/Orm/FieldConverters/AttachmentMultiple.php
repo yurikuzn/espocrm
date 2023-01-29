@@ -38,7 +38,7 @@ use Espo\ORM\Type\AttributeType;
 
 class AttachmentMultiple implements FieldConverter
 {
-    public function convert(FieldDefs $fieldDefs): EntityDefs
+    public function convert(FieldDefs $fieldDefs, string $entityType): EntityDefs
     {
         $name = $fieldDefs->getName();
 

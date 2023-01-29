@@ -74,6 +74,94 @@ class RelationDefs
     }
 
     /**
+     * Clone with a foreign entity type.
+     */
+    public function withForeignEntityType(string $entityType): self
+    {
+        return $this->withParam('entity', $entityType);
+    }
+
+    /**
+     * Get a foreign entity type.
+     */
+    public function getForeignEntityType(): ?string
+    {
+        return $this->getParam('entity');
+    }
+
+    /**
+     * Clone with a foreign relation name.
+     */
+    public function withForeignRelationName(string $name): self
+    {
+        return $this->withParam('foreign', $name);
+    }
+
+    /**
+     * Get a foreign relation name.
+     */
+    public function getForeignRelationName(): ?string
+    {
+        return $this->getParam('foreign');
+    }
+
+    /**
+     * Clone with a relationship name.
+     */
+    public function withRelationshipName(string $name): self
+    {
+        return $this->withParam('relationName', $name);
+    }
+
+    /**
+     * Get a foreign relation name.
+     */
+    public function getRelationshipName(): ?string
+    {
+        return $this->getParam('relationName');
+    }
+
+    /**
+     * Clone with a key.
+     */
+    public function withKey(string $key): self
+    {
+        return $this->withParam('key', $key);
+    }
+
+    /**
+     * Get a key.
+     */
+    public function getKey(): ?string
+    {
+        return $this->getParam('key');
+    }
+
+    /**
+     * Clone with a key.
+     */
+    public function withForeignKey(string $foreignKey): self
+    {
+        return $this->withParam('foreignKey', $foreignKey);
+    }
+
+    /**
+     * Get a key.
+     */
+    public function getForeignKey(): ?string
+    {
+        return $this->getParam('foreignKey');
+    }
+
+    /**
+     * Clone with middle keys.
+     */
+    public function withMidKeys(string $midKey, string $foreignMidKey): self
+    {
+        return $this->withParam('midKeys', [$midKey, $foreignMidKey]);
+    }
+
+    /**
      * Whether a parameter is set.
      */
     public function hasParam(string $name): bool
@@ -109,6 +197,33 @@ class RelationDefs
         unset($obj->params[$name]);
 
         return $obj;
+    }
+
+    /**
+     * Clone with conditions. Conditions are used for relationships that share a same middle table.
+     *
+     * @param array<string, ?scalar> $conditions
+     */
+    public function withConditions(array $conditions): self
+    {
+        $obj = clone $this;
+
+        return $obj->withParam('conditions', $conditions);
+    }
+
+    /**
+     * Clone with an additional middle table column.
+     */
+    public function withAdditionalColumn(AttributeDefs $attributeDefs): self
+    {
+        $obj = clone $this;
+
+        /** @var array<string, array<string, mixed>> $list */
+        $list = $obj->getParam('additionalColumns') ?? [];
+
+        $list[$attributeDefs->getName()] = $attributeDefs->toAssoc();
+
+        return $obj->withParam('additionalColumns', $list);
     }
 
     /**

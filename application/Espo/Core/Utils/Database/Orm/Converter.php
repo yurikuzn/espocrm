@@ -472,14 +472,14 @@ class Converter
                     $ormMetadata = Util::unsetInArray($ormMetadata, [$entityType => ['fields.' . $field]]);
                 }
 
-                $converter = $this->injectableFactory->createWith($className, ['entityType' => $entityType]);
+                $converter = $this->injectableFactory->create($className);
 
                 /** @var array<string, mixed> $rawFieldDefs */
                 $rawFieldDefs = $this->metadata->get(['entityDefs', $entityType, 'fields', $field]);
 
                 $fieldDefs = FieldDefs::fromRaw($rawFieldDefs, $field);
 
-                $convertedEntityDefs = $converter->convert($fieldDefs);
+                $convertedEntityDefs = $converter->convert($fieldDefs, $entityType);
 
                 /** @var array<string, mixed> $ormMetadata */
                 $ormMetadata = Util::merge($ormMetadata, [$entityType => $convertedEntityDefs->toAssoc()]);

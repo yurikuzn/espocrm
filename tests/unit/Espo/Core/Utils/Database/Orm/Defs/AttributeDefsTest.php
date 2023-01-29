@@ -77,14 +77,15 @@ class AttributeDefsTest extends TestCase
         $this->assertEquals(AttributeType::VARCHAR, $defs->getType());
     }
 
-    public function testNotStorable(): void
+    public function testParams(): void
     {
-        $defs = AttributeDefs::create('test')->withNotStorable();
+        $defs = AttributeDefs::create('test')
+            ->withNotStorable()
+            ->withDefault('1');
 
-        $this->assertEquals(['notStorable' => true], $defs->toAssoc());
-
-        $defs = $defs->withoutNotStorable();
-
-        $this->assertEquals([], $defs->toAssoc());
+        $this->assertEquals([
+            'notStorable' => true,
+            'default' => '1',
+        ], $defs->toAssoc());
     }
 }
