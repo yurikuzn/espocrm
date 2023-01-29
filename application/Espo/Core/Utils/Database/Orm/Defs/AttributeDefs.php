@@ -81,9 +81,9 @@ class AttributeDefs
     /**
      * Clone with not-storable.
      */
-    public function withNotStorable(): self
+    public function withNotStorable(bool $value = true): self
     {
-        return $this->withParam('notStorable', true);
+        return $this->withParam('notStorable', $value);
     }
 
     /**

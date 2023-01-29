@@ -49,7 +49,8 @@ class Email implements FieldConverter
         $foreignJoinAlias = "{$name}{$entityType}{alias}Foreign";
         $foreignJoinMiddleAlias = "{$name}{$entityType}{alias}ForeignMiddle";
 
-        $emailAddressDefs = AttributeDefs::create($name)
+        $emailAddressDefs = AttributeDefs
+            ::create($name)
             ->withType(AttributeType::VARCHAR)
             ->withParamsMerged(
                 $this->getEmailAddressParams($entityType, $foreignJoinAlias, $foreignJoinMiddleAlias)
@@ -136,7 +137,7 @@ class Email implements FieldConverter
                         ]
                     ],
                     [
-                        'EmailAddress',
+                        EmailAddress::ENTITY_TYPE,
                         $foreignJoinAlias,
                         [
                             "{$foreignJoinAlias}.id:" => "{$foreignJoinMiddleAlias}.emailAddressId",
@@ -269,7 +270,7 @@ class Email implements FieldConverter
                         ]
                     ],
                     [
-                        'EmailAddress',
+                        EmailAddress::ENTITY_TYPE,
                         $foreignJoinAlias,
                         [
                             "{$foreignJoinAlias}.id:" => "{$foreignJoinMiddleAlias}.emailAddressId",
@@ -329,7 +330,7 @@ class Email implements FieldConverter
                         ]
                     ],
                     [
-                        'EmailAddress',
+                        EmailAddress::ENTITY_TYPE,
                         $foreignJoinAlias,
                         [
                             "{$foreignJoinAlias}.id:" => "{$foreignJoinMiddleAlias}.emailAddressId",
