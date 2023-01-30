@@ -27,43 +27,38 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Core\Utils\Database\Orm\Fields;
+namespace Espo\Core\Utils\Database\Orm\FieldConverters;
 
-class LinkOne extends Base
+use Espo\Core\Utils\Database\Orm\Defs\AttributeDefs;
+use Espo\Core\Utils\Database\Orm\Defs\EntityDefs;
+use Espo\Core\Utils\Database\Orm\FieldConverter;
+use Espo\ORM\Defs\FieldDefs;
+use Espo\ORM\Type\AttributeType;
+
+class LinkOne implements FieldConverter
 {
-    /**
-     * @param string $fieldName
-     * @param string $entityType
-     * @return array<string,mixed>
-     */
-    protected function load($fieldName, $entityType)
+    public function convert(FieldDefs $fieldDefs, string $entityType): EntityDefs
     {
-        $fieldParams = $this->getFieldParams();
+        $name = $fieldDefs->getName();
 
-        $data = [
-            $entityType => [
-                'fields' => [
-                    $fieldName.'Id' => [
-                        'type' => 'varchar',
-                        'notStorable' => true,
+        return EntityDefs::create()
+            ->withAttribute(
+                AttributeDefs::create($name . 'Id')
+                    ->withType(AttributeType::VARCHAR)
+                    ->withNotStorable()
+                    ->withParamsMerged([
                         'attributeRole' => 'id',
                         'fieldType' => 'linkOne',
-                    ],
-                    $fieldName.'Name' => [
-                        'type' => 'varchar',
-                        'notStorable' => true,
+                    ])
+            )
+            ->withAttribute(
+                AttributeDefs::create($name . 'Name')
+                    ->withType(AttributeType::VARCHAR)
+                    ->withNotStorable()
+                    ->withParamsMerged([
                         'attributeRole' => 'name',
                         'fieldType' => 'linkOne',
-                    ]
-                ]
-            ],
-            'unset' => [
-                $entityType => [
-                    'fields.' . $fieldName,
-                ]
-            ]
-        ];
-
-        return $data;
+                    ])
+            );
     }
 }
