@@ -34,9 +34,6 @@ use Espo\Core\Utils\Metadata;
 
 use RuntimeException;
 
-/**
- * @deprecated As of v7.4. Use FieldConverter.
- */
 class Base
 {
     /**
