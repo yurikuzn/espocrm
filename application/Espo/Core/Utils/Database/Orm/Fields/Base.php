@@ -29,6 +29,9 @@
 
 namespace Espo\Core\Utils\Database\Orm\Fields;
 
+/**
+ * @deprecated As of v7.4. Use FieldConverter.
+ */
 class Base extends \Espo\Core\Utils\Database\Orm\Base
 {
     /**

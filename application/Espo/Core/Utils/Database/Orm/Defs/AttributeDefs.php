@@ -79,6 +79,14 @@ class AttributeDefs
     }
 
     /**
+     * Clone with a DB type.
+     */
+    public function withDbType(string $dbType): self
+    {
+        return $this->withParam('dbType', $dbType);
+    }
+
+    /**
      * Clone with not-storable.
      */
     public function withNotStorable(bool $value = true): self
