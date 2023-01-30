@@ -97,7 +97,7 @@ class Currency implements FieldConverter
             ->withAttribute($currencyDefs);
 
         if ($convertedDefs) {
-            $entityDefs = $entityDefs->withAttribute($currencyDefs);
+            $entityDefs = $entityDefs->withAttribute($convertedDefs);
         }
 
         return $entityDefs;
@@ -264,11 +264,13 @@ class Currency implements FieldConverter
         $mulExpression = "MUL:({$name}, {$alias}.rate)";
 
         $amountDefs = $amountDefs->withParamsMerged([
-            "order" => [
-                [$mulExpression, '{direction}'],
-            ],
-            'leftJoins' => $leftJoins,
-            'additionalSelect' => ["{$alias}.rate"],
+            'order' => [
+                'order' => [
+                    [$mulExpression, '{direction}'],
+                ],
+                'leftJoins' => $leftJoins,
+                'additionalSelect' => ["{$alias}.rate"],
+            ]
         ]);
 
         $convertedDefs = AttributeDefs::create($name . 'Converted')

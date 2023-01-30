@@ -70,6 +70,7 @@ class LinkParent implements FieldConverter
             ->withNotStorable()
             ->withParamsMerged([
                 'relation' => $name,
+                'isParentName' => true,
                 'attributeRole' => 'name',
                 'fieldType' => 'linkParent',
             ]);
