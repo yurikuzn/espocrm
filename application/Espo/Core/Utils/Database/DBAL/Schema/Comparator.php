@@ -74,7 +74,6 @@ class Comparator extends OriginalComparator
             // check if value of length is set at all, default value assumed otherwise.
             $length1 = $properties1['length'] ?? 255;
             $length2 = $properties2['length'] ?? 255;
-
             if ($length1 !== $length2) {
                 $changedProperties[] = 'length';
             }
@@ -119,13 +118,6 @@ class Comparator extends OriginalComparator
             if ($properties1[$key] === $properties2[$key]) {
                 continue;
             }
-
-            // Espo: skip collation changes
-            if ($key == 'collation') {
-                //$column2->setPlatformOption('collation', $platformOptions1['collation']);
-                //continue;
-            }
-            // Espo: end
 
             $changedProperties[] = $key;
         }

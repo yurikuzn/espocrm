@@ -32,14 +32,16 @@ namespace Espo\Core\Utils\Database\Schema;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaDiff as DbalSchemaDiff;
 use Doctrine\DBAL\Schema\SchemaException;
 use Doctrine\DBAL\Types\Type;
 
+//use Espo\Core\Utils\Database\DBAL\Schema\Comparator;
+
 use Espo\Core\Binding\BindingContainerBuilder;
 use Espo\Core\InjectableFactory;
-use Espo\Core\Utils\Database\DBAL\Schema\Comparator;
 use Espo\Core\Utils\Database\Helper;
 use Espo\Core\Utils\Log;
 use Espo\Core\Utils\Metadata\OrmMetadataData;
@@ -131,7 +133,7 @@ class SchemaManager
             return false;
         }
 
-        $queries = $this->getDiffSql($currentSchema, $schema);
+        $queries = $this->composeDiffQueries($currentSchema, $schema);
 
         $result = true;
 
@@ -183,20 +185,20 @@ class SchemaManager
     }
 
     /**
-     * Get SQL queries to get from one to another schema.
+     * Compose SQL queries to get from one to another schema.
      *
      * @return string[] Array of SQL queries.
      * @throws DbalException
      */
-    private function getDiffSql(DbalSchema $fromSchema, DbalSchema $toSchema)
+    private function composeDiffQueries(DbalSchema $fromSchema, DbalSchema $toSchema): array
     {
         $diff = $this->comparator->compareSchemas($fromSchema, $toSchema);
 
         $this->diffModifier->modify($diff);
 
-        print_r($this->toSql($diff)); die;
+        print_r($this->toSql($diff));die;
 
-        return $this->toSql($diff);
+        //return $this->toSql($diff);
     }
 
     private function processPreRebuildActions(DbalSchema $actualSchema, DbalSchema $schema): void
