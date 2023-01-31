@@ -152,6 +152,27 @@ class MysqlColumnPreparator implements ColumnPreparator
                 ->withUnsigned();
         }
 
+        if (
+            in_array($dbType, [
+                Types::BOOLEAN,
+                Types::DATE_MUTABLE,
+                Types::DATETIME_MUTABLE,
+                Types::DATE_IMMUTABLE,
+                Types::DATETIME_IMMUTABLE,
+                Types::BIGINT,
+                Types::SMALLINT,
+                Types::INTEGER,
+                Types::DECIMAL,
+                Types::FLOAT,
+                Types::BLOB,
+                Types::TIME_IMMUTABLE,
+                Types::TIME_MUTABLE,
+                Types::GUID,
+            ])
+        ) {
+            return $column;
+        }
+
         $collation = $binary ?
             'utf8mb4_bin' :
             'utf8mb4_unicode_ci';
