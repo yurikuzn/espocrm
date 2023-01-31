@@ -72,8 +72,10 @@ trait MySQLPlatform
             $columnArray['comment'] = $this->getColumnComment($column);
 
             // Espo: do not rename the column
-            /* $queryParts[] = 'CHANGE ' . $oldColumnName->getQuotedName($this) . ' '
-                   $this->getColumnDeclarationSQL($column->getQuotedName($this), $columnArray); */
+            // Handled by amendDiff.
+            // @todo Remove.
+            // $queryParts[] = 'CHANGE ' . $oldColumnName->getQuotedName($this) . ' ' .
+            //      $this->getColumnDeclarationSQL($column->getQuotedName($this), $columnArray);
             $queryParts[]           =  'ADD '
                     . $this->getColumnDeclarationSQL($column->getQuotedName($this), $columnArray);
             // Espo: end
@@ -141,6 +143,8 @@ trait MySQLPlatform
             // Espo: end
 
             // Espo: No need to delete the column
+            // Handled in amendDiff.
+            // @todo Remove.
             //$queryParts[] =  'DROP ' . $column->getQuotedName($this);
             // Espo: end
         }

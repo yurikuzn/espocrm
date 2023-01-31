@@ -33,6 +33,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Schema\SchemaDiff;
 use Doctrine\DBAL\Schema\SchemaDiff as DbalSchemaDiff;
 use Doctrine\DBAL\Schema\SchemaException;
 use Doctrine\DBAL\Types\Type;
@@ -187,9 +188,36 @@ class SchemaManager
      */
     private function getDiffSql(DbalSchema $fromSchema, DbalSchema $toSchema)
     {
-        $schemaDiff = $this->comparator->compareSchemas($fromSchema, $toSchema);
+        $diff = $this->comparator->compareSchemas($fromSchema, $toSchema);
 
-        return $this->toSql($schemaDiff);
+        $this->amendSchemaDiff($diff);
+
+        return $this->toSql($diff);
+    }
+
+    private function amendSchemaDiff(SchemaDiff $diff): void
+    {
+        $diff->removedTables = [];
+
+        foreach ($diff->changedTables as $tableDiff) {
+            $tableDiff->removedColumns = [];
+
+            /**
+             * @todo Leave only for MariaDB?
+             * MariaDB has re-name index as of
+             * Test how long does it take to rename fo different databases.
+             */
+            $tableDiff->renamedIndexes = [];
+
+            foreach ($tableDiff->renamedColumns as $renamedColumn) {
+                $addedName = strtolower($renamedColumn->getName());
+                $tableDiff->addedColumns[$addedName] = $renamedColumn;
+            }
+
+            $tableDiff->renamedColumns = [];
+        }
+
+        print_r($this->toSql($diff)); die;
     }
 
     private function processPreRebuildActions(DbalSchema $actualSchema, DbalSchema $schema): void
