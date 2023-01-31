@@ -29,8 +29,6 @@
 
 namespace Espo\Core\Utils\Database\DBAL\Schema;
 
-use Espo\Core\Utils\Database\DBAL\Traits\Schema\Comparator as ComparatorTrait;
-
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ColumnDiff;
 use Doctrine\DBAL\Schema\Comparator as OriginalComparator;
@@ -41,10 +39,6 @@ use Doctrine\DBAL\Types;
 
 class Comparator extends OriginalComparator
 {
-    // Espo
-    use ComparatorTrait;
-    // Espo: end
-
     public function diffColumn(Column $column1, Column $column2)
     {
         $properties1 = $column1->toArray();
@@ -53,10 +47,7 @@ class Comparator extends OriginalComparator
         $changedProperties = [];
 
         if (get_class($properties1['type']) !== get_class($properties2['type'])) {
-            // Espo
-            //$this->espoFixTypeDiff($changedProperties, $column1, $column2);
             $changedProperties[] = 'type';
-            // Espo: end
         }
 
         foreach (['notnull', 'unsigned', 'autoincrement'] as $property) {
@@ -131,8 +122,8 @@ class Comparator extends OriginalComparator
 
             // Espo: skip collation changes
             if ($key == 'collation') {
-                $column2->setPlatformOption('collation', $platformOptions1['collation']);
-                continue;
+                //$column2->setPlatformOption('collation', $platformOptions1['collation']);
+                //continue;
             }
             // Espo: end
 

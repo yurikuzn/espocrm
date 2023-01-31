@@ -77,10 +77,13 @@ class DiffModifier
 
         $tableDiff->renamedColumns = [];
 
-        // Prevent decreasing length for string columns to prevent data loss.
         foreach ($tableDiff->changedColumns as $name => $columnDiff) {
+            // Prevent decreasing length for string columns to prevent data loss.
             $this->amendColumnDiffLength($tableDiff, $columnDiff, $name);
+            // Prevent longtext => mediumtext to prevent data loss.
             $this->amendColumnDiffTextType($tableDiff, $columnDiff, $name);
+            // Prevent changing collation.
+            $this->amendColumnDiffCollation($tableDiff, $columnDiff, $name);
         }
     }
 
@@ -106,13 +109,7 @@ class DiffModifier
 
         $column->setLength($fromLength);
 
-        if (count($columnDiff->changedProperties) === 1) {
-            unset($tableDiff->changedColumns[$name]);
-
-            return;
-        }
-
-        $columnDiff->changedProperties = array_diff($columnDiff->changedProperties, ['length']);
+        self::unsetChangedColumnProperty($tableDiff, $columnDiff, $name, 'length');
     }
 
     /**
@@ -156,12 +153,46 @@ class DiffModifier
 
         $column->setType(Type::getType($fromType->getName()));
 
+        self::unsetChangedColumnProperty($tableDiff, $columnDiff, $name, 'type');
+    }
+
+    private function amendColumnDiffCollation(TableDiff $tableDiff, ColumnDiff $columnDiff, string $name): void
+    {
+        $fromColumn = $columnDiff->fromColumn;
+        $column = $columnDiff->column;
+
+        if (!$fromColumn) {
+            return;
+        }
+
+        if (!in_array('collation', $columnDiff->changedProperties)) {
+            return;
+        }
+
+        $fromCollation = $fromColumn->getPlatformOption('collation');
+
+        if (!$fromCollation) {
+            return;
+        }
+
+        $column->setPlatformOption('collation', $fromCollation);
+
+        self::unsetChangedColumnProperty($tableDiff, $columnDiff, $name, 'collation');
+    }
+
+    private static function unsetChangedColumnProperty(
+        TableDiff $tableDiff,
+        ColumnDiff $columnDiff,
+        string $name,
+        string $property
+    ): void {
+
         if (count($columnDiff->changedProperties) === 1) {
             unset($tableDiff->changedColumns[$name]);
 
             return;
         }
 
-        $columnDiff->changedProperties = array_diff($columnDiff->changedProperties, ['type']);
+        $columnDiff->changedProperties = array_diff($columnDiff->changedProperties, [$property]);
     }
 }
