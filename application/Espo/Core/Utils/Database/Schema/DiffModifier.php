@@ -190,7 +190,7 @@ class DiffModifier
         if (count($columnDiff->changedProperties) === 1) {
             unset($tableDiff->changedColumns[$name]);
 
-            return;
+            //return;
         }
 
         $columnDiff->changedProperties = array_diff($columnDiff->changedProperties, [$property]);

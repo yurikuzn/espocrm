@@ -153,7 +153,7 @@ class MysqlColumnPreparator implements ColumnPreparator
         }
 
         if (
-            in_array($dbType, [
+            in_array($columnType, [
                 Types::BOOLEAN,
                 Types::DATE_MUTABLE,
                 Types::DATETIME_MUTABLE,
@@ -177,13 +177,19 @@ class MysqlColumnPreparator implements ColumnPreparator
             'utf8mb4_bin' :
             'utf8mb4_unicode_ci';
 
+        $charset = 'utf8mb4';
+
         if ($mb3) {
             $collation = $binary ?
-                'utf8_bin' :
-                'utf8_unicode_ci';
+                'utf8mb3_bin' :
+                'utf8mb3_unicode_ci';
+
+            $charset = 'utf8mb3';
         }
 
-        return $column->withCollation($collation);
+        return $column
+            ->withCollation($collation)
+            ->withCharset($charset);
     }
 
     private function getMaxIndexLength(): int
