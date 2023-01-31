@@ -36,6 +36,7 @@ use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaDiff;
 use Doctrine\DBAL\Schema\SchemaDiff as DbalSchemaDiff;
 use Doctrine\DBAL\Schema\SchemaException;
+use Doctrine\DBAL\Schema\TableDiff;
 use Doctrine\DBAL\Types\Type;
 
 use Espo\Core\Binding\BindingContainerBuilder;
@@ -200,24 +201,63 @@ class SchemaManager
         $diff->removedTables = [];
 
         foreach ($diff->changedTables as $tableDiff) {
-            $tableDiff->removedColumns = [];
-
-            /**
-             * @todo Leave only for MariaDB?
-             * MariaDB has re-name index as of
-             * Test how long does it take to rename fo different databases.
-             */
-            $tableDiff->renamedIndexes = [];
-
-            foreach ($tableDiff->renamedColumns as $renamedColumn) {
-                $addedName = strtolower($renamedColumn->getName());
-                $tableDiff->addedColumns[$addedName] = $renamedColumn;
-            }
-
-            $tableDiff->renamedColumns = [];
+            $this->amendTableDiff($tableDiff);
         }
 
         print_r($this->toSql($diff)); die;
+    }
+
+    private function amendTableDiff(TableDiff $tableDiff): void
+    {
+        /**
+         * @todo Leave only for MariaDB?
+         * MariaDB has re-name index as of
+         * Test how long does it take to rename fo different databases.
+         */
+        // Prevent index renaming as an operation may take a lot of time.
+        $tableDiff->renamedIndexes = [];
+
+        // Prevent column removal to prevent data loss.
+        $tableDiff->removedColumns = [];
+
+        // Prevent column renaming as a not desired behavior.
+        foreach ($tableDiff->renamedColumns as $renamedColumn) {
+            $addedName = strtolower($renamedColumn->getName());
+            $tableDiff->addedColumns[$addedName] = $renamedColumn;
+        }
+
+        $tableDiff->renamedColumns = [];
+
+        // Prevent decreasing length for string columns to prevent data loss.
+        foreach ($tableDiff->changedColumns as $name => $columnDiff) {
+            $fromColumn = $columnDiff->fromColumn;
+            $column = $columnDiff->column;
+
+            if (!$fromColumn) {
+                continue;
+            }
+
+            if (!in_array('length', $columnDiff->changedProperties)) {
+                continue;
+            }
+
+            $fromLength = $fromColumn->getLength() ?? 255;
+            $length = $column->getLength() ?? 255;
+
+            if ($fromLength <= $length) {
+                continue;
+            }
+
+            $column->setLength($fromLength);
+
+            if (count($columnDiff->changedProperties) === 1) {
+                unset($tableDiff->changedColumns[$name]);
+
+                continue;
+            }
+
+            $columnDiff->changedProperties = array_diff($columnDiff->changedProperties, ['length']);
+        }
     }
 
     private function processPreRebuildActions(DbalSchema $actualSchema, DbalSchema $schema): void

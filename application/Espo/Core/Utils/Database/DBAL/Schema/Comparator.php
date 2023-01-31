@@ -83,17 +83,9 @@ class Comparator extends OriginalComparator
             $length1 = $properties1['length'] ?? 255;
             $length2 = $properties2['length'] ?? 255;
 
-            // Espo: column length can only be increased
-            /*if ($length1 !== $length2) {
-                $changedProperties[] = 'length';
-            }*/
-            if ($length2 > $length1) {
+            if ($length1 !== $length2) {
                 $changedProperties[] = 'length';
             }
-            if ($length2 < $length1) {
-                $column2->setLength($length1);
-            }
-            // Espo: end
 
             if ($properties1['fixed'] !== $properties2['fixed']) {
                 $changedProperties[] = 'fixed';
