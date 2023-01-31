@@ -32,12 +32,9 @@ namespace Espo\Core\Utils\Database\Schema;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Schema\ColumnDiff;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Schema\SchemaDiff;
 use Doctrine\DBAL\Schema\SchemaDiff as DbalSchemaDiff;
 use Doctrine\DBAL\Schema\SchemaException;
-use Doctrine\DBAL\Schema\TableDiff;
 use Doctrine\DBAL\Types\Type;
 
 use Espo\Core\Binding\BindingContainerBuilder;
@@ -65,6 +62,7 @@ class SchemaManager
         private Log $log,
         private Helper $helper,
         private MetadataProvider $metadataProvider,
+        private DiffModifier $diffModifier,
         private InjectableFactory $injectableFactory
     ) {
         $this->comparator = new Comparator($this->getPlatform());
@@ -116,6 +114,7 @@ class SchemaManager
      *
      * @param ?string[] $entityTypeList Specific entity types.
      * @throws SchemaException
+     * @throws DbalException
      */
     public function rebuild(?array $entityTypeList = null): bool
     {
@@ -187,83 +186,17 @@ class SchemaManager
      * Get SQL queries to get from one to another schema.
      *
      * @return string[] Array of SQL queries.
+     * @throws DbalException
      */
     private function getDiffSql(DbalSchema $fromSchema, DbalSchema $toSchema)
     {
         $diff = $this->comparator->compareSchemas($fromSchema, $toSchema);
 
-        $this->amendSchemaDiff($diff);
-
-        return $this->toSql($diff);
-    }
-
-    private function amendSchemaDiff(SchemaDiff $diff): void
-    {
-        $diff->removedTables = [];
-
-        foreach ($diff->changedTables as $tableDiff) {
-            $this->amendTableDiff($tableDiff);
-        }
+        $this->diffModifier->modify($diff);
 
         print_r($this->toSql($diff)); die;
-    }
 
-    private function amendTableDiff(TableDiff $tableDiff): void
-    {
-        /**
-         * @todo Leave only for MariaDB?
-         * MariaDB supports RENAME INDEX as of v10.5.
-         * Find out how long does it take to rename fo different databases.
-         */
-        // Prevent index renaming as an operation may take a lot of time.
-        $tableDiff->renamedIndexes = [];
-
-        // Prevent column removal to prevent data loss.
-        $tableDiff->removedColumns = [];
-
-        // Prevent column renaming as a not desired behavior.
-        foreach ($tableDiff->renamedColumns as $renamedColumn) {
-            $addedName = strtolower($renamedColumn->getName());
-            $tableDiff->addedColumns[$addedName] = $renamedColumn;
-        }
-
-        $tableDiff->renamedColumns = [];
-
-        // Prevent decreasing length for string columns to prevent data loss.
-        foreach ($tableDiff->changedColumns as $name => $columnDiff) {
-            $this->amendColumnDiffLength($tableDiff, $columnDiff, $name);
-        }
-    }
-
-    private function amendColumnDiffLength(TableDiff $tableDiff, ColumnDiff $columnDiff, string $name): void
-    {
-        $fromColumn = $columnDiff->fromColumn;
-        $column = $columnDiff->column;
-
-        if (!$fromColumn) {
-            return;
-        }
-
-        if (!in_array('length', $columnDiff->changedProperties)) {
-            return;
-        }
-
-        $fromLength = $fromColumn->getLength() ?? 255;
-        $length = $column->getLength() ?? 255;
-
-        if ($fromLength <= $length) {
-            return;
-        }
-
-        $column->setLength($fromLength);
-
-        if (count($columnDiff->changedProperties) === 1) {
-            unset($tableDiff->changedColumns[$name]);
-
-            return;
-        }
-
-        $columnDiff->changedProperties = array_diff($columnDiff->changedProperties, ['length']);
+        return $this->toSql($diff);
     }
 
     private function processPreRebuildActions(DbalSchema $actualSchema, DbalSchema $schema): void

@@ -54,7 +54,8 @@ class Comparator extends OriginalComparator
 
         if (get_class($properties1['type']) !== get_class($properties2['type'])) {
             // Espo
-            $this->espoFixTypeDiff($changedProperties, $column1, $column2);
+            //$this->espoFixTypeDiff($changedProperties, $column1, $column2);
+            $changedProperties[] = 'type';
             // Espo: end
         }
 
