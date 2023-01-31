@@ -211,8 +211,8 @@ class SchemaManager
     {
         /**
          * @todo Leave only for MariaDB?
-         * MariaDB has re-name index as of
-         * Test how long does it take to rename fo different databases.
+         * MariaDB supports RENAME INDEX as of v10.5.
+         * Find out how long does it take to rename fo different databases.
          */
         // Prevent index renaming as an operation may take a lot of time.
         $tableDiff->renamedIndexes = [];
