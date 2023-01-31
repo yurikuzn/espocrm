@@ -84,6 +84,8 @@ class DiffModifier
             $this->amendColumnDiffTextType($tableDiff, $columnDiff, $name);
             // Prevent changing collation.
             $this->amendColumnDiffCollation($tableDiff, $columnDiff, $name);
+            // Prevent changing charset.
+            $this->amendColumnDiffCharset($tableDiff, $columnDiff, $name);
         }
     }
 
@@ -178,6 +180,30 @@ class DiffModifier
         $column->setPlatformOption('collation', $fromCollation);
 
         self::unsetChangedColumnProperty($tableDiff, $columnDiff, $name, 'collation');
+    }
+
+    private function amendColumnDiffCharset(TableDiff $tableDiff, ColumnDiff $columnDiff, string $name): void
+    {
+        $fromColumn = $columnDiff->fromColumn;
+        $column = $columnDiff->column;
+
+        if (!$fromColumn) {
+            return;
+        }
+
+        if (!in_array('charset', $columnDiff->changedProperties)) {
+            return;
+        }
+
+        $fromCharset = $fromColumn->getPlatformOption('charset');
+
+        if (!$fromCharset) {
+            return;
+        }
+
+        $column->setPlatformOption('charset', $fromCharset);
+
+        self::unsetChangedColumnProperty($tableDiff, $columnDiff, $name, 'charset');
     }
 
     private static function unsetChangedColumnProperty(

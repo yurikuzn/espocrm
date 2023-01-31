@@ -38,8 +38,6 @@ use Doctrine\DBAL\Schema\SchemaDiff as DbalSchemaDiff;
 use Doctrine\DBAL\Schema\SchemaException;
 use Doctrine\DBAL\Types\Type;
 
-//use Espo\Core\Utils\Database\DBAL\Schema\Comparator;
-
 use Espo\Core\Binding\BindingContainerBuilder;
 use Espo\Core\InjectableFactory;
 use Espo\Core\Utils\Database\Helper;
