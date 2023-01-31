@@ -333,11 +333,8 @@ class Comparator extends OriginalComparator
                 continue;
             }
 
-            // Espo: skip index renaming
-            // Handled by amendDiff.
-            // @todo Remove.
-            //$tableDifferences->renamedIndexes[$removedIndexName] = $addedIndex;
-            // Espo: end
+            $tableDifferences->renamedIndexes[$removedIndexName] = $addedIndex;
+
             unset(
                 $tableDifferences->addedIndexes[$addedIndexName],
                 $tableDifferences->removedIndexes[$removedIndexName]

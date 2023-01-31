@@ -32,6 +32,7 @@ namespace Espo\Core\Utils\Database\Schema;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Schema\ColumnDiff;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaDiff;
 use Doctrine\DBAL\Schema\SchemaDiff as DbalSchemaDiff;
@@ -230,34 +231,39 @@ class SchemaManager
 
         // Prevent decreasing length for string columns to prevent data loss.
         foreach ($tableDiff->changedColumns as $name => $columnDiff) {
-            $fromColumn = $columnDiff->fromColumn;
-            $column = $columnDiff->column;
-
-            if (!$fromColumn) {
-                continue;
-            }
-
-            if (!in_array('length', $columnDiff->changedProperties)) {
-                continue;
-            }
-
-            $fromLength = $fromColumn->getLength() ?? 255;
-            $length = $column->getLength() ?? 255;
-
-            if ($fromLength <= $length) {
-                continue;
-            }
-
-            $column->setLength($fromLength);
-
-            if (count($columnDiff->changedProperties) === 1) {
-                unset($tableDiff->changedColumns[$name]);
-
-                continue;
-            }
-
-            $columnDiff->changedProperties = array_diff($columnDiff->changedProperties, ['length']);
+            $this->amendColumnDiffLength($tableDiff, $columnDiff, $name);
         }
+    }
+
+    private function amendColumnDiffLength(TableDiff $tableDiff, ColumnDiff $columnDiff, string $name): void
+    {
+        $fromColumn = $columnDiff->fromColumn;
+        $column = $columnDiff->column;
+
+        if (!$fromColumn) {
+            return;
+        }
+
+        if (!in_array('length', $columnDiff->changedProperties)) {
+            return;
+        }
+
+        $fromLength = $fromColumn->getLength() ?? 255;
+        $length = $column->getLength() ?? 255;
+
+        if ($fromLength <= $length) {
+            return;
+        }
+
+        $column->setLength($fromLength);
+
+        if (count($columnDiff->changedProperties) === 1) {
+            unset($tableDiff->changedColumns[$name]);
+
+            return;
+        }
+
+        $columnDiff->changedProperties = array_diff($columnDiff->changedProperties, ['length']);
     }
 
     private function processPreRebuildActions(DbalSchema $actualSchema, DbalSchema $schema): void
