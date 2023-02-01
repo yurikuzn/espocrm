@@ -30,6 +30,7 @@
 namespace Espo\Core\Utils\Database\Schema;
 
 use Doctrine\DBAL\Exception as DbalException;
+use Doctrine\DBAL\Schema\Column as Column;
 use Doctrine\DBAL\Schema\ColumnDiff;
 use Doctrine\DBAL\Schema\SchemaDiff;
 use Doctrine\DBAL\Schema\TableDiff;
@@ -44,20 +45,28 @@ class DiffModifier
     /**
      * @throws DbalException
      */
-    public function modify(SchemaDiff $diff): void
+    public function modify(SchemaDiff $diff): bool
     {
+        $needReRun = false;
+
         $diff->removedTables = [];
 
         foreach ($diff->changedTables as $tableDiff) {
-            $this->amendTableDiff($tableDiff);
+            $itemNeedReRun = $this->amendTableDiff($tableDiff);
+
+            $needReRun = $needReRun || $itemNeedReRun;
         }
+
+        return $needReRun;
     }
 
     /**
      * @throws DbalException
      */
-    private function amendTableDiff(TableDiff $tableDiff): void
+    private function amendTableDiff(TableDiff $tableDiff): bool
     {
+        $needReRun = false;
+
         /**
          * @todo Leave only for MariaDB?
          * MariaDB supports RENAME INDEX as of v10.5.
@@ -65,6 +74,10 @@ class DiffModifier
          */
         // Prevent index renaming as an operation may take a lot of time.
         $tableDiff->renamedIndexes = [];
+
+        foreach ($tableDiff->removedColumns as $name => $column) {
+            $this->moveRemovedAutoincrementColumnToChanged($tableDiff, $column, $name);
+        }
 
         // Prevent column removal to prevent data loss.
         $tableDiff->removedColumns = [];
@@ -76,6 +89,13 @@ class DiffModifier
         }
 
         $tableDiff->renamedColumns = [];
+
+        foreach ($tableDiff->addedColumns as $column) {
+            // Suppress autoincrement as need having a unique index first.
+            $hasAutoincrement = $this->amendAddedColumnAutoincrement($column);
+
+            $needReRun = $needReRun || $hasAutoincrement;
+        }
 
         foreach ($tableDiff->changedColumns as $name => $columnDiff) {
             // Prevent decreasing length for string columns to prevent data loss.
@@ -89,6 +109,8 @@ class DiffModifier
         }
 
         //print_r($tableDiff->changedColumns);die;
+
+        return $needReRun;
     }
 
     private function amendColumnDiffLength(TableDiff $tableDiff, ColumnDiff $columnDiff, string $name): void
@@ -206,6 +228,42 @@ class DiffModifier
         $column->setPlatformOption('charset', $fromCharset);
 
         self::unsetChangedColumnProperty($tableDiff, $columnDiff, $name, 'charset');
+    }
+
+    private function amendAddedColumnAutoincrement(Column $column): bool
+    {
+        if (!$column->getAutoincrement()) {
+            return false;
+        }
+
+        $column
+            ->setAutoincrement(false)
+            ->setNotnull(false)
+            ->setDefault(null);
+
+        return true;
+    }
+
+    private function moveRemovedAutoincrementColumnToChanged(TableDiff $tableDiff, Column $column, string $name): void
+    {
+        if (!$column->getAutoincrement()) {
+            return;
+        }
+
+        $newColumn = clone $column;
+
+        $newColumn
+            ->setAutoincrement(false)
+            ->setNotnull(false)
+            ->setDefault(null);
+
+        $changedProperties = [
+            'autoincrement',
+            'notnull',
+            'default',
+        ];
+
+        $tableDiff->changedColumns[$name] = new ColumnDiff($name, $newColumn, $changedProperties, $column);
     }
 
     private static function unsetChangedColumnProperty(

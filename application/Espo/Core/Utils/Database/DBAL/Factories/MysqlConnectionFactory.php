@@ -74,8 +74,6 @@ class MysqlConnectionFactory implements ConnectionFactory
         $version = $this->getFullDatabaseVersion() ?? '';
         $platform = $driver->createDatabasePlatformForVersion($version);
 
-        //print_r($platform);die;
-
         $params = [
             'platform' => $this->handlePlatform($platform),
             'host' => $databaseParams->getHost(),

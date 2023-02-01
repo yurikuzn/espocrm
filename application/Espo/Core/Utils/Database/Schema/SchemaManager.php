@@ -33,8 +33,8 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Comparator;
-use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Schema\SchemaDiff as DbalSchemaDiff;
+use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\SchemaDiff;
 use Doctrine\DBAL\Schema\SchemaException;
 use Doctrine\DBAL\Types\Type;
 
@@ -118,12 +118,11 @@ class SchemaManager
      */
     public function rebuild(?array $entityTypeList = null): bool
     {
-        $currentSchema = $this->getCurrentSchema();
-
+        $fromSchema = $this->createDatabaseSchema();
         $schema = $this->builder->build($this->ormMetadataData->getData(), $entityTypeList);
 
         try {
-            $this->processPreRebuildActions($currentSchema, $schema);
+            $this->processPreRebuildActions($fromSchema, $schema);
         }
         catch (Throwable $e) {
             $this->log->alert('Rebuild database pre-rebuild error: '. $e->getMessage());
@@ -131,8 +130,54 @@ class SchemaManager
             return false;
         }
 
-        $queries = $this->composeDiffQueries($currentSchema, $schema);
+        $diff = $this->comparator->compareSchemas($fromSchema, $schema);
+        $needReRun = $this->diffModifier->modify($diff);
+        $sql = $this->composeDiffSql($diff);
 
+        print_r($sql);
+        //die;
+
+        $result = $this->runSql($sql);
+
+        if (!$result) {
+            return false;
+        }
+
+        if ($needReRun) {
+            $intermediateSchema = $this->createDatabaseSchema();
+            $schema = $this->builder->build($this->ormMetadataData->getData(), $entityTypeList);
+
+            $diff = $this->comparator->compareSchemas($intermediateSchema, $schema);
+
+            $this->diffModifier->modify($diff);
+            $sql = $this->composeDiffSql($diff);
+            $result = $this->runSql($sql);
+
+            print_r($sql);
+        }
+
+        if (!$result) {
+            return false;
+        }
+
+        try {
+            $this->processPostRebuildActions($fromSchema, $schema);
+        }
+        catch (Throwable $e) {
+            $this->log->alert('Rebuild database post-rebuild error: ' . $e->getMessage());
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param string[] $queries
+     * @return bool
+     */
+    private function runSql(array $queries): bool
+    {
         $result = true;
 
         $connection = $this->getDbalConnection();
@@ -150,22 +195,13 @@ class SchemaManager
             }
         }
 
-        try {
-            $this->processPostRebuildActions($currentSchema, $schema);
-        }
-        catch (Throwable $e) {
-            $this->log->alert('Rebuild database post-rebuild error: ' . $e->getMessage());
-
-            return false;
-        }
-
         return $result;
     }
 
     /**
-     * Get current database schema.
+     * Create a current database schema.
      */
-    private function getCurrentSchema(): DbalSchema
+    private function createDatabaseSchema(): Schema
     {
         return $this->getDbalConnection()
             ->getSchemaManager()
@@ -173,33 +209,14 @@ class SchemaManager
     }
 
     /**
-     * Get SQL queries of database schema.
-     *
-     * @return string[] Array of SQL queries.
+     * @return string[]
      */
-    private function toSql(DbalSchemaDiff $schema)
+    private function composeDiffSql(SchemaDiff $schema): array
     {
         return $schema->toSaveSql($this->getPlatform());
     }
 
-    /**
-     * Compose SQL queries to get from one to another schema.
-     *
-     * @return string[] Array of SQL queries.
-     * @throws DbalException
-     */
-    private function composeDiffQueries(DbalSchema $fromSchema, DbalSchema $toSchema): array
-    {
-        $diff = $this->comparator->compareSchemas($fromSchema, $toSchema);
-
-        $this->diffModifier->modify($diff);
-
-        print_r($this->toSql($diff));die;
-
-        //return $this->toSql($diff);
-    }
-
-    private function processPreRebuildActions(DbalSchema $actualSchema, DbalSchema $schema): void
+    private function processPreRebuildActions(Schema $actualSchema, Schema $schema): void
     {
         $binding = BindingContainerBuilder::create()
             ->bindInstance(Helper::class, $this->helper)
@@ -212,7 +229,7 @@ class SchemaManager
         }
     }
 
-    private function processPostRebuildActions(DbalSchema $actualSchema, DbalSchema $schema): void
+    private function processPostRebuildActions(Schema $actualSchema, Schema $schema): void
     {
         $binding = BindingContainerBuilder::create()
             ->bindInstance(Helper::class, $this->helper)
