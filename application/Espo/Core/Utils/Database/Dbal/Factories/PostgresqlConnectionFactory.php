@@ -27,13 +27,13 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Core\Utils\Database\DBAL\Factories;
+namespace Espo\Core\Utils\Database\Dbal\Factories;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDO\PgSQL\Driver as PostgreSQLDriver;
 use Doctrine\DBAL\Exception as DBALException;
 use Doctrine\DBAL\VersionAwarePlatformDriver as Driver;
-use Espo\Core\Utils\Database\DBAL\ConnectionFactory;
+use Espo\Core\Utils\Database\Dbal\ConnectionFactory;
 use Espo\ORM\DatabaseParams;
 use Espo\ORM\PDO\Options as PdoOptions;
 

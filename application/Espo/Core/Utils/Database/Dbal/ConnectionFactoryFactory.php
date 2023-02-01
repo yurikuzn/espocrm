@@ -27,25 +27,35 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Core\Utils\Database\DBAL\Types;
+namespace Espo\Core\Utils\Database\Dbal;
 
-use Doctrine\DBAL\Platforms\AbstractPlatform;
-use Doctrine\DBAL\Types\TextType;
+use Espo\Core\Binding\BindingContainerBuilder;
+use Espo\Core\InjectableFactory;
+use Espo\Core\Utils\Metadata;
+use PDO;
+use RuntimeException;
 
-/**
- * MySQL only.
- */
-class MediumtextType extends TextType
+class ConnectionFactoryFactory
 {
-    public const NAME = 'mediumtext';
+    public function __construct(
+        private Metadata $metadata,
+        private InjectableFactory $injectableFactory
+    ) {}
 
-    public function getName()
+    public function create(string $platform, PDO $pdo): ConnectionFactory
     {
-        return self::NAME;
-    }
+        /** @var ?class-string<ConnectionFactory> $className */
+        $className = $this->metadata
+            ->get(['app', 'database', 'platforms', $platform, 'dbalConnectionFactoryClassName']);
 
-    public function getSQLDeclaration(array $column, AbstractPlatform $platform)
-    {
-        return 'MEDIUMTEXT';
+        if (!$className) {
+            throw new RuntimeException("No DBAL ConnectionFactory for {$platform}.");
+        }
+
+        $bindingContainer = BindingContainerBuilder::create()
+            ->bindInstance(PDO::class, $pdo)
+            ->build();
+
+        return $this->injectableFactory->createWithBinding($className, $bindingContainer);
     }
 }

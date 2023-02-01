@@ -37,8 +37,8 @@ use Doctrine\DBAL\Schema\TableDiff;
 use Doctrine\DBAL\Types\TextType;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
-use Espo\Core\Utils\Database\DBAL\Types\LongtextType;
-use Espo\Core\Utils\Database\DBAL\Types\MediumtextType;
+use Espo\Core\Utils\Database\Dbal\Types\LongtextType;
+use Espo\Core\Utils\Database\Dbal\Types\MediumtextType;
 
 class DiffModifier
 {

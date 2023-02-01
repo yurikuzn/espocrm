@@ -30,8 +30,8 @@
 namespace Espo\Core\Utils\Database\Schema\ColumnPreparators;
 
 use Doctrine\DBAL\Types\Types;
-use Espo\Core\Utils\Database\DBAL\Types\LongtextType;
-use Espo\Core\Utils\Database\DBAL\Types\MediumtextType;
+use Espo\Core\Utils\Database\Dbal\Types\LongtextType;
+use Espo\Core\Utils\Database\Dbal\Types\MediumtextType;
 use Espo\Core\Utils\Database\Helper;
 use Espo\Core\Utils\Database\Schema\Column;
 use Espo\Core\Utils\Database\Schema\ColumnPreparator;

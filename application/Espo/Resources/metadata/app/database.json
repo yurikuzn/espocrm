@@ -2,7 +2,7 @@
     "platforms": {
         "Mysql": {
             "detailsProviderClassName": "Espo\\Core\\Utils\\Database\\DetailsProviders\\MysqlDetailsProvider",
-            "dbalConnectionFactoryClassName": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\MysqlConnectionFactory",
+            "dbalConnectionFactoryClassName": "Espo\\Core\\Utils\\Database\\Dbal\\Factories\\MysqlConnectionFactory",
             "indexHelperClassName": "Espo\\Core\\Utils\\Database\\Orm\\IndexHelpers\\MysqlIndexHelper",
             "columnPreparatorClassName": "Espo\\Core\\Utils\\Database\\Schema\\ColumnPreparators\\MysqlColumnPreparator",
             "preRebuildActionClassNameList": [
