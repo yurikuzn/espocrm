@@ -74,6 +74,8 @@ class MysqlConnectionFactory implements ConnectionFactory
         $version = $this->getFullDatabaseVersion() ?? '';
         $platform = $driver->createDatabasePlatformForVersion($version);
 
+        //print_r($platform);die;
+
         $params = [
             'platform' => $this->handlePlatform($platform),
             'host' => $databaseParams->getHost(),
@@ -90,6 +92,8 @@ class MysqlConnectionFactory implements ConnectionFactory
 
     private function createDriver(): Driver
     {
+        return new \Doctrine\DBAL\Driver\PDO\MySQL\Driver();
+
         $driverName = $this->config->get('database.driver') ?? 'pdo_mysql';
 
         $driverClass = $this->driverClassNameMap[$driverName] ?? null;
@@ -110,7 +114,7 @@ class MysqlConnectionFactory implements ConnectionFactory
         if (isset($this->customPlatformClassNameMap[$platformClass])) {
             $className = $this->customPlatformClassNameMap[$platformClass];
 
-            return new $className();
+            //return new $className();
         }
 
         return $platform;

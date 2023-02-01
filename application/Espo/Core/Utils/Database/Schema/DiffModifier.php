@@ -87,6 +87,8 @@ class DiffModifier
             // Prevent changing charset.
             $this->amendColumnDiffCharset($tableDiff, $columnDiff, $name);
         }
+
+        //print_r($tableDiff->changedColumns);die;
     }
 
     private function amendColumnDiffLength(TableDiff $tableDiff, ColumnDiff $columnDiff, string $name): void

@@ -245,11 +245,13 @@ trait MySQLPlatform
                 return 'TEXT';
             }
 
-            if ($length > static::LENGTH_LIMIT_MEDIUMTEXT) {
+            if ($length > static::LENGTH_LIMIT_MEDIUMTEXT) {// Espo
+                // Espo
                 return 'LONGTEXT';
             }
         }
 
+        // Espo
         return 'MEDIUMTEXT';
     }
 
