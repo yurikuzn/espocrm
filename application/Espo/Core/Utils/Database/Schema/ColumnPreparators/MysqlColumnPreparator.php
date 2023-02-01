@@ -30,6 +30,7 @@
 namespace Espo\Core\Utils\Database\Schema\ColumnPreparators;
 
 use Doctrine\DBAL\Types\Types;
+use Espo\Core\Utils\Database\DBAL\Types\LongtextType;
 use Espo\Core\Utils\Database\DBAL\Types\MediumtextType;
 use Espo\Core\Utils\Database\Helper;
 use Espo\Core\Utils\Database\Schema\Column;
@@ -153,21 +154,11 @@ class MysqlColumnPreparator implements ColumnPreparator
         }
 
         if (
-            in_array($columnType, [
-                Types::BOOLEAN,
-                Types::DATE_MUTABLE,
-                Types::DATETIME_MUTABLE,
-                Types::DATE_IMMUTABLE,
-                Types::DATETIME_IMMUTABLE,
-                Types::BIGINT,
-                Types::SMALLINT,
-                Types::INTEGER,
-                Types::DECIMAL,
-                Types::FLOAT,
-                Types::BLOB,
-                Types::TIME_IMMUTABLE,
-                Types::TIME_MUTABLE,
-                Types::GUID,
+            !in_array($columnType, [
+                Types::STRING,
+                Types::TEXT,
+                MediumtextType::NAME,
+                LongtextType::NAME,
             ])
         ) {
             return $column;
