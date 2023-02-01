@@ -134,9 +134,6 @@ class SchemaManager
         $needReRun = $this->diffModifier->modify($diff);
         $sql = $this->composeDiffSql($diff);
 
-        print_r($sql);
-        //die;
-
         $result = $this->runSql($sql);
 
         if (!$result) {
@@ -155,8 +152,6 @@ class SchemaManager
             $this->diffModifier->modify($diff, true);
             $sql = $this->composeDiffSql($diff);
             $result = $this->runSql($sql);
-
-            print_r($sql);
         }
 
         if (!$result) {
