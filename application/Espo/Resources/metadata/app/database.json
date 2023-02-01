@@ -10,12 +10,12 @@
             ],
             "postRebuildActionClassNameList": [],
             "dbalTypeClassNameMap": {
-                "mediumtext": "Espo\\Core\\Utils\\Database\\DBAL\\Types\\MediumtextType",
-                "longtext": "Espo\\Core\\Utils\\Database\\DBAL\\Types\\LongtextType"
+                "mediumtext": "Espo\\Core\\Utils\\Database\\Dbal\\Types\\MediumtextType",
+                "longtext": "Espo\\Core\\Utils\\Database\\Dbal\\Types\\LongtextType"
             }
         },
         "Postgresql": {
-            "dbalConnectionFactoryClassName": "Espo\\Core\\Utils\\Database\\DBAL\\Factories\\PostgresqlConnectionFactory"
+            "dbalConnectionFactoryClassName": "Espo\\Core\\Utils\\Database\\Dbal\\Factories\\PostgresqlConnectionFactory"
         }
     }
 }
