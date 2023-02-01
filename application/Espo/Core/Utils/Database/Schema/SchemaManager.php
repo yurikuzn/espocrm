@@ -144,12 +144,15 @@ class SchemaManager
         }
 
         if ($needReRun) {
+            // Needed to handle auto-increment column creation/removal/change.
+            // As an auto-increment column requires having a unique index, but
+            // Doctrine DBAL does not handle this.
             $intermediateSchema = $this->createDatabaseSchema();
             $schema = $this->builder->build($this->ormMetadataData->getData(), $entityTypeList);
 
             $diff = $this->comparator->compareSchemas($intermediateSchema, $schema);
 
-            $this->diffModifier->modify($diff);
+            $this->diffModifier->modify($diff, true);
             $sql = $this->composeDiffSql($diff);
             $result = $this->runSql($sql);
 

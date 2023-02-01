@@ -45,27 +45,25 @@ class DiffModifier
     /**
      * @throws DbalException
      */
-    public function modify(SchemaDiff $diff): bool
+    public function modify(SchemaDiff $diff, bool $secondRun = false): bool
     {
-        $needReRun = false;
+        $reRun = false;
 
         $diff->removedTables = [];
 
         foreach ($diff->changedTables as $tableDiff) {
-            $itemNeedReRun = $this->amendTableDiff($tableDiff);
-
-            $needReRun = $needReRun || $itemNeedReRun;
+            $reRun = $this->amendTableDiff($tableDiff, $secondRun) || $reRun;
         }
 
-        return $needReRun;
+        return $reRun;
     }
 
     /**
      * @throws DbalException
      */
-    private function amendTableDiff(TableDiff $tableDiff): bool
+    private function amendTableDiff(TableDiff $tableDiff, bool $secondRun): bool
     {
-        $needReRun = false;
+        $reRun = false;
 
         /**
          * @todo Leave only for MariaDB?
@@ -76,7 +74,7 @@ class DiffModifier
         $tableDiff->renamedIndexes = [];
 
         foreach ($tableDiff->removedColumns as $name => $column) {
-            $this->moveRemovedAutoincrementColumnToChanged($tableDiff, $column, $name);
+            $reRun = $this->moveRemovedAutoincrementColumnToChanged($tableDiff, $column, $name) || $reRun;
         }
 
         // Prevent column removal to prevent data loss.
@@ -92,9 +90,7 @@ class DiffModifier
 
         foreach ($tableDiff->addedColumns as $column) {
             // Suppress autoincrement as need having a unique index first.
-            $hasAutoincrement = $this->amendAddedColumnAutoincrement($column);
-
-            $needReRun = $needReRun || $hasAutoincrement;
+            $reRun = $this->amendAddedColumnAutoincrement($column) || $reRun;
         }
 
         foreach ($tableDiff->changedColumns as $name => $columnDiff) {
@@ -106,11 +102,13 @@ class DiffModifier
             $this->amendColumnDiffCollation($tableDiff, $columnDiff, $name);
             // Prevent changing charset.
             $this->amendColumnDiffCharset($tableDiff, $columnDiff, $name);
+            // Prevent setting autoincrement in first run.
+            if (!$secondRun) {
+                $reRun = $this->amendColumnDiffAutoincrement($tableDiff, $columnDiff, $name) || $reRun;
+            }
         }
 
-        //print_r($tableDiff->changedColumns);die;
-
-        return $needReRun;
+        return $reRun;
     }
 
     private function amendColumnDiffLength(TableDiff $tableDiff, ColumnDiff $columnDiff, string $name): void
@@ -230,6 +228,29 @@ class DiffModifier
         self::unsetChangedColumnProperty($tableDiff, $columnDiff, $name, 'charset');
     }
 
+    private function amendColumnDiffAutoincrement(TableDiff $tableDiff, ColumnDiff $columnDiff, string $name): bool
+    {
+        $fromColumn = $columnDiff->fromColumn;
+        $column = $columnDiff->column;
+
+        if (!$fromColumn) {
+            return false;
+        }
+
+        if (!in_array('autoincrement', $columnDiff->changedProperties)) {
+            return false;
+        }
+
+        $column
+            ->setAutoincrement(false)
+            ->setNotnull(false)
+            ->setDefault(null);
+
+        self::unsetChangedColumnProperty($tableDiff, $columnDiff, $name, 'autoincrement');
+
+        return true;
+    }
+
     private function amendAddedColumnAutoincrement(Column $column): bool
     {
         if (!$column->getAutoincrement()) {
@@ -244,10 +265,10 @@ class DiffModifier
         return true;
     }
 
-    private function moveRemovedAutoincrementColumnToChanged(TableDiff $tableDiff, Column $column, string $name): void
+    private function moveRemovedAutoincrementColumnToChanged(TableDiff $tableDiff, Column $column, string $name): bool
     {
         if (!$column->getAutoincrement()) {
-            return;
+            return false;
         }
 
         $newColumn = clone $column;
@@ -264,6 +285,14 @@ class DiffModifier
         ];
 
         $tableDiff->changedColumns[$name] = new ColumnDiff($name, $newColumn, $changedProperties, $column);
+
+        foreach ($tableDiff->removedIndexes as $indexName => $index) {
+            if ($index->getColumns() === [$name]) {
+                unset($tableDiff->removedIndexes[$indexName]);
+            }
+        }
+
+        return true;
     }
 
     private static function unsetChangedColumnProperty(
