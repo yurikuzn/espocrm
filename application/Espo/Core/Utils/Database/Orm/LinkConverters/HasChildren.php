@@ -37,6 +37,7 @@ class HasChildren implements LinkConverter
 {
     public function convert(LinkDefs $linkDefs, string $entityType): EntityDefs
     {
-
+        $name = $linkDefs->getName();
+        $hasField = $linkDefs->getParam('hasField');
     }
 }

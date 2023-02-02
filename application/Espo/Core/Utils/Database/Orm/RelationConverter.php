@@ -128,6 +128,9 @@ class RelationConverter
 
         // Check for backward compatibility.
         if (!$relationshipName || !$this->getRelationClass($relationshipName)) {
+            $linkParams['hasField'] = (bool) $this->metadata
+                ->get(['entityDefs', $entityType, 'fields', $linkName]);
+
             $relationDefs = RelationDefs::fromRaw($linkParams, $linkName);
 
             $converter = $this->createLinkConverter($relationshipName, $linkType, $foreignLinkType);
