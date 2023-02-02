@@ -32,6 +32,7 @@ namespace Espo\Core\Utils\Database\Schema;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\SchemaDiff;
@@ -51,6 +52,8 @@ use Throwable;
  */
 class SchemaManager
 {
+    /** @var AbstractSchemaManager<AbstractPlatform> */
+    private AbstractSchemaManager $schemaManager;
     private Comparator $comparator;
     private Builder $builder;
 
@@ -65,7 +68,11 @@ class SchemaManager
         private DiffModifier $diffModifier,
         private InjectableFactory $injectableFactory
     ) {
+
+        $this->schemaManager = $this->getDbalConnection()->createSchemaManager();
         $this->comparator = new Comparator($this->getPlatform());
+
+        //$this->schemaManager->createComparator();
 
         $this->initFieldTypes();
 
@@ -82,6 +89,9 @@ class SchemaManager
         return $this->helper;
     }
 
+    /**
+     * @throws DbalException
+     */
     private function getPlatform(): AbstractPlatform
     {
         return $this->getDbalConnection()->getDatabasePlatform();
@@ -89,7 +99,7 @@ class SchemaManager
 
     private function getDbalConnection(): DbalConnection
     {
-        return $this->getDatabaseHelper()->getDbalConnection();
+        return $this->helper->getDbalConnection();
     }
 
     /**
@@ -118,7 +128,7 @@ class SchemaManager
      */
     public function rebuild(?array $entityTypeList = null): bool
     {
-        $fromSchema = $this->createDatabaseSchema();
+        $fromSchema = $this->introspectSchema();
         $schema = $this->builder->build($this->ormMetadataData->getData(), $entityTypeList);
 
         try {
@@ -144,7 +154,7 @@ class SchemaManager
             // Needed to handle auto-increment column creation/removal/change.
             // As an auto-increment column requires having a unique index, but
             // Doctrine DBAL does not handle this.
-            $intermediateSchema = $this->createDatabaseSchema();
+            $intermediateSchema = $this->introspectSchema();
             $schema = $this->builder->build($this->ormMetadataData->getData(), $entityTypeList);
 
             $diff = $this->comparator->compareSchemas($intermediateSchema, $schema);
@@ -181,7 +191,7 @@ class SchemaManager
         $connection = $this->getDbalConnection();
 
         foreach ($queries as $sql) {
-            $this->log->info('SCHEMA, Execute Query: '. $sql);
+            $this->log->info('Schema, query: '. $sql);
 
             try {
                 $connection->executeQuery($sql);
@@ -197,21 +207,22 @@ class SchemaManager
     }
 
     /**
-     * Create a current database schema.
+     * Introspect and return a current database schema.
+     *
+     * @throws DbalException
      */
-    private function createDatabaseSchema(): Schema
+    private function introspectSchema(): Schema
     {
-        return $this->getDbalConnection()
-            ->getSchemaManager()
-            ->createSchema();
+        return $this->schemaManager->introspectSchema();
     }
 
     /**
      * @return string[]
+     * @throws DbalException
      */
-    private function composeDiffSql(SchemaDiff $schema): array
+    private function composeDiffSql(SchemaDiff $diff): array
     {
-        return $schema->toSaveSql($this->getPlatform());
+        return $this->getPlatform()->getAlterSchemaSQL($diff);
     }
 
     private function processPreRebuildActions(Schema $actualSchema, Schema $schema): void
