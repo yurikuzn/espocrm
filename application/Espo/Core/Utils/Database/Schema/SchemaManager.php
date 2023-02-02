@@ -68,11 +68,11 @@ class SchemaManager
         private DiffModifier $diffModifier,
         private InjectableFactory $injectableFactory
     ) {
-
         $this->schemaManager = $this->getDbalConnection()->createSchemaManager();
+        // Not using a platform specific comparator as it unsets a collation and charset if
+        // they match a table default.
+        //$this->comparator = $this->schemaManager->createComparator();
         $this->comparator = new Comparator($this->getPlatform());
-
-        //$this->schemaManager->createComparator();
 
         $this->initFieldTypes();
 
