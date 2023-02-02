@@ -32,12 +32,12 @@ namespace Espo\Core\Utils\Database\Dbal\Factories;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDO\PgSQL\Driver as PostgreSQLDriver;
 use Doctrine\DBAL\Exception as DBALException;
-use Doctrine\DBAL\VersionAwarePlatformDriver as Driver;
 use Espo\Core\Utils\Database\Dbal\ConnectionFactory;
 use Espo\ORM\DatabaseParams;
 use Espo\ORM\PDO\Options as PdoOptions;
 
 use PDO;
+use RuntimeException;
 
 class PostgresqlConnectionFactory implements ConnectionFactory
 {
@@ -50,47 +50,35 @@ class PostgresqlConnectionFactory implements ConnectionFactory
      */
     public function create(DatabaseParams $databaseParams): Connection
     {
-        $driver = $this->createDriver();
+        $driver = new PostgreSQLDriver();
 
-        $version = $this->getDatabaseVersion() ?? '';
-        $platform = $driver->createDatabasePlatformForVersion($version);
+        if (!$databaseParams->getHost() || !$databaseParams->getName()) {
+            throw new RuntimeException("No required database params.");
+        }
 
         $params = [
-            'platform' => $platform,
+            'pdo' => $this->pdo,
             'host' => $databaseParams->getHost(),
-            'port' => $databaseParams->getPort(),
             'dbname' => $databaseParams->getName(),
-            'charset' => $databaseParams->getCharset(),
-            'user' => $databaseParams->getUsername(),
-            'password' => $databaseParams->getPassword(),
             'driverOptions' => PdoOptions::getOptionsFromDatabaseParams($databaseParams),
         ];
 
-        return new Connection($params, $driver);
-    }
-
-    private function createDriver(): Driver
-    {
-        $driverClass = PostgreSQLDriver::class;
-
-        return new $driverClass();
-    }
-
-    private function getDatabaseVersion(): ?string
-    {
-        $sql = "SHOW server_version";
-
-        $sth = $this->pdo->prepare($sql);
-        $sth->execute();
-
-        $row = $sth->fetch(PDO::FETCH_NUM);
-
-        $value = $row[0] ?: null;
-
-        if ($value === null) {
-            return null;
+        if ($databaseParams->getPort() !== null) {
+            $params['port'] = $databaseParams->getPort();
         }
 
-        return (string) $value;
+        if ($databaseParams->getUsername() !== null) {
+            $params['user'] = $databaseParams->getUsername();
+        }
+
+        if ($databaseParams->getPassword() !== null) {
+            $params['password'] = $databaseParams->getPassword();
+        }
+
+        if ($databaseParams->getCharset() !== null) {
+            $params['charset'] = $databaseParams->getCharset();
+        }
+
+        return new Connection($params, $driver);
     }
 }

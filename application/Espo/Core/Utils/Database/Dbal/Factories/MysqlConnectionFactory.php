@@ -38,6 +38,7 @@ use Espo\ORM\DatabaseParams;
 use Espo\ORM\PDO\Options as PdoOptions;
 
 use PDO;
+use RuntimeException;
 
 class MysqlConnectionFactory implements ConnectionFactory
 {
@@ -52,36 +53,33 @@ class MysqlConnectionFactory implements ConnectionFactory
     {
         $driver = new PDOMySQLDriver();
 
-        $version = $this->getFullDatabaseVersion() ?? '';
-        $platform = $driver->createDatabasePlatformForVersion($version);
+        if (!$databaseParams->getHost() || !$databaseParams->getName()) {
+            throw new RuntimeException("No required database params.");
+        }
 
         $params = [
-            'platform' => $platform,
+            'pdo' => $this->pdo,
             'host' => $databaseParams->getHost(),
-            'port' => $databaseParams->getPort(),
             'dbname' => $databaseParams->getName(),
-            'charset' => $databaseParams->getCharset(),
-            'user' => $databaseParams->getUsername(),
-            'password' => $databaseParams->getPassword(),
             'driverOptions' => PdoOptions::getOptionsFromDatabaseParams($databaseParams),
         ];
 
-        return new Connection($params, $driver);
-    }
-
-    private function getFullDatabaseVersion(): ?string
-    {
-        $sth = $this->pdo->prepare("select version()");
-
-        $sth->execute();
-
-        /** @var string|null|false $result */
-        $result = $sth->fetchColumn();
-
-        if ($result === false || $result === null) {
-            return null;
+        if ($databaseParams->getPort() !== null) {
+            $params['port'] = $databaseParams->getPort();
         }
 
-        return $result;
+        if ($databaseParams->getUsername() !== null) {
+            $params['user'] = $databaseParams->getUsername();
+        }
+
+        if ($databaseParams->getPassword() !== null) {
+            $params['password'] = $databaseParams->getPassword();
+        }
+
+        if ($databaseParams->getCharset() !== null) {
+            $params['charset'] = $databaseParams->getCharset();
+        }
+
+        return new Connection($params, $driver);
     }
 }
