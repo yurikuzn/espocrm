@@ -35,7 +35,7 @@ use Espo\ORM\Defs\RelationDefs;
 
 class HasMany implements LinkConverter
 {
-    public function convert(RelationDefs $relationDefs, string $entityType): EntityDefs
+    public function convert(RelationDefs $linkDefs, string $entityType): EntityDefs
     {
 
     }

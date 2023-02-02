@@ -29,14 +29,50 @@
 
 namespace Espo\Core\Utils\Database\Orm\LinkConverters;
 
+use Espo\Core\Utils\Database\Orm\Defs\AttributeDefs;
 use Espo\Core\Utils\Database\Orm\Defs\EntityDefs;
+use Espo\Core\Utils\Database\Orm\Defs\RelationDefs;
 use Espo\Core\Utils\Database\Orm\LinkConverter;
-use Espo\ORM\Defs\RelationDefs;
+use Espo\ORM\Defs\RelationDefs as LinkDefs;
+use Espo\ORM\Type\AttributeType;
 
 class BelongsToParent implements LinkConverter
 {
-    public function convert(RelationDefs $relationDefs, string $entityType): EntityDefs
-    {
+    private const TYPE_LENGTH = 100;
 
+    public function convert(LinkDefs $linkDefs, string $entityType): EntityDefs
+    {
+        $name = $linkDefs->getName();
+
+        $foreignRelationName = $linkDefs->hasForeignRelationName() ?
+            $linkDefs->getForeignRelationName() : null;
+
+        $idName = $name . 'Id';
+        $nameName = $name . 'Name';
+        $typeName = $name . 'Type';
+
+        return EntityDefs::create()
+            ->withAttribute(
+                AttributeDefs::create($idName)
+                    ->withType(AttributeType::FOREIGN_ID)
+                    ->withParam('index', $name)
+            )
+            ->withAttribute(
+                AttributeDefs::create($typeName)
+                    ->withType(AttributeType::FOREIGN_TYPE)
+                    ->withParam('notNull', false) // Revise whether needed.
+                    ->withParam('index', $name)
+                    ->withLength(self::TYPE_LENGTH)
+            )
+            ->withAttribute(
+                AttributeDefs::create($nameName)
+                    ->withType(AttributeType::VARCHAR)
+                    ->withNotStorable()
+            )
+            ->withRelation(
+                RelationDefs::create($name)
+                    ->withKey($idName)
+                    ->withForeignRelationName($foreignRelationName)
+            );
     }
 }

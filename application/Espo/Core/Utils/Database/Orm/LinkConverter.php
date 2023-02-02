@@ -37,5 +37,5 @@ use Espo\Core\Utils\Database\Orm\Defs\EntityDefs;
  */
 interface LinkConverter
 {
-    public function convert(RelationDefs $relationDefs, string $entityType): EntityDefs;
+    public function convert(RelationDefs $linkDefs, string $entityType): EntityDefs;
 }

@@ -31,6 +31,7 @@ namespace Espo\Core\Utils\Database\Orm;
 
 use Espo\Core\InjectableFactory;
 use Espo\Core\Utils\Database\Orm\LinkConverters\BelongsTo;
+use Espo\Core\Utils\Database\Orm\LinkConverters\BelongsToParent;
 use Espo\Core\Utils\Database\Orm\LinkConverters\HasChildren;
 use Espo\Core\Utils\Database\Orm\LinkConverters\HasMany;
 use Espo\Core\Utils\Database\Orm\LinkConverters\HasOne;
@@ -216,7 +217,7 @@ class RelationConverter
         }
 
         if ($type === RelationType::BELONGS_TO_PARENT) {
-            return BelongsTo::class;
+            return BelongsToParent::class;
         }
 
         throw new RuntimeException("Unsupported link type '{$type}'.");

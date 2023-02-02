@@ -31,11 +31,11 @@ namespace Espo\Core\Utils\Database\Orm\LinkConverters;
 
 use Espo\Core\Utils\Database\Orm\Defs\EntityDefs;
 use Espo\Core\Utils\Database\Orm\LinkConverter;
-use Espo\ORM\Defs\RelationDefs;
+use Espo\ORM\Defs\RelationDefs as LinkDefs;
 
 class HasChildren implements LinkConverter
 {
-    public function convert(RelationDefs $relationDefs, string $entityType): EntityDefs
+    public function convert(LinkDefs $linkDefs, string $entityType): EntityDefs
     {
 
     }
