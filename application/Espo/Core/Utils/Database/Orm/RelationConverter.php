@@ -29,15 +29,25 @@
 
 namespace Espo\Core\Utils\Database\Orm;
 
+use Espo\Core\InjectableFactory;
+use Espo\Core\Utils\Database\Orm\LinkConverters\BelongsTo;
+use Espo\Core\Utils\Database\Orm\LinkConverters\HasChildren;
+use Espo\Core\Utils\Database\Orm\LinkConverters\HasMany;
+use Espo\Core\Utils\Database\Orm\LinkConverters\HasOne;
+use Espo\Core\Utils\Database\Orm\LinkConverters\ManyMany;
 use Espo\Core\Utils\Util;
 use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Config;
+use Espo\ORM\Defs\RelationDefs;
+use Espo\ORM\Type\RelationType;
+use RuntimeException;
 
 class RelationConverter
 {
     public function __construct(
         private Metadata $metadata,
-        private Config $config
+        private Config $config,
+        private InjectableFactory $injectableFactory
     ) {}
 
     /**
@@ -77,20 +87,20 @@ class RelationConverter
     /**
      * Get a foreign link.
      *
-     * @param array<string, mixed> $parentLinkParams
+     * @param array<string, mixed> $linkParams
      * @param array<string, mixed> $currentEntityDefs
-     * @return array{name: string, params: array<string, mixed>}|false
+     * @return array{name: string, params: array<string, mixed>}|null
      */
-    private function getForeignLink($parentLinkParams, $currentEntityDefs)
+    private function getForeignLinkParams(array $linkParams, array $currentEntityDefs): ?array
     {
-        if (isset($parentLinkParams['foreign']) && isset($currentEntityDefs['links'][$parentLinkParams['foreign']])) {
-            return [
-                'name' => $parentLinkParams['foreign'],
-                'params' => $currentEntityDefs['links'][$parentLinkParams['foreign']],
-            ];
+        if (
+            isset($linkParams['foreign']) &&
+            isset($currentEntityDefs['links'][$linkParams['foreign']])
+        ) {
+            return $currentEntityDefs['links'][$linkParams['foreign']];
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -104,37 +114,56 @@ class RelationConverter
     {
         $entityDefs = $this->metadata->get('entityDefs');
 
-        $foreignEntityType = $linkParams['entity'] ?? $entityType;
-        $foreignLink = $this->getForeignLink($linkParams, $entityDefs[$foreignEntityType]);
+        $foreignEntityType = $linkParams['entity'] ?? null;
 
-        $currentType = $linkParams['type'];
+        $foreignLinkParams = $foreignEntityType ?
+            $this->getForeignLinkParams($linkParams, $entityDefs[$foreignEntityType] ?? []) :
+            null;
 
-        $relType = $currentType;
+        $relationshipName = $linkParams['relationName'] ?? null;
 
-        if ($foreignLink !== false) {
-            $relType .= '_' . $foreignLink['params']['type'];
+        $linkType = $linkParams['type'];
+        $foreignLinkType = $foreignLinkParams ? $foreignLinkParams['type'] : null;
+
+        // Check for backward compatibility.
+        if (!$relationshipName || !$this->getRelationClass($relationshipName)) {
+            $relationDefs = RelationDefs::fromRaw($linkParams, $linkName);
+
+            $converter = $this->createLinkConverter($relationshipName, $linkType, $foreignLinkType);
+
+            $convertedEntityDefs = $converter->convert($relationDefs, $entityType);
+
+            return [$entityType => $convertedEntityDefs->toAssoc()];
+        }
+
+        // Below is a legacy.
+
+        $relType = $linkType;
+
+        if ($foreignLinkParams !== null) {
+            $relType .= '_' . $foreignLinkParams['type'];
         }
 
         $relType = Util::toCamelCase($relType);
 
-        $relationName = $this->relationExists($relType) ?
+        $type = $this->relationExists($relType) ?
             $relType /*hasManyHasMany*/ :
-            $currentType /*hasMany*/;
+            $linkType /*hasMany*/;
 
-        if (isset($linkParams['relationName'])) {
-            $className = $this->getRelationClass($linkParams['relationName']);
+        if ($relationshipName) {
+            $className = $this->getRelationClass($relationshipName);
 
             if (!$className) {
-                $relationName = $this->relationExists($relType) ? $relType : $currentType;
-                $className = $this->getRelationClass($relationName);
+                $type = $this->relationExists($relType) ? $relType : $linkType;
+                $className = $this->getRelationClass($type);
             }
         } else {
-            $className = $this->getRelationClass($relationName);
+            $className = $this->getRelationClass($type);
         }
 
         if ($className) {
-            $foreignLinkName = (is_array($foreignLink) && array_key_exists('name', $foreignLink)) ?
-                $foreignLink['name'] : null;
+            $foreignLinkName = $foreignLinkParams ?
+                ($linkParams['foreign'] ?? null) : null;
 
             $helperClass = new $className($this->metadata, $ormMetadata, $entityDefs, $this->config);
 
@@ -142,5 +171,54 @@ class RelationConverter
         }
 
         return null;
+    }
+
+    private function createLinkConverter(?string $relationship, string $type, ?string $foreignType): LinkConverter
+    {
+        $className = $this->getLinkConverterClassName($relationship, $type, $foreignType);
+
+        return $this->injectableFactory->create($className);
+    }
+
+    /**
+     * @return class-string<LinkConverter>
+     */
+    private function getLinkConverterClassName(?string $relationship, string $type, ?string $foreignType): string
+    {
+        if ($relationship) {
+            /** @var class-string<LinkConverter> $className */
+            $className = $this->metadata
+                ->get(['app', 'ormMetadata', 'relationships', $relationship, 'converterClassName']);
+
+            if ($className) {
+                return $className;
+            }
+        }
+
+        if ($type === RelationType::HAS_MANY && $foreignType === RelationType::HAS_MANY) {
+            return ManyMany::class;
+        }
+
+        if ($type === RelationType::HAS_MANY) {
+            return HasMany::class;
+        }
+
+        if ($type === RelationType::HAS_CHILDREN) {
+            return HasChildren::class;
+        }
+
+        if ($type === RelationType::HAS_ONE) {
+            return HasOne::class;
+        }
+
+        if ($type === RelationType::BELONGS_TO) {
+            return BelongsTo::class;
+        }
+
+        if ($type === RelationType::BELONGS_TO_PARENT) {
+            return BelongsTo::class;
+        }
+
+        throw new RuntimeException("Unsupported link type '{$type}'.");
     }
 }

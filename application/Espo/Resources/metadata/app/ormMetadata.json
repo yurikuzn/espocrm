@@ -1,0 +1,7 @@
+{
+    "relationships": {
+        "attachment": {
+            "converterClassName": "Espo\\Core\\Utils\\Database\\LinkConverters\\Attachment"
+        }
+    }
+}
