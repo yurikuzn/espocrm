@@ -40,11 +40,24 @@ use Espo\Core\Utils\Util;
 use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Config;
 use Espo\ORM\Defs\RelationDefs;
+use Espo\ORM\Type\AttributeType;
 use Espo\ORM\Type\RelationType;
 use RuntimeException;
 
 class RelationConverter
 {
+    private const DEFAULT_VARCHAR_LENGTH = 255;
+
+    /** @var string[] */
+    private $allowedParams = [
+        'relationName',
+        'conditions',
+        'additionalColumns',
+        'midKeys',
+        'noJoin',
+        'indexes',
+    ];
+
     public function __construct(
         private Metadata $metadata,
         private Config $config,
@@ -105,47 +118,54 @@ class RelationConverter
     }
 
     /**
-     * @param string $linkName
-     * @param array<string, mixed> $linkParams
+     * @param string $name
+     * @param array<string, mixed> $params
      * @param string $entityType
      * @param array<string, mixed> $ormMetadata
      * @return ?array<string, mixed>
      */
-    public function process(string $linkName, array $linkParams, string $entityType, array $ormMetadata): ?array
+    public function process(string $name, array $params, string $entityType, array $ormMetadata): ?array
     {
         $entityDefs = $this->metadata->get('entityDefs');
 
-        $foreignEntityType = $linkParams['entity'] ?? null;
+        $foreignEntityType = $params['entity'] ?? null;
 
-        $foreignLinkParams = $foreignEntityType ?
-            $this->getForeignLinkParams($linkParams, $entityDefs[$foreignEntityType] ?? []) :
+        $foreignParams = $foreignEntityType ?
+            $this->getForeignLinkParams($params, $entityDefs[$foreignEntityType] ?? []) :
             null;
 
-        $relationshipName = $linkParams['relationName'] ?? null;
+        $relationshipName = $params['relationName'] ?? null;
 
-        $linkType = $linkParams['type'];
-        $foreignLinkType = $foreignLinkParams ? $foreignLinkParams['type'] : null;
+        $linkType = $params['type'];
+        $foreignLinkType = $foreignParams ? $foreignParams['type'] : null;
 
-        // Check for backward compatibility.
+        // If-check for backward compatibility.
         if (!$relationshipName || !$this->getRelationClass($relationshipName)) {
-            $linkParams['hasField'] = (bool) $this->metadata
-                ->get(['entityDefs', $entityType, 'fields', $linkName]);
+            $params['hasField'] = (bool) $this->metadata
+                ->get(['entityDefs', $entityType, 'fields', $name]);
 
-            $relationDefs = RelationDefs::fromRaw($linkParams, $linkName);
+            $relationDefs = RelationDefs::fromRaw($params, $name);
 
             $converter = $this->createLinkConverter($relationshipName, $linkType, $foreignLinkType);
 
             $convertedEntityDefs = $converter->convert($relationDefs, $entityType);
 
-            return [$entityType => $convertedEntityDefs->toAssoc()];
+            $raw = $convertedEntityDefs->toAssoc();
+
+            if (isset($raw['relations'][$name])) {
+                $this->mergeAllowedParams($raw['relations'][$name], $params, $foreignParams);
+                $this->correct($raw['relations'][$name]);
+            }
+
+            return [$entityType => $raw];
         }
 
         // Below is a legacy.
 
         $relType = $linkType;
 
-        if ($foreignLinkParams !== null) {
-            $relType .= '_' . $foreignLinkParams['type'];
+        if ($foreignParams !== null) {
+            $relType .= '_' . $foreignParams['type'];
         }
 
         $relType = Util::toCamelCase($relType);
@@ -166,12 +186,12 @@ class RelationConverter
         }
 
         if ($className) {
-            $foreignLinkName = $foreignLinkParams ?
-                ($linkParams['foreign'] ?? null) : null;
+            $foreignLinkName = $foreignParams ?
+                ($params['foreign'] ?? null) : null;
 
             $helperClass = new $className($this->metadata, $ormMetadata, $entityDefs, $this->config);
 
-            return $helperClass->process($linkName, $entityType, $foreignLinkName, $foreignEntityType);
+            return $helperClass->process($name, $entityType, $foreignLinkName, $foreignEntityType);
         }
 
         return null;
@@ -224,5 +244,84 @@ class RelationConverter
         }
 
         throw new RuntimeException("Unsupported link type '{$type}'.");
+    }
+
+    /**
+     * @param array<string, mixed> $relationDefs
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $foreignParams
+     */
+    private function mergeAllowedParams(array &$relationDefs, array $params, array $foreignParams): void
+    {
+        foreach ($this->allowedParams as $name) {
+            $additionalParam = $this->getAllowedParam($name, $params, $foreignParams);
+
+            if ($additionalParam === null) {
+                continue;
+            }
+
+            $relationDefs[$name] = $additionalParam;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $foreignParams
+     * @return array<string, mixed>|scalar|null
+     */
+    private function getAllowedParam(string $name, array $params, array $foreignParams): mixed
+    {
+        $itemLinkParams = $params[$name] ?? null;
+        $itemForeignLinkParams = $foreignParams[$name] ?? null;
+
+        if (isset($itemLinkParams) && isset($itemForeignLinkParams)) {
+            if (!empty($itemLinkParams) && !is_array($itemLinkParams)) {
+                return $itemLinkParams;
+            }
+
+            if (!empty($itemForeignLinkParams) && !is_array($itemForeignLinkParams)) {
+                return $itemForeignLinkParams;
+            }
+
+            /** @var array<int|string, mixed> $itemLinkParams */
+            /** @var array<int|string, mixed> $itemForeignLinkParams */
+            return Util::merge($itemLinkParams, $itemForeignLinkParams);
+        }
+
+        if (isset($itemLinkParams)) {
+            return $itemLinkParams;
+        }
+
+        if (isset($itemForeignLinkParams)) {
+            return $itemForeignLinkParams;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $relationDefs
+     */
+    private function correct(array &$relationDefs): void
+    {
+        if (!isset($relationDefs['additionalColumns'])) {
+            return;
+        }
+
+        /** @var array<string, array<string, mixed>> $additionalColumns */
+        $additionalColumns = &$relationDefs['additionalColumns'];
+
+        foreach ($additionalColumns as &$columnDefs) {
+            $columnDefs['type'] ??= AttributeType::VARCHAR;
+
+            if (
+                $columnDefs['type'] === AttributeType::VARCHAR &&
+                !isset($columnDefs['len'])
+            ) {
+                $columnDefs['len'] = self::DEFAULT_VARCHAR_LENGTH;
+            }
+        }
+
+        $relationDefs['additionalColumns'] = $additionalColumns;
     }
 }

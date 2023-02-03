@@ -29,14 +29,46 @@
 
 namespace Espo\Core\Utils\Database\Orm\LinkConverters;
 
+use Espo\Core\Utils\Database\Orm\Defs\AttributeDefs;
 use Espo\Core\Utils\Database\Orm\Defs\EntityDefs;
+use Espo\Core\Utils\Database\Orm\Defs\RelationDefs;
 use Espo\Core\Utils\Database\Orm\LinkConverter;
-use Espo\ORM\Defs\RelationDefs;
+use Espo\ORM\Defs\RelationDefs as LinkDefs;
+use Espo\ORM\Type\AttributeType;
+use Espo\ORM\Type\RelationType;
 
 class HasMany implements LinkConverter
 {
-    public function convert(RelationDefs $linkDefs, string $entityType): EntityDefs
+    public function convert(LinkDefs $linkDefs, string $entityType): EntityDefs
     {
+        $name = $linkDefs->getName();
+        $foreignEntityType = $linkDefs->getForeignEntityType();
+        $foreignRelationName = $linkDefs->getForeignRelationName();
+        $hasField = $linkDefs->getParam('hasField');
 
+        $type = $linkDefs->hasRelationshipName() ?
+            RelationType::MANY_MANY : // Revise.
+            RelationType::HAS_MANY;
+
+        return EntityDefs::create()
+            ->withAttribute(
+                AttributeDefs::create($name . 'Ids')
+                    ->withType(AttributeType::JSON_ARRAY)
+                    ->withNotStorable()
+                    ->withParam('isLinkStub', !$hasField) // Revise. Change to notExportable?
+            )
+            ->withAttribute(
+                AttributeDefs::create($name . 'Names')
+                    ->withType(AttributeType::JSON_OBJECT)
+                    ->withNotStorable()
+                    ->withParam('isLinkStub', !$hasField)
+            )
+            ->withRelation(
+                RelationDefs::create($name)
+                    ->withType($type)
+                    ->withForeignEntityType($foreignEntityType)
+                    ->withForeignKey($name . 'Id')
+                    ->withForeignRelationName($foreignRelationName)
+            );
     }
 }

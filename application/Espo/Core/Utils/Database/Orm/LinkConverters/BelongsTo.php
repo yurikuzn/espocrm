@@ -46,7 +46,7 @@ class BelongsTo implements LinkConverter
         $foreignRelationName = $linkDefs->getForeignRelationName();
         $noIndex = $linkDefs->getParam('noIndex');
         $noForeignName = $linkDefs->getParam('noForeignName');
-        $foreignName = $linkDefs->getParam('foreignName');
+        $foreignName = $linkDefs->getParam('foreignName') ?? 'name';
         $noJoin = $linkDefs->getParam('noJoin');
 
         $idName = $name . 'Id';
