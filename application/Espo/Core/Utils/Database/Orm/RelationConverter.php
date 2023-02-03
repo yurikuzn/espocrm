@@ -38,7 +38,6 @@ use Espo\Core\Utils\Database\Orm\LinkConverters\HasOne;
 use Espo\Core\Utils\Database\Orm\LinkConverters\ManyMany;
 use Espo\Core\Utils\Util;
 use Espo\Core\Utils\Metadata;
-use Espo\Core\Utils\Config;
 use Espo\ORM\Defs\RelationDefs;
 use Espo\ORM\Type\AttributeType;
 use Espo\ORM\Type\RelationType;
@@ -60,43 +59,8 @@ class RelationConverter
 
     public function __construct(
         private Metadata $metadata,
-        private Config $config,
         private InjectableFactory $injectableFactory
     ) {}
-
-    /**
-     * @param string $relationName
-     */
-    private function relationExists($relationName): bool
-    {
-        if ($this->getRelationClass($relationName) !== false) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * @param string $relationName
-     * @return class-string<\Espo\Core\Utils\Database\Orm\Relations\Base>|false
-     */
-    private function getRelationClass($relationName)
-    {
-        $relationName = ucfirst($relationName);
-
-        $className = 'Espo\Custom\Core\Utils\Database\Orm\Relations\\' . $relationName;
-
-        if (!class_exists($className)) {
-            $className = 'Espo\Core\Utils\Database\Orm\Relations\\' . $relationName;
-        }
-
-        if (class_exists($className)) {
-            /** @var class-string<\Espo\Core\Utils\Database\Orm\Relations\Base> */
-            return $className;
-        }
-
-        return false;
-    }
 
     /**
      * @param string $name
@@ -126,64 +90,23 @@ class RelationConverter
         $linkType = $params['type'];
         $foreignLinkType = $foreignParams ? $foreignParams['type'] : null;
 
-        // If-check for backward compatibility.
-        //if (!$relationshipName || !$this->getRelationClass($relationshipName)) {
-            $params['hasField'] = (bool) $this->metadata
-                ->get(['entityDefs', $entityType, 'fields', $name]);
+        $params['hasField'] = (bool) $this->metadata
+            ->get(['entityDefs', $entityType, 'fields', $name]);
 
-            $relationDefs = RelationDefs::fromRaw($params, $name);
+        $relationDefs = RelationDefs::fromRaw($params, $name);
 
-            $converter = $this->createLinkConverter($relationshipName, $linkType, $foreignLinkType);
+        $converter = $this->createLinkConverter($relationshipName, $linkType, $foreignLinkType);
 
-            $convertedEntityDefs = $converter->convert($relationDefs, $entityType);
+        $convertedEntityDefs = $converter->convert($relationDefs, $entityType);
 
-            $raw = $convertedEntityDefs->toAssoc();
+        $raw = $convertedEntityDefs->toAssoc();
 
-            if (isset($raw['relations'][$name])) {
-                $this->mergeAllowedParams($raw['relations'][$name], $params, $foreignParams ?? []);
-                $this->correct($raw['relations'][$name]);
-            }
-
-            return [$entityType => $raw];
-        //}
-
-        // Below is a legacy.
-
-        $relType = $linkType;
-
-        if ($foreignParams !== null) {
-            $relType .= '_' . $foreignParams['type'];
+        if (isset($raw['relations'][$name])) {
+            $this->mergeAllowedParams($raw['relations'][$name], $params, $foreignParams ?? []);
+            $this->correct($raw['relations'][$name]);
         }
 
-        $relType = Util::toCamelCase($relType);
-
-        $type = $this->relationExists($relType) ?
-            $relType /*hasManyHasMany*/ :
-            $linkType /*hasMany*/;
-
-        if ($relationshipName) {
-            $className = $this->getRelationClass($relationshipName);
-
-            if (!$className) {
-                $type = $this->relationExists($relType) ? $relType : $linkType;
-                $className = $this->getRelationClass($type);
-            }
-        } else {
-            $className = $this->getRelationClass($type);
-        }
-
-        if ($className) {
-            $foreignLinkName = $foreignParams ?
-                ($params['foreign'] ?? null) : null;
-
-            $entityDefs = $this->metadata->get('entityDefs');
-
-            $helperClass = new $className($this->metadata, $ormMetadata, $entityDefs, $this->config);
-
-            return $helperClass->process($name, $entityType, $foreignLinkName, $foreignEntityType);
-        }
-
-        return null;
+        return [$entityType => $raw];
     }
 
     private function createLinkConverter(?string $relationship, string $type, ?string $foreignType): LinkConverter
