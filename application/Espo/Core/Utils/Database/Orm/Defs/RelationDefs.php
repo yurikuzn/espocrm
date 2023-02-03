@@ -202,7 +202,7 @@ class RelationDefs
     /**
      * Clone with conditions. Conditions are used for relationships that share a same middle table.
      *
-     * @param array<string, ?scalar> $conditions
+     * @param array<string, ?scalar|array<string, ?scalar>> $conditions
      */
     public function withConditions(array $conditions): self
     {

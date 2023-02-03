@@ -1,0 +1,17 @@
+{
+    "attachments": {
+        "converterClassName": "Espo\\Core\\Utils\\Database\\LinkConverters\\Attachments"
+    },
+    "emailEmailAddress": {
+        "converterClassName": "Espo\\Core\\Utils\\Database\\LinkConverters\\EmailEmailAddress"
+    },
+    "entityTeam": {
+        "converterClassName": "Espo\\Core\\Utils\\Database\\LinkConverters\\EntityTeam"
+    },
+    "entityUser": {
+        "converterClassName": "Espo\\Core\\Utils\\Database\\LinkConverters\\EntityUser"
+    },
+    "smsPhoneNumber": {
+        "converterClassName": "Espo\\Core\\Utils\\Database\\LinkConverters\\SmsPhoneNumber"
+    }
+}

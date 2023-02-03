@@ -194,8 +194,7 @@ class RelationConverter
     {
         if ($relationship) {
             /** @var class-string<LinkConverter> $className */
-            $className = $this->metadata
-                ->get(['app', 'ormMetadata', 'relationships', $relationship, 'converterClassName']);
+            $className = $this->metadata->get(['app', 'relationships', lcfirst($relationship), 'converterClassName']);
 
             if ($className) {
                 return $className;
