@@ -46,6 +46,16 @@ class HasChildren implements LinkConverter
         $foreignRelationName = $linkDefs->hasForeignRelationName() ? $linkDefs->getForeignRelationName() : null;
         $hasField = $linkDefs->getParam('hasField');
 
+        $relationDefs = RelationDefs::create($name)
+            ->withType(RelationType::HAS_CHILDREN)
+            ->withForeignEntityType($foreignEntityType)
+            ->withForeignKey($name . 'Id')
+            ->withParam('foreignType', $name . 'Type');
+
+        if ($foreignRelationName) {
+            $relationDefs = $relationDefs->withForeignRelationName($foreignRelationName);
+        }
+
         return EntityDefs::create()
             ->withAttribute(
                 AttributeDefs::create($name . 'Ids')
@@ -59,13 +69,6 @@ class HasChildren implements LinkConverter
                     ->withNotStorable()
                     ->withParam('isLinkStub', !$hasField)
             )
-            ->withRelation(
-                RelationDefs::create($name)
-                    ->withType(RelationType::HAS_CHILDREN)
-                    ->withForeignEntityType($foreignEntityType)
-                    ->withForeignKey($name . 'Id')
-                    ->withParam('foreignType', $name . 'Type')
-                    ->withForeignRelationName($foreignRelationName)
-            );
+            ->withRelation($relationDefs);
     }
 }

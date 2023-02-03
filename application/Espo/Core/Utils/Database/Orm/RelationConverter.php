@@ -99,25 +99,6 @@ class RelationConverter
     }
 
     /**
-     * Get a foreign link.
-     *
-     * @param array<string, mixed> $linkParams
-     * @param array<string, mixed> $currentEntityDefs
-     * @return array{name: string, params: array<string, mixed>}|null
-     */
-    private function getForeignLinkParams(array $linkParams, array $currentEntityDefs): ?array
-    {
-        if (
-            isset($linkParams['foreign']) &&
-            isset($currentEntityDefs['links'][$linkParams['foreign']])
-        ) {
-            return $currentEntityDefs['links'][$linkParams['foreign']];
-        }
-
-        return null;
-    }
-
-    /**
      * @param string $name
      * @param array<string, mixed> $params
      * @param string $entityType
@@ -126,12 +107,12 @@ class RelationConverter
      */
     public function process(string $name, array $params, string $entityType, array $ormMetadata): ?array
     {
-        $entityDefs = $this->metadata->get('entityDefs');
-
         $foreignEntityType = $params['entity'] ?? null;
+        $foreignLinkName = $params['foreign'] ?? null;
 
-        $foreignParams = $foreignEntityType ?
-            $this->getForeignLinkParams($params, $entityDefs[$foreignEntityType] ?? []) :
+        /** @var ?array<string, mixed> $foreignParams */
+        $foreignParams = $foreignEntityType && $foreignLinkName ?
+            $this->metadata->get(['entityDefs', $foreignEntityType, 'links', $foreignLinkName]) :
             null;
 
         $relationshipName = $params['relationName'] ?? null;
@@ -153,7 +134,7 @@ class RelationConverter
             $raw = $convertedEntityDefs->toAssoc();
 
             if (isset($raw['relations'][$name])) {
-                $this->mergeAllowedParams($raw['relations'][$name], $params, $foreignParams);
+                $this->mergeAllowedParams($raw['relations'][$name], $params, $foreignParams ?? []);
                 $this->correct($raw['relations'][$name]);
             }
 
@@ -188,6 +169,8 @@ class RelationConverter
         if ($className) {
             $foreignLinkName = $foreignParams ?
                 ($params['foreign'] ?? null) : null;
+
+            $entityDefs = $this->metadata->get('entityDefs');
 
             $helperClass = new $className($this->metadata, $ormMetadata, $entityDefs, $this->config);
 
@@ -285,6 +268,8 @@ class RelationConverter
 
             /** @var array<int|string, mixed> $itemLinkParams */
             /** @var array<int|string, mixed> $itemForeignLinkParams */
+
+            /** @var array<string, mixed> */
             return Util::merge($itemLinkParams, $itemForeignLinkParams);
         }
 

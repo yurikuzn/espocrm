@@ -51,6 +51,13 @@ class BelongsToParent implements LinkConverter
         $nameName = $name . 'Name';
         $typeName = $name . 'Type';
 
+        $relationDefs = RelationDefs::create($name)
+            ->withKey($idName);
+
+        if ($foreignRelationName) {
+            $relationDefs = $relationDefs->withForeignRelationName($foreignRelationName);
+        }
+
         return EntityDefs::create()
             ->withAttribute(
                 AttributeDefs::create($idName)
@@ -69,10 +76,6 @@ class BelongsToParent implements LinkConverter
                     ->withType(AttributeType::VARCHAR)
                     ->withNotStorable()
             )
-            ->withRelation(
-                RelationDefs::create($name)
-                    ->withKey($idName)
-                    ->withForeignRelationName($foreignRelationName)
-            );
+            ->withRelation($relationDefs);
     }
 }
