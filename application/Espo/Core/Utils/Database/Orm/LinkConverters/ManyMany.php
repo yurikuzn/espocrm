@@ -82,7 +82,7 @@ class ManyMany implements LinkConverter
                     ->withParam('isLinkStub', !$hasField) // Revise.
             )
             ->withAttribute(
-                AttributeDefs::create($name . 'Name')
+                AttributeDefs::create($name . 'Names')
                     ->withType(AttributeType::JSON_OBJECT)
                     ->withNotStorable()
                     ->withParam('isLinkStub', !$hasField) // Revise.

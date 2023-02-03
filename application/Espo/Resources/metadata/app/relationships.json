@@ -1,17 +1,17 @@
 {
     "attachments": {
-        "converterClassName": "Espo\\Core\\Utils\\Database\\LinkConverters\\Attachments"
+        "converterClassName": "Espo\\Core\\Utils\\Database\\Orm\\LinkConverters\\Attachments"
     },
     "emailEmailAddress": {
-        "converterClassName": "Espo\\Core\\Utils\\Database\\LinkConverters\\EmailEmailAddress"
+        "converterClassName": "Espo\\Core\\Utils\\Database\\Orm\\LinkConverters\\EmailEmailAddress"
     },
     "entityTeam": {
-        "converterClassName": "Espo\\Core\\Utils\\Database\\LinkConverters\\EntityTeam"
+        "converterClassName": "Espo\\Core\\Utils\\Database\\Orm\\LinkConverters\\EntityTeam"
     },
     "entityUser": {
-        "converterClassName": "Espo\\Core\\Utils\\Database\\LinkConverters\\EntityUser"
+        "converterClassName": "Espo\\Core\\Utils\\Database\\Orm\\LinkConverters\\EntityUser"
     },
     "smsPhoneNumber": {
-        "converterClassName": "Espo\\Core\\Utils\\Database\\LinkConverters\\SmsPhoneNumber"
+        "converterClassName": "Espo\\Core\\Utils\\Database\\Orm\\LinkConverters\\SmsPhoneNumber"
     }
 }

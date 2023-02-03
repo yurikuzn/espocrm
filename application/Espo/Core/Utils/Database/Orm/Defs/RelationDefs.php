@@ -92,7 +92,7 @@ class RelationDefs
     /**
      * Clone with a foreign relation name.
      */
-    public function withForeignRelationName(string $name): self
+    public function withForeignRelationName(?string $name): self
     {
         return $this->withParam('foreign', $name);
     }

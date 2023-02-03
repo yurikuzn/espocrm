@@ -35,6 +35,7 @@ use Espo\Core\Utils\Database\Orm\Defs\RelationDefs;
 use Espo\Core\Utils\Database\Orm\LinkConverter;
 use Espo\ORM\Defs\RelationDefs as LinkDefs;
 use Espo\ORM\Type\AttributeType;
+use Espo\ORM\Type\RelationType;
 
 class BelongsToParent implements LinkConverter
 {
@@ -52,11 +53,9 @@ class BelongsToParent implements LinkConverter
         $typeName = $name . 'Type';
 
         $relationDefs = RelationDefs::create($name)
-            ->withKey($idName);
-
-        if ($foreignRelationName) {
-            $relationDefs = $relationDefs->withForeignRelationName($foreignRelationName);
-        }
+            ->withType(RelationType::BELONGS_TO_PARENT)
+            ->withKey($idName)
+            ->withForeignRelationName($foreignRelationName);
 
         return EntityDefs::create()
             ->withAttribute(

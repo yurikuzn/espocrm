@@ -67,7 +67,7 @@ class HasMany implements LinkConverter
                 RelationDefs::create($name)
                     ->withType($type)
                     ->withForeignEntityType($foreignEntityType)
-                    ->withForeignKey($name . 'Id')
+                    ->withForeignKey($foreignRelationName . 'Id')
                     ->withForeignRelationName($foreignRelationName)
             );
     }

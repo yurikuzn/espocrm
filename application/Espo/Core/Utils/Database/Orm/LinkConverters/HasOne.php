@@ -43,7 +43,7 @@ class HasOne implements LinkConverter
     {
         $name = $linkDefs->getName();
         $foreignEntityType = $linkDefs->getForeignEntityType();
-        $foreignRelationName = $linkDefs->getForeignRelationName();
+        $foreignRelationName = $linkDefs->hasForeignRelationName() ? $linkDefs->getForeignRelationName() : null;
         $noForeignName = $linkDefs->getParam('noForeignName');
         $foreignName = $linkDefs->getParam('foreignName') ?? 'name';
         $noJoin = $linkDefs->getParam('noJoin');
@@ -68,9 +68,13 @@ class HasOne implements LinkConverter
 
         $relationDefs = RelationDefs::create($name)
             ->withType(RelationType::HAS_ONE)
-            ->withForeignEntityType($foreignEntityType)
-            ->withForeignKey($idName)
-            ->withForeignRelationName($foreignRelationName);
+            ->withForeignEntityType($foreignEntityType);
+
+        if ($foreignRelationName) {
+            $relationDefs = $relationDefs
+                ->withForeignKey($foreignRelationName . 'Id')
+                ->withForeignRelationName($foreignRelationName);
+        }
 
         $entityDefs = EntityDefs::create()
             ->withAttribute($idAttributeDefs)

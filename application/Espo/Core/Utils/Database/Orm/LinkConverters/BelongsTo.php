@@ -43,7 +43,7 @@ class BelongsTo implements LinkConverter
     {
         $name = $linkDefs->getName();
         $foreignEntityType = $linkDefs->getForeignEntityType();
-        $foreignRelationName = $linkDefs->getForeignRelationName();
+        $foreignRelationName = $linkDefs->hasForeignRelationName() ? $linkDefs->getForeignRelationName() : null;
         $noIndex = $linkDefs->getParam('noIndex');
         $noForeignName = $linkDefs->getParam('noForeignName');
         $foreignName = $linkDefs->getParam('foreignName') ?? 'name';
@@ -73,6 +73,7 @@ class BelongsTo implements LinkConverter
                         ->withParam('foreign', $foreignName) :
                     AttributeDefs::create($nameName)
                         ->withType(AttributeType::FOREIGN)
+                        ->withNotStorable(true) // Used to be false before v7.4.
                         ->withParam('relation', $name)
                         ->withParam('foreign', $foreignName)
             ) : null;

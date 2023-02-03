@@ -46,7 +46,7 @@ class Attachments implements LinkConverter
 
         $entityDefs = $this->hasChildren->convert($linkDefs, $entityType);
 
-        $entityDefs->withAttribute(
+        $entityDefs = $entityDefs->withAttribute(
             AttributeDefs::create($name . 'Types')
                 ->withType(AttributeType::JSON_OBJECT)
                 ->withNotStorable()

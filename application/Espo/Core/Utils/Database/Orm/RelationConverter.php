@@ -127,7 +127,7 @@ class RelationConverter
         $foreignLinkType = $foreignParams ? $foreignParams['type'] : null;
 
         // If-check for backward compatibility.
-        if (!$relationshipName || !$this->getRelationClass($relationshipName)) {
+        //if (!$relationshipName || !$this->getRelationClass($relationshipName)) {
             $params['hasField'] = (bool) $this->metadata
                 ->get(['entityDefs', $entityType, 'fields', $name]);
 
@@ -145,7 +145,7 @@ class RelationConverter
             }
 
             return [$entityType => $raw];
-        }
+        //}
 
         // Below is a legacy.
 
@@ -259,31 +259,31 @@ class RelationConverter
      */
     private function getAllowedParam(string $name, array $params, array $foreignParams): mixed
     {
-        $itemLinkParams = $params[$name] ?? null;
-        $itemForeignLinkParams = $foreignParams[$name] ?? null;
+        $value = $params[$name] ?? null;
+        $foreignValue = $foreignParams[$name] ?? null;
 
-        if (isset($itemLinkParams) && isset($itemForeignLinkParams)) {
-            if (!empty($itemLinkParams) && !is_array($itemLinkParams)) {
-                return $itemLinkParams;
+        if ($value !== null && $foreignValue !== null) {
+            if (!empty($value) && !is_array($value)) {
+                return $value;
             }
 
-            if (!empty($itemForeignLinkParams) && !is_array($itemForeignLinkParams)) {
-                return $itemForeignLinkParams;
+            if (!empty($foreignValue) && !is_array($foreignValue)) {
+                return $foreignValue;
             }
 
-            /** @var array<int|string, mixed> $itemLinkParams */
-            /** @var array<int|string, mixed> $itemForeignLinkParams */
+            /** @var array<int|string, mixed> $value */
+            /** @var array<int|string, mixed> $foreignValue */
 
             /** @var array<string, mixed> */
-            return Util::merge($itemLinkParams, $itemForeignLinkParams);
+            return Util::merge($value, $foreignValue);
         }
 
-        if (isset($itemLinkParams)) {
-            return $itemLinkParams;
+        if (isset($value)) {
+            return $value;
         }
 
-        if (isset($itemForeignLinkParams)) {
-            return $itemForeignLinkParams;
+        if (isset($foreignValue)) {
+            return $foreignValue;
         }
 
         return null;

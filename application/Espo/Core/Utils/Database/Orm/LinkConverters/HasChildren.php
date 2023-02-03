@@ -49,12 +49,9 @@ class HasChildren implements LinkConverter
         $relationDefs = RelationDefs::create($name)
             ->withType(RelationType::HAS_CHILDREN)
             ->withForeignEntityType($foreignEntityType)
-            ->withForeignKey($name . 'Id')
-            ->withParam('foreignType', $name . 'Type');
-
-        if ($foreignRelationName) {
-            $relationDefs = $relationDefs->withForeignRelationName($foreignRelationName);
-        }
+            ->withForeignKey($foreignRelationName . 'Id')
+            ->withParam('foreignType', $foreignRelationName . 'Type')
+            ->withForeignRelationName($foreignRelationName);
 
         return EntityDefs::create()
             ->withAttribute(
