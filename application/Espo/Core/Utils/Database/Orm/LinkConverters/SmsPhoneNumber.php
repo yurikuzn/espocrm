@@ -31,18 +31,18 @@ namespace Espo\Core\Utils\Database\Orm\LinkConverters;
 
 use Espo\Core\Utils\Database\Orm\Defs\EntityDefs;
 use Espo\Core\Utils\Database\Orm\LinkConverter;
-use Espo\Entities\EmailAddress;
+use Espo\Entities\PhoneNumber;
 use Espo\ORM\Defs\RelationDefs as LinkDefs;
 use LogicException;
 
-class EmailEmailAddress implements LinkConverter
+class SmsPhoneNumber implements LinkConverter
 {
     public function __construct(private HasMany $hasMany) {}
 
     public function convert(LinkDefs $linkDefs, string $entityType): EntityDefs
     {
         $name = $linkDefs->getName();
-        $foreignEntityType = EmailAddress::ENTITY_TYPE;
+        $foreignEntityType = PhoneNumber::ENTITY_TYPE;
 
         $entityDefs = $this->hasMany->convert($linkDefs, $entityType);
 

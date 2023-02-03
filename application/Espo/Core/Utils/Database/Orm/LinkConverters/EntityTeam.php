@@ -29,34 +29,37 @@
 
 namespace Espo\Core\Utils\Database\Orm\LinkConverters;
 
+use Espo\Core\Utils\Database\Orm\Defs\AttributeDefs;
 use Espo\Core\Utils\Database\Orm\Defs\EntityDefs;
+use Espo\Core\Utils\Database\Orm\Defs\RelationDefs;
 use Espo\Core\Utils\Database\Orm\LinkConverter;
-use Espo\Entities\EmailAddress;
+use Espo\Entities\Team;
 use Espo\ORM\Defs\RelationDefs as LinkDefs;
-use LogicException;
+use Espo\ORM\Type\AttributeType;
+use Espo\ORM\Type\RelationType;
 
-class EmailEmailAddress implements LinkConverter
+class EntityTeam implements LinkConverter
 {
-    public function __construct(private HasMany $hasMany) {}
+    private const ENTITY_TYPE_LENGTH = 100;
 
     public function convert(LinkDefs $linkDefs, string $entityType): EntityDefs
     {
         $name = $linkDefs->getName();
-        $foreignEntityType = EmailAddress::ENTITY_TYPE;
+        $relationshipName = $linkDefs->getRelationshipName();
 
-        $entityDefs = $this->hasMany->convert($linkDefs, $entityType);
-
-        $relationDefs = $entityDefs->getRelation($name);
-
-        if (!$relationDefs) {
-            throw new LogicException();
-        }
-
-        $key1 = lcfirst($entityType) . 'Id';
-        $key2 = lcfirst($foreignEntityType) . 'Id';
-
-        $relationDefs = $relationDefs->withMidKeys($key1, $key2);
-
-        return $entityDefs->withRelation($relationDefs);
+        return EntityDefs::create()
+            ->withRelation(
+                RelationDefs::create($name)
+                    ->withType(RelationType::MANY_MANY)
+                    ->withForeignEntityType(Team::ENTITY_TYPE)
+                    ->withRelationshipName($relationshipName)
+                    ->withMidKeys('entityId', 'teamId')
+                    ->withConditions(['entityType' => $entityType])
+                    ->withAdditionalColumn(
+                        AttributeDefs::create('entityType')
+                            ->withType(AttributeType::VARCHAR)
+                            ->withLength(self::ENTITY_TYPE_LENGTH)
+                    )
+            );
     }
 }

@@ -115,7 +115,13 @@ class RelationConverter
             $this->metadata->get(['entityDefs', $foreignEntityType, 'links', $foreignLinkName]) :
             null;
 
+        /** @var ?string $relationshipName */
         $relationshipName = $params['relationName'] ?? null;
+
+        if ($relationshipName) {
+            $relationshipName = lcfirst($relationshipName);
+            $params['relationName'] = $relationshipName;
+        }
 
         $linkType = $params['type'];
         $foreignLinkType = $foreignParams ? $foreignParams['type'] : null;
@@ -194,7 +200,7 @@ class RelationConverter
     {
         if ($relationship) {
             /** @var class-string<LinkConverter> $className */
-            $className = $this->metadata->get(['app', 'relationships', lcfirst($relationship), 'converterClassName']);
+            $className = $this->metadata->get(['app', 'relationships', $relationship, 'converterClassName']);
 
             if ($className) {
                 return $className;
