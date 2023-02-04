@@ -29,53 +29,42 @@
 
 namespace Espo\Core\Select\AccessControl\Filters;
 
-use Espo\{
-    ORM\Query\SelectBuilder as QueryBuilder,
-    Core\Select\AccessControl\Filter,
-    Core\Select\Helpers\FieldHelper,
-    Entities\User,
-};
+use Espo\Core\Select\AccessControl\Filter;
+use Espo\Core\Select\Helpers\FieldHelper;
+use Espo\Entities\User;
+use Espo\ORM\Query\SelectBuilder as QueryBuilder;
 
 class OnlyOwn implements Filter
 {
-    private $user;
-
-    private $fieldHelper;
-
-    public function __construct(User $user, FieldHelper $fieldHelper)
-    {
-        $this->user = $user;
-        $this->fieldHelper = $fieldHelper;
-    }
+    public function __construct(
+        private User $user,
+        private FieldHelper $fieldHelper,
+        private string $entityType
+    ) {}
 
     public function apply(QueryBuilder $queryBuilder): void
     {
         if ($this->fieldHelper->hasAssignedUsersField()) {
-            $queryBuilder->distinct();
+            $subQuery = QueryBuilder::create()
+                ->select('id')
+                ->from($this->entityType)
+                ->leftJoin('assignedUsers', 'assignedUsersAccess')
+                ->where(['assignedUsersAccess.id' => $this->user->getId()])
+                ->build();
 
-            $queryBuilder->leftJoin('assignedUsers', 'assignedUsersAccess');
-
-            $queryBuilder->where([
-                'assignedUsersAccess.id' => $this->user->id,
-            ]);
+            $queryBuilder->where(['id=s' => $subQuery->getRaw()]);
 
             return;
         }
 
         if ($this->fieldHelper->hasAssignedUserField()) {
-            $queryBuilder->where([
-                'assignedUserId' => $this->user->id,
-            ]);
+            $queryBuilder->where(['assignedUserId' => $this->user->getId()]);
 
             return;
         }
 
         if ($this->fieldHelper->hasCreatedByField()) {
-            $queryBuilder->where([
-                'createdById' => $this->user->id,
-            ]);
-
-            return;
+            $queryBuilder->where(['createdById' => $this->user->getId()]);
         }
     }
 }
