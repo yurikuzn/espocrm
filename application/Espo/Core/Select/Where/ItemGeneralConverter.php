@@ -30,20 +30,18 @@
 namespace Espo\Core\Select\Where;
 
 use Espo\Core\Select\Where\Item\Type;
-
-use Espo\{
-    Core\Exceptions\Error,
-    ORM\Query\SelectBuilder as QueryBuilder,
-    ORM\Query\Part\WhereClause,
-    ORM\Query\Part\WhereItem as WhereClauseItem,
-    ORM\EntityManager,
-    ORM\Entity,
-    ORM\Defs as ORMDefs,
-    Entities\User,
-    Core\Utils\Config,
-    Core\Select\Helpers\RandomStringGenerator,
-    Core\Utils\Metadata,
-};
+use Espo\Core\Exceptions\Error;
+use Espo\Core\Select\Helpers\RandomStringGenerator;
+use Espo\Core\Utils\Config;
+use Espo\Core\Utils\Metadata;
+use Espo\Entities\User;
+use Espo\ORM\Defs as ORMDefs;
+use Espo\ORM\Entity;
+use Espo\ORM\EntityManager;
+use Espo\ORM\Query\Part\WhereClause;
+use Espo\ORM\Query\Part\WhereItem as WhereClauseItem;
+use Espo\ORM\Query\SelectBuilder;
+use Espo\ORM\Query\SelectBuilder as QueryBuilder;
 
 use DateTime;
 use DateInterval;
@@ -53,49 +51,18 @@ use DateInterval;
  */
 class ItemGeneralConverter implements ItemConverter
 {
-    private string $entityType;
-
-    private User $user;
-
-    private DateTimeItemTransformer $dateTimeItemTransformer;
-
-    private Scanner $scanner;
-
-    private ItemConverterFactory $itemConverterFactory;
-
-    private RandomStringGenerator $randomStringGenerator;
-
-    private EntityManager $entityManager;
-
-    private ORMDefs $ormDefs;
-
-    private Config $config;
-
-    private Metadata $metadata;
-
     public function __construct(
-        string $entityType,
-        User $user,
-        DateTimeItemTransformer $dateTimeItemTransformer,
-        Scanner $scanner,
-        ItemConverterFactory $itemConverterFactory,
-        RandomStringGenerator $randomStringGenerator,
-        EntityManager $entityManager,
-        ORMDefs $ormDefs,
-        Config $config,
-        Metadata $metadata
-    ) {
-        $this->entityType = $entityType;
-        $this->user = $user;
-        $this->dateTimeItemTransformer = $dateTimeItemTransformer;
-        $this->scanner = $scanner;
-        $this->itemConverterFactory = $itemConverterFactory;
-        $this->randomStringGenerator = $randomStringGenerator;
-        $this->entityManager = $entityManager;
-        $this->ormDefs = $ormDefs;
-        $this->config = $config;
-        $this->metadata = $metadata;
-    }
+        private string $entityType,
+        private User $user,
+        private DateTimeItemTransformer $dateTimeItemTransformer,
+        private Scanner $scanner,
+        private ItemConverterFactory $itemConverterFactory,
+        private RandomStringGenerator $randomStringGenerator,
+        private EntityManager $entityManager,
+        private ORMDefs $ormDefs,
+        private Config $config,
+        private Metadata $metadata
+    ) {}
 
     public function convert(QueryBuilder $queryBuilder, Item $item): WhereClauseItem
     {
@@ -165,7 +132,6 @@ class ItemGeneralConverter implements ItemConverter
 
             case Type::ARRAY_ANY_OF:
             case Type::ARRAY_NONE_OF:
-            case Type::ARRAY_IS_EMPTY:
             case Type::ARRAY_IS_EMPTY:
             case Type::ARRAY_ALL_OF:
 
@@ -1246,7 +1212,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed,mixed>
+     * @return array<mixed, mixed>
      * @throws Error
      */
     protected function processLinkedWith(QueryBuilder $queryBuilder, string $attribute, $value): array
@@ -1267,10 +1233,10 @@ class ItemGeneralConverter implements ItemConverter
 
         $relationType = $defs->getType();
 
-        $queryBuilder->distinct();
+        //$queryBuilder->distinct();
 
         if ($relationType == Entity::MANY_MANY) {
-            $queryBuilder->leftJoin($link, $alias);
+            //$queryBuilder->leftJoin($link, $alias);
 
             $key = $defs->getForeignMidKey();
 
@@ -1278,34 +1244,62 @@ class ItemGeneralConverter implements ItemConverter
                 throw new Error("Bad link '{$link}' in where item.");
             }
 
-            return [
+            $subQuery = SelectBuilder::create()
+                ->select('id')
+                ->from($this->entityType)
+                ->leftJoin($link, $alias)
+                ->where([$alias . 'Middle.' . $key => $value])
+                ->build();
+
+            return ['id=s' =>  $subQuery->getRaw()];
+
+            /*return [
                 $alias . 'Middle.' . $key => $value,
-            ];
+            ];*/
         }
-        else if ($relationType == Entity::HAS_MANY) {
-            $queryBuilder->leftJoin($link, $alias);
+
+        if ($relationType == Entity::HAS_MANY) {
+            $subQuery = SelectBuilder::create()
+                ->select('id')
+                ->from($this->entityType)
+                ->leftJoin($link, $alias)
+                ->where([$alias . '.id' => $value])
+                ->build();
+
+            return ['id=s' =>  $subQuery->getRaw()];
+
+            /*$queryBuilder->leftJoin($link, $alias);
 
             return [
                 $alias . '.id' => $value,
-            ];
+            ];*/
         }
-        else if ($relationType == Entity::BELONGS_TO) {
+
+        if ($relationType == Entity::BELONGS_TO) {
             $key = $defs->getKey();
 
             if (!$key) {
                 throw new Error("Bad link '{$link}' in where item.");
             }
 
-            return [
-                $key => $value,
-            ];
+            return [$key => $value];
         }
-        else if ($relationType == Entity::HAS_ONE) {
-            $queryBuilder->leftJoin($link, $alias);
 
-            return [
+        if ($relationType == Entity::HAS_ONE) {
+            $subQuery = SelectBuilder::create()
+                ->select('id')
+                ->from($this->entityType)
+                ->leftJoin($link, $alias)
+                ->where([$alias . '.id' => $value])
+                ->build();
+
+            return ['id=s' =>  $subQuery->getRaw()];
+
+            //$queryBuilder->leftJoin($link, $alias);
+
+            /*return [
                 $alias . '.id' => $value,
-            ];
+            ];*/
         }
 
         throw new Error("Bad where item. Not supported relation type.");
@@ -1313,7 +1307,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed,mixed>
+     * @return array<mixed, mixed>
      * @throws Error
      */
     protected function processNotLinkedWith(QueryBuilder $queryBuilder, string $attribute, $value): array
