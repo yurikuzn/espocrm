@@ -38,7 +38,6 @@ use Espo\Entities\ArrayValue;
 use Espo\Entities\User;
 use Espo\ORM\Defs as ORMDefs;
 use Espo\ORM\Entity;
-use Espo\ORM\EntityManager;
 use Espo\ORM\Query\Part\WhereClause;
 use Espo\ORM\Query\Part\WhereItem as WhereClauseItem;
 use Espo\ORM\Query\SelectBuilder as QueryBuilder;
@@ -58,7 +57,6 @@ class ItemGeneralConverter implements ItemConverter
         private Scanner $scanner,
         private ItemConverterFactory $itemConverterFactory,
         private RandomStringGenerator $randomStringGenerator,
-        private EntityManager $entityManager,
         private ORMDefs $ormDefs,
         private Config $config,
         private Metadata $metadata
