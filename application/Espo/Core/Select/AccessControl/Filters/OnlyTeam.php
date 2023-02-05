@@ -32,6 +32,7 @@ namespace Espo\Core\Select\AccessControl\Filters;
 use Espo\Core\Select\AccessControl\Filter;
 use Espo\Core\Select\Helpers\FieldHelper;
 use Espo\Entities\User;
+use Espo\ORM\Defs;
 use Espo\ORM\Query\SelectBuilder as QueryBuilder;
 
 class OnlyTeam implements Filter
@@ -39,7 +40,8 @@ class OnlyTeam implements Filter
     public function __construct(
         private User $user,
         private FieldHelper $fieldHelper,
-        private string $entityType
+        private string $entityType,
+        private Defs $defs
     ) {}
 
     public function apply(QueryBuilder $queryBuilder): void
@@ -62,9 +64,20 @@ class OnlyTeam implements Filter
         $orGroup = ['entityTeam.teamId' => $this->user->getTeamIdList()];
 
         if ($this->fieldHelper->hasAssignedUsersField()) {
-            $subQueryBuilder->leftJoin('assignedUsers', 'assignedUsersAccess');
+            $relationDefs = $this->defs
+                ->getEntity($this->entityType)
+                ->getRelation('assignedUsers');
 
-            $orGroup['assignedUsersAccess.id'] = $this->user->getId();
+            $middleEntityType = ucfirst($relationDefs->getRelationshipName());
+            $key1 = $relationDefs->getMidKey();
+            $key2 = $relationDefs->getForeignMidKey();
+
+            $subQueryBuilder->leftJoin($middleEntityType, 'assignedUsersMiddle', [
+                "assignedUsersMiddle.{$key1}:" => 'id',
+                'assignedUsersMiddle.deleted' => false,
+            ]);
+
+            $orGroup["assignedUsersMiddle.{$key2}"] = $this->user->getId();
         }
         else if ($this->fieldHelper->hasAssignedUserField()) {
             $orGroup['assignedUserId'] = $this->user->getId();
