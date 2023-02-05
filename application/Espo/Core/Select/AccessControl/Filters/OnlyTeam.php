@@ -31,6 +31,7 @@ namespace Espo\Core\Select\AccessControl\Filters;
 
 use Espo\Core\Select\AccessControl\Filter;
 use Espo\Core\Select\Helpers\FieldHelper;
+use Espo\Entities\Team;
 use Espo\Entities\User;
 use Espo\ORM\Defs;
 use Espo\ORM\Query\SelectBuilder as QueryBuilder;
@@ -55,7 +56,7 @@ class OnlyTeam implements Filter
         $subQueryBuilder = QueryBuilder::create()
             ->select('id')
             ->from($this->entityType)
-            ->leftJoin('EntityTeam', 'entityTeam', [
+            ->leftJoin(Team::RELATIONSHIP_ENTITY_TEAM, 'entityTeam', [
                 'entityTeam.entityId:' => 'id',
                 'entityTeam.entityType' => $this->entityType,
                 'entityTeam.deleted' => false,
