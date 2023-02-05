@@ -160,7 +160,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      * @throws Error
      */
     protected function groupProcessAndOr(
@@ -240,7 +240,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      * @throws Error
      */
     protected function groupProcessColumn(
@@ -473,7 +473,7 @@ class ItemGeneralConverter implements ItemConverter
      * A complex expression w/o a value.
      *
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processExpression(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -490,7 +490,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processLike(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -512,7 +512,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processEquals(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -523,7 +523,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processOn(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -532,7 +532,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processNotEquals(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -543,7 +543,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processNotOn(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -552,7 +552,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processStartsWith(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -563,7 +563,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processEndsWith(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -574,7 +574,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processContains(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -585,7 +585,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processNotContains(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -596,7 +596,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processGreaterThan(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -607,7 +607,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processAfter(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -616,7 +616,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processLessThan(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -627,7 +627,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processBefore(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -636,7 +636,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processGreaterThanOrEquals(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -647,7 +647,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processLessThanOrEquals(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -658,7 +658,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      * @throws Error
      */
     protected function processIn(QueryBuilder $queryBuilder, string $attribute, $value): array
@@ -674,7 +674,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      * @throws Error
      */
     protected function processNotIn(QueryBuilder $queryBuilder, string $attribute, $value): array
@@ -690,7 +690,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      * @throws Error
      */
     protected function processBetween(QueryBuilder $queryBuilder, string $attribute, $value): array
@@ -709,7 +709,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processAny(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -720,7 +720,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processNone(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -731,7 +731,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processIsNull(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -742,7 +742,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processIsNotNull(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -753,7 +753,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processEver(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -762,7 +762,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processIsTrue(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -773,7 +773,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processIsFalse(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -784,7 +784,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processToday(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -795,7 +795,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processPast(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -806,7 +806,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processFuture(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -817,7 +817,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processLastSevenDays(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -837,7 +837,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processLastXDays(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -859,7 +859,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processNextXDays(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -881,7 +881,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processOlderThanXDays(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -898,7 +898,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processAfterXDays(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -915,7 +915,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processCurrentMonth(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -931,7 +931,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processLastMonth(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -947,7 +947,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processNextMonth(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -963,7 +963,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      * @throws \Exception
      */
     protected function processCurrentQuarter(QueryBuilder $queryBuilder, string $attribute, $value): array
@@ -984,7 +984,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      * @throws \Exception
      */
     protected function processLastQuarter(QueryBuilder $queryBuilder, string $attribute, $value): array
@@ -1012,7 +1012,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processCurrentYear(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -1028,7 +1028,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processLastYear(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -1044,7 +1044,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processCurrentFiscalYear(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -1069,7 +1069,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processLastFiscalYear(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -1096,7 +1096,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      * @throws \Exception
      */
     protected function processCurrentFiscalQuarter(QueryBuilder $queryBuilder, string $attribute, $value): array
@@ -1131,7 +1131,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      * @throws \Exception
      */
     protected function processLastFiscalQuarter(QueryBuilder $queryBuilder, string $attribute, $value): array
@@ -1168,7 +1168,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processIsNotLinked(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -1183,7 +1183,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      */
     protected function processIsLinked(QueryBuilder $queryBuilder, string $attribute, $value): array
     {
@@ -1201,7 +1201,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      * @throws Error
      */
     protected function processLinkedWith(QueryBuilder $queryBuilder, string $attribute, $value): array
@@ -1276,7 +1276,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      * @throws Error
      */
     protected function processNotLinkedWith(QueryBuilder $queryBuilder, string $attribute, $value): array
@@ -1348,7 +1348,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|mixed, mixed>
      * @throws Error
      */
     protected function processLinkedWithAll(QueryBuilder $queryBuilder, string $attribute, $value): array
