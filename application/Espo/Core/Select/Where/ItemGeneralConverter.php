@@ -384,7 +384,10 @@ class ItemGeneralConverter implements ItemConverter
 
             $relationType = $entityDefs->getRelation($arrayAttributeLink)->getType();
 
-            if ($relationType === Entity::MANY_MANY || $relationType === Entity::HAS_MANY) {
+            if (
+                $relationType === Entity::MANY_MANY ||
+                $relationType === Entity::HAS_MANY
+            ) {
                 $queryBuilder->distinct();
             }
         }
@@ -412,40 +415,33 @@ class ItemGeneralConverter implements ItemConverter
                 throw new Error("Bad where item 'array'. No value.");
             }
 
-            // Distinct-left-join performs faster than not-in-subquery.
-            $queryBuilder->distinct();
-            $queryBuilder->leftJoin(
-                ArrayValue::ENTITY_TYPE,
-                $arrayValueAlias,
-                [
-                    $arrayValueAlias . '.entityId:' => $idPart,
-                    $arrayValueAlias . '.entityType' => $arrayEntityType,
-                    $arrayValueAlias . '.attribute' => $arrayAttribute,
-                    $arrayValueAlias . '.value=' => $value,
-                ]
-            );
+            $subQuery = QueryBuilder::create()
+                ->select('entityId')
+                ->from(ArrayValue::ENTITY_TYPE)
+                ->where([
+                    'entityType' => $arrayEntityType,
+                    'attribute' => $arrayAttribute,
+                    'value' => $value,
+                ])
+                ->build();
 
-            return [
-                $arrayValueAlias . '.id' => null,
-            ];
+            return [$idPart . '!=s' => $subQuery->getRaw()];
         }
 
         if ($type === Type::ARRAY_IS_EMPTY) {
-            // Distinct-left-join performs faster than not-in-subquery.
-            $queryBuilder->distinct();
-            $queryBuilder->leftJoin(
-                ArrayValue::ENTITY_TYPE,
-                $arrayValueAlias,
-                [
-                    $arrayValueAlias . '.entityId:' => $idPart,
-                    $arrayValueAlias . '.entityType' => $arrayEntityType,
-                    $arrayValueAlias . '.attribute' => $arrayAttribute,
-                ]
-            );
+            // Though distinct-left-join may perform faster than not-in-subquery
+            // it's reasonable to avoid using distinct as it may negatively affect
+            // performance when other filters are applied.
+            $subQuery = QueryBuilder::create()
+                ->select('entityId')
+                ->from(ArrayValue::ENTITY_TYPE)
+                ->where([
+                    'entityType' => $arrayEntityType,
+                    'attribute' => $arrayAttribute,
+                ])
+                ->build();
 
-            return [
-                $arrayValueAlias . '.id' => null,
-            ];
+            return [$idPart . '!=s' => $subQuery->getRaw()];
         }
 
         if ($type === Type::ARRAY_IS_NOT_EMPTY) {
@@ -1396,15 +1392,10 @@ class ItemGeneralConverter implements ItemConverter
                     "{$alias}.{$nearKey}:" => 'id',
                     "{$alias}.deleted" => 0,
                 ])
-                ->where([
-                    'OR' => [
-                        ["{$alias}.{$key}!=" => $value],
-                        ["{$alias}.{$key}" => null],
-                    ]
-                ])
+                ->where(["{$alias}.{$key}=" => $value])
                 ->build();
 
-            return ['id=s' =>  $subQuery->getRaw()];
+            return ['id!=s' =>  $subQuery->getRaw()];
         }
 
         if (
@@ -1415,15 +1406,10 @@ class ItemGeneralConverter implements ItemConverter
                 ->select('id')
                 ->from($this->entityType)
                 ->leftJoin($link, $alias)
-                ->where([
-                    'OR' => [
-                        ["{$alias}.id!=" => $value],
-                        ["{$alias}.id" => null],
-                    ]
-                ])
+                ->where(["{$alias}.id" => $value])
                 ->build();
 
-            return ['id=s' =>  $subQuery->getRaw()];
+            return ['id!=s' =>  $subQuery->getRaw()];
         }
 
         if ($relationType == Entity::BELONGS_TO) {
