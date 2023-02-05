@@ -98,18 +98,12 @@ class ItemGeneralConverter implements ItemConverter
         switch ($type) {
             case Type::OR:
             case Type::AND:
-
-                return WhereClause::fromRaw(
-                    $this->groupProcessAndOr($queryBuilder, $type, $attribute, $value)
-                );
+                return WhereClause::fromRaw($this->groupProcessAndOr($queryBuilder, $type, $attribute, $value));
 
             case Type::NOT:
             case Type::SUBQUERY_NOT_IN:
             case Type::SUBQUERY_IN:
-
-                return WhereClause::fromRaw(
-                    $this->groupProcessSubQuery($queryBuilder, $type, $attribute, $value)
-                );
+                return WhereClause::fromRaw($this->groupProcessSubQuery($queryBuilder, $type, $attribute, $value));
         }
 
         if (!$attribute) {
@@ -124,20 +118,54 @@ class ItemGeneralConverter implements ItemConverter
             case 'columnIsNotNull':
             case 'columnEquals':
             case 'columnNotEquals':
-
-                return WhereClause::fromRaw(
-                    $this->groupProcessColumn($queryBuilder, $type, $attribute, $value)
-                );
+                return WhereClause::fromRaw($this->groupProcessColumn($queryBuilder, $type, $attribute, $value));
 
             case Type::ARRAY_ANY_OF:
             case Type::ARRAY_NONE_OF:
             case Type::ARRAY_IS_EMPTY:
             case Type::ARRAY_ALL_OF:
             case Type::ARRAY_IS_NOT_EMPTY:
+                return WhereClause::fromRaw($this->groupProcessArray($queryBuilder, $type, $attribute, $value));
+        }
 
-                return WhereClause::fromRaw(
-                    $this->groupProcessArray($queryBuilder, $type, $attribute, $value)
-                );
+        if ($type === Type::IS_LINKED_WITH) {
+            return WhereClause::fromRaw($this->processLinkedWith($queryBuilder, $attribute, $value));
+        }
+
+        if ($type === Type::IS_NOT_LINKED_WITH) {
+            return WhereClause::fromRaw($this->processNotLinkedWith($queryBuilder, $attribute, $value));
+        }
+
+        if ($type === Type::IS_LINKED_WITH_ALL) {
+            return WhereClause::fromRaw($this->processLinkedWithAll($queryBuilder, $attribute, $value));
+        }
+
+        if ($type === Type::IS_LINKED_WITH_ANY) {
+            return WhereClause::fromRaw($this->processIsLinked($queryBuilder, $attribute));
+        }
+
+        if ($type === Type::IS_LINKED_WITH_NONE) {
+            return WhereClause::fromRaw($this->processIsNotLinked($queryBuilder, $attribute));
+        }
+
+        if ($type === Type::EXPRESSION) {
+            return WhereClause::fromRaw($this->processExpression($queryBuilder, $attribute, $value));
+        }
+
+        if ($type === Type::EQUALS) {
+            return WhereClause::fromRaw($this->processEquals($queryBuilder, $attribute, $value));
+        }
+
+        if ($type === Type::NOT_EQUALS) {
+            return WhereClause::fromRaw($this->processNotEquals($queryBuilder, $attribute, $value));
+        }
+
+        if ($type === Type::ON) {
+            return WhereClause::fromRaw($this->processOn($queryBuilder, $attribute, $value));
+        }
+
+        if ($type === Type::NOT_ON) {
+            return WhereClause::fromRaw($this->processNotOn($queryBuilder, $attribute, $value));
         }
 
         $methodName = 'process' .  ucfirst($type);
@@ -1164,36 +1192,105 @@ class ItemGeneralConverter implements ItemConverter
     }
 
     /**
-     * @param mixed $value
      * @return array<string|int, mixed>
      */
-    protected function processIsNotLinked(QueryBuilder $queryBuilder, string $attribute, $value): array
+    protected function processIsNotLinked(QueryBuilder $queryBuilder, string $attribute): array
     {
-        return [
-            'id!=s' => [
-                'select' => ['id'],
-                'from' => $this->entityType,
-                'joins' => [$attribute],
-            ]
-        ];
+        $link = $attribute;
+        $alias = $link . 'IsLinkedFilter' . $this->randomStringGenerator->generate();
+
+        $defs = $this->ormDefs->getEntity($this->entityType)->getRelation($link);
+
+        $key = $defs->getForeignMidKey();
+        $nearKey = $defs->getMidKey();
+        $middleEntityType = ucfirst($defs->getRelationshipName());
+
+        $relationType = $defs->getType();
+
+        if ($relationType == Entity::MANY_MANY) {
+            // The foreign table is not joined as it would perform much slower.
+            // Trade off is that if a foreign record is deleted but the middle table
+            // is not yet deleted, it will give a non-actual result.
+            $subQuery = QueryBuilder::create()
+                ->select('id')
+                ->from($this->entityType)
+                ->leftJoin($middleEntityType, $alias, [
+                    "{$alias}.{$nearKey}:" => 'id',
+                    "{$alias}.deleted" => 0,
+                ])
+                ->where(["{$alias}.{$key}" => null])
+                ->build();
+
+            return ['id=s' =>  $subQuery->getRaw()];
+        }
+
+        if (
+            $relationType == Entity::HAS_MANY ||
+            $relationType == Entity::HAS_ONE ||
+            $relationType == Entity::BELONGS_TO
+        ) {
+            $subQuery = QueryBuilder::create()
+                ->select('id')
+                ->from($this->entityType)
+                ->leftJoin($link, $alias)
+                ->where([$alias . '.id' => null])
+                ->build();
+
+            return ['id=s' =>  $subQuery->getRaw()];
+        }
+
+        throw new Error("Bad where item. Not supported relation type.");
     }
 
     /**
-     * @param mixed $value
      * @return array<string|int, mixed>
      */
-    protected function processIsLinked(QueryBuilder $queryBuilder, string $attribute, $value): array
+    protected function processIsLinked(QueryBuilder $queryBuilder, string $attribute): array
     {
         $link = $attribute;
-
         $alias = $link . 'IsLinkedFilter' . $this->randomStringGenerator->generate();
 
-        $queryBuilder->distinct();
-        $queryBuilder->leftJoin($link, $alias);
+        $defs = $this->ormDefs->getEntity($this->entityType)->getRelation($link);
 
-        return [
-            $alias . '.id!=' => null,
-        ];
+        $key = $defs->getForeignMidKey();
+        $nearKey = $defs->getMidKey();
+        $middleEntityType = ucfirst($defs->getRelationshipName());
+
+        $relationType = $defs->getType();
+
+        if ($relationType == Entity::MANY_MANY) {
+            // The foreign table is not joined as it would perform much slower.
+            // Trade off is that if a foreign record is deleted but the middle table
+            // is not yet deleted, it will give a non-actual result.
+            $subQuery = QueryBuilder::create()
+                ->select('id')
+                ->from($this->entityType)
+                ->leftJoin($middleEntityType, $alias, [
+                    "{$alias}.{$nearKey}:" => 'id',
+                    "{$alias}.deleted" => 0,
+                ])
+                ->where(["{$alias}.{$key}!=" => null])
+                ->build();
+
+            return ['id=s' =>  $subQuery->getRaw()];
+        }
+
+        if (
+            $relationType == Entity::HAS_MANY ||
+            $relationType == Entity::HAS_ONE ||
+            $relationType == Entity::BELONGS_TO
+        ) {
+            $subQuery = QueryBuilder::create()
+                ->select('id')
+                ->from($this->entityType)
+                ->leftJoin($link, $alias)
+                ->where([$alias . '.id!=' => null])
+                ->build();
+
+            return ['id=s' =>  $subQuery->getRaw()];
+        }
+
+        throw new Error("Bad where item. Not supported relation type.");
     }
 
     /**
@@ -1226,7 +1323,7 @@ class ItemGeneralConverter implements ItemConverter
             $nearKey = $defs->getMidKey();
             $middleEntityType = ucfirst($defs->getRelationshipName());
 
-            // Left-join performs faster than Inner-join
+            // Left-join performs faster than Inner-join.
             // Not joining a foreign table as it affects performance in MySQL.
             $subQuery = QueryBuilder::create()
                 ->select('id')
@@ -1241,7 +1338,10 @@ class ItemGeneralConverter implements ItemConverter
             return ['id=s' =>  $subQuery->getRaw()];
         }
 
-        if ($relationType == Entity::HAS_MANY) {
+        if (
+            $relationType == Entity::HAS_MANY ||
+            $relationType == Entity::HAS_ONE
+        ) {
             $subQuery = QueryBuilder::create()
                 ->select('id')
                 ->from($this->entityType)
@@ -1255,22 +1355,7 @@ class ItemGeneralConverter implements ItemConverter
         if ($relationType == Entity::BELONGS_TO) {
             $key = $defs->getKey();
 
-            if (!$key) {
-                throw new Error("Bad link '{$link}' in where item.");
-            }
-
             return [$key => $value];
-        }
-
-        if ($relationType == Entity::HAS_ONE) {
-            $subQuery = QueryBuilder::create()
-                ->select('id')
-                ->from($this->entityType)
-                ->leftJoin($link, $alias)
-                ->where([$alias . '.id' => $value])
-                ->build();
-
-            return ['id=s' =>  $subQuery->getRaw()];
         }
 
         throw new Error("Bad where item. Not supported relation type.");
@@ -1301,48 +1386,50 @@ class ItemGeneralConverter implements ItemConverter
 
         if ($relationType == Entity::MANY_MANY) {
             $key = $defs->getForeignMidKey();
+            $nearKey = $defs->getMidKey();
+            $middleEntityType = ucfirst($defs->getRelationshipName());
 
-            if (!$key) {
-                throw new Error("Bad link '{$link}' in where item.");
-            }
+            $subQuery = QueryBuilder::create()
+                ->select('id')
+                ->from($this->entityType)
+                ->leftJoin($middleEntityType, $alias, [
+                    "{$alias}.{$nearKey}:" => 'id',
+                    "{$alias}.deleted" => 0,
+                ])
+                ->where([
+                    'OR' => [
+                        ["{$alias}.{$key}!=" => $value],
+                        ["{$alias}.{$key}" => null],
+                    ]
+                ])
+                ->build();
 
-            // Distinct-left-join performs faster than not-in-subquery.
-            $queryBuilder->distinct();
-            $queryBuilder->leftJoin(
-                $link,
-                $alias,
-                [$key => $value]
-            );
-
-            return [$alias . 'Middle.' . $key => null];
+            return ['id=s' =>  $subQuery->getRaw()];
         }
 
-        if ($relationType == Entity::HAS_MANY) {
-            $queryBuilder->distinct();
-            $queryBuilder->leftJoin(
-                $link,
-                $alias,
-                ['id' => $value]
-            );
+        if (
+            $relationType == Entity::HAS_MANY ||
+            $relationType == Entity::HAS_ONE
+        ) {
+            $subQuery = QueryBuilder::create()
+                ->select('id')
+                ->from($this->entityType)
+                ->leftJoin($link, $alias)
+                ->where([
+                    'OR' => [
+                        ["{$alias}.id!=" => $value],
+                        ["{$alias}.id" => null],
+                    ]
+                ])
+                ->build();
 
-            return [$alias . '.id' => null];
+            return ['id=s' =>  $subQuery->getRaw()];
         }
 
         if ($relationType == Entity::BELONGS_TO) {
             $key = $defs->getKey();
 
-            if (!$key) {
-                throw new Error("Bad link '{$link}' in where item.");
-            }
-
             return [$key . '!=' => $value];
-        }
-
-        if ($relationType == Entity::HAS_ONE) {
-            $queryBuilder->distinct();
-            $queryBuilder->leftJoin($link, $alias);
-
-            return [$alias . '.id!=' => $value];
         }
 
         throw new Error("Bad where item. Not supported relation type.");
@@ -1361,7 +1448,7 @@ class ItemGeneralConverter implements ItemConverter
             throw new Error("Not existing link '{$link}' in where item.");
         }
 
-        if (is_null($value) || !$value && !is_array($value)) {
+        if (!$value && !is_array($value)) {
             throw new Error("Bad where item. Empty value.");
         }
 
@@ -1402,9 +1489,7 @@ class ItemGeneralConverter implements ItemConverter
                     ->from($this->entityType)
                     ->select('id')
                     ->leftJoin($link)
-                    ->where([
-                        $link . '.id' => $targetId,
-                    ])
+                    ->where([$link . '.id' => $targetId])
                     ->build();
 
                 $whereList[] = ['id=s' => $sq->getRaw()];
