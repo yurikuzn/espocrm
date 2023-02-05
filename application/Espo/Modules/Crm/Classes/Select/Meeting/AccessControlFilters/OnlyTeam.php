@@ -37,34 +37,41 @@ use Espo\Entities\User;
 
 class OnlyTeam implements Filter
 {
-    private $user;
-
-    public function __construct(User $user)
-    {
-        $this->user = $user;
-    }
+    public function __construct(private User $user, private string $entityType)
+    {}
 
     public function apply(SelectBuilder $queryBuilder): void
     {
-        $queryBuilder
-            ->distinct()
-            ->leftJoin('teams', 'teamsAccess')
-            ->leftJoin('users', 'usersAccess')
-            ->where(
-                Cond::or(
-                    Cond::in(
-                        Cond::column('teamsAccessMiddle.teamId'),
-                        $this->user->getLinkMultipleIdList(User::LINK_TEAMS) ?? []
-                    ),
-                    Cond::equal(
-                        Cond::column('usersAccessMiddle.userId'),
-                        $this->user->getId()
-                    ),
-                    Cond::equal(
-                        Cond::column('assignedUserId'),
-                        $this->user->getId()
+        $queryBuilder->where(
+            Cond::in(
+                Cond::column('id'),
+                SelectBuilder::create()
+                    ->select('id')
+                    ->from($this->entityType, 'ma')
+                    ->leftJoin('EntityTeam', 'entityTeam', [
+                        'entityTeam.entityId:' => 'ma.id',
+                        'entityTeam.entityType' => $this->entityType,
+                        'entityTeam.deleted' => false,
+                    ])
+                    ->leftJoin('users', 'usersAccess')
+                    ->where(
+                        Cond::or(
+                            Cond::in(
+                                Cond::column('entityTeam.teamId'),
+                                $this->user->getTeamIdList(),
+                            ),
+                            Cond::equal(
+                                Cond::column('usersAccessMiddle.userId'),
+                                $this->user->getId()
+                            ),
+                            Cond::equal(
+                                Cond::column('assignedUserId'),
+                                $this->user->getId()
+                            )
+                        )
                     )
-                )
-            );
+                    ->build()
+            )
+        );
     }
 }

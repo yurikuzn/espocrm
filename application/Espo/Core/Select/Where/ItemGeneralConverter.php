@@ -134,6 +134,7 @@ class ItemGeneralConverter implements ItemConverter
             case Type::ARRAY_NONE_OF:
             case Type::ARRAY_IS_EMPTY:
             case Type::ARRAY_ALL_OF:
+            case Type::ARRAY_IS_NOT_EMPTY:
 
                 return WhereClause::fromRaw(
                     $this->groupProcessArray($queryBuilder, $type, $attribute, $value)
@@ -159,7 +160,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed,mixed>
+     * @return array<mixed, mixed>
      * @throws Error
      */
     protected function groupProcessAndOr(
@@ -310,7 +311,7 @@ class ItemGeneralConverter implements ItemConverter
 
     /**
      * @param mixed $value
-     * @return array<mixed, mixed>
+     * @return array<string|int, mixed>
      * @throws Error
      */
     protected function groupProcessArray(
@@ -334,7 +335,6 @@ class ItemGeneralConverter implements ItemConverter
 
         if (!$isForeign) {
             $isForeignType = $entityDefs->getAttribute($attribute)->getType() === Entity::FOREIGN;
-
             $isForeign = $isForeignType;
         }
 
@@ -344,7 +344,7 @@ class ItemGeneralConverter implements ItemConverter
                 $arrayAttribute = $entityDefs->getAttribute($attribute)->getParam('foreign');
             }
             else {
-                list($arrayAttributeLink, $arrayAttribute) = explode('.', $attribute);
+                [$arrayAttributeLink, $arrayAttribute] = explode('.', $attribute);
             }
 
             if (!$arrayAttributeLink || !$arrayAttribute) {
@@ -352,9 +352,7 @@ class ItemGeneralConverter implements ItemConverter
             }
 
             $arrayEntityType = $entityDefs->getRelation($arrayAttributeLink)->getForeignEntityType();
-
             $arrayLinkAlias = $arrayAttributeLink . 'ArrayFilter' . $this->randomStringGenerator->generate();
-
             $idPart = $arrayLinkAlias . '.id';
 
             $queryBuilder->leftJoin($arrayAttributeLink, $arrayLinkAlias);
@@ -371,21 +369,17 @@ class ItemGeneralConverter implements ItemConverter
                 throw new Error("Bad where item. No value.");
             }
 
-            $queryBuilder->leftJoin(
-                ArrayValue::ENTITY_TYPE,
-                $arrayValueAlias,
-                [
-                    $arrayValueAlias . '.entityId:' => $idPart,
-                    $arrayValueAlias . '.entityType' => $arrayEntityType,
-                    $arrayValueAlias . '.attribute' => $arrayAttribute,
-                ]
-            );
+            $subQuery = QueryBuilder::create()
+                ->select('entityId')
+                ->from(ArrayValue::ENTITY_TYPE)
+                ->where([
+                    'entityType' => $arrayEntityType,
+                    'attribute' => $arrayAttribute,
+                    'value' => $value,
+                ])
+                ->build();
 
-            $queryBuilder->distinct();
-
-            return [
-                $arrayValueAlias . '.value' => $value,
-            ];
+            return [$idPart . '=s' => $subQuery->getRaw()];
         }
 
         if ($type === Type::ARRAY_NONE_OF) {
@@ -393,6 +387,8 @@ class ItemGeneralConverter implements ItemConverter
                 throw new Error("Bad where item 'array'. No value.");
             }
 
+            // Distinct-left-join performs faster than not-in-subquery.
+            $queryBuilder->distinct();
             $queryBuilder->leftJoin(
                 ArrayValue::ENTITY_TYPE,
                 $arrayValueAlias,
@@ -404,16 +400,14 @@ class ItemGeneralConverter implements ItemConverter
                 ]
             );
 
-            $queryBuilder->distinct();
-
             return [
                 $arrayValueAlias . '.id' => null,
             ];
         }
 
         if ($type === Type::ARRAY_IS_EMPTY) {
+            // Distinct-left-join performs faster than not-in-subquery.
             $queryBuilder->distinct();
-
             $queryBuilder->leftJoin(
                 ArrayValue::ENTITY_TYPE,
                 $arrayValueAlias,
@@ -430,21 +424,16 @@ class ItemGeneralConverter implements ItemConverter
         }
 
         if ($type === Type::ARRAY_IS_NOT_EMPTY) {
-            $queryBuilder->distinct();
+            $subQuery = QueryBuilder::create()
+                ->select('entityId')
+                ->from(ArrayValue::ENTITY_TYPE)
+                ->where([
+                    'entityType' => $arrayEntityType,
+                    'attribute' => $arrayAttribute,
+                ])
+                ->build();
 
-            $queryBuilder->leftJoin(
-                ArrayValue::ENTITY_TYPE,
-                $arrayValueAlias,
-                [
-                    $arrayValueAlias . '.entityId:' => $idPart,
-                    $arrayValueAlias . '.entityType' => $arrayEntityType,
-                    $arrayValueAlias . '.attribute' => $arrayAttribute,
-                ]
-            );
-
-            return [
-                $arrayValueAlias . '.id!=' => null,
-            ];
+            return [$idPart . '=s' => $subQuery->getRaw()];
         }
 
         if ($type === Type::ARRAY_ALL_OF) {
@@ -1233,11 +1222,7 @@ class ItemGeneralConverter implements ItemConverter
 
         $relationType = $defs->getType();
 
-        //$queryBuilder->distinct();
-
         if ($relationType == Entity::MANY_MANY) {
-            //$queryBuilder->leftJoin($link, $alias);
-
             $key = $defs->getForeignMidKey();
 
             if (!$key) {
@@ -1252,10 +1237,6 @@ class ItemGeneralConverter implements ItemConverter
                 ->build();
 
             return ['id=s' =>  $subQuery->getRaw()];
-
-            /*return [
-                $alias . 'Middle.' . $key => $value,
-            ];*/
         }
 
         if ($relationType == Entity::HAS_MANY) {
@@ -1267,12 +1248,6 @@ class ItemGeneralConverter implements ItemConverter
                 ->build();
 
             return ['id=s' =>  $subQuery->getRaw()];
-
-            /*$queryBuilder->leftJoin($link, $alias);
-
-            return [
-                $alias . '.id' => $value,
-            ];*/
         }
 
         if ($relationType == Entity::BELONGS_TO) {
@@ -1294,12 +1269,6 @@ class ItemGeneralConverter implements ItemConverter
                 ->build();
 
             return ['id=s' =>  $subQuery->getRaw()];
-
-            //$queryBuilder->leftJoin($link, $alias);
-
-            /*return [
-                $alias . '.id' => $value,
-            ];*/
         }
 
         throw new Error("Bad where item. Not supported relation type.");

@@ -37,29 +37,32 @@ use Espo\Entities\User;
 
 class OnlyOwn implements Filter
 {
-    private $user;
-
-    public function __construct(User $user)
-    {
-        $this->user = $user;
-    }
+    public function __construct(private User $user, private string $entityType)
+    {}
 
     public function apply(SelectBuilder $queryBuilder): void
     {
-        $queryBuilder
-            ->distinct()
-            ->leftJoin('users', 'usersAccess')
-            ->where(
-                Cond::or(
-                    Cond::equal(
-                        Cond::column('usersAccessMiddle.userId'),
-                        $this->user->getId()
-                    ),
-                    Cond::equal(
-                        Cond::column('assignedUserId'),
-                        $this->user->getId()
+        $queryBuilder->where(
+            Cond::in(
+                Cond::column('id'),
+                SelectBuilder::create()
+                    ->select('id')
+                    ->from($this->entityType, 'ma')
+                    ->leftJoin('users', 'usersAccess')
+                    ->where(
+                        Cond::or(
+                            Cond::equal(
+                                Cond::column('usersAccessMiddle.userId'),
+                                $this->user->getId()
+                            ),
+                            Cond::equal(
+                                Cond::column('assignedUserId'),
+                                $this->user->getId()
+                            )
+                        )
                     )
-                )
-            );
+                    ->build()
+            )
+        );
     }
 }

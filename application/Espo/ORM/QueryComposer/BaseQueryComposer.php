@@ -743,6 +743,10 @@ abstract class BaseQueryComposer implements QueryComposer
             $tailPart
         );
 
+        if ($entityType === 'Test') {
+            $GLOBALS['log']->info($sql);
+        }
+
         return $sql;
     }
 
