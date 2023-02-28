@@ -30,7 +30,7 @@
 return [
   'database' => [
     'platform' => getenv('TEST_DATABASE_PLATFORM') ?: 'Mysql',
-    'charset' => 'utf8mb4',
+    'charset' => getenv('TEST_DATABASE_CHARSET') ?: 'utf8mb4',
     'host' => getenv('TEST_DATABASE_HOST'),
     'port' => getenv('TEST_DATABASE_PORT'),
     'dbname' => getenv('TEST_DATABASE_NAME'),

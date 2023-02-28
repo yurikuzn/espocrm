@@ -12,6 +12,7 @@ jobs:
     env:
       TEST_DATABASE_HOST: '127.0.0.1'
       TEST_DATABASE_PLATFORM: 'Postgresql'
+      TEST_DATABASE_CHARSET: 'utf8'
       TEST_DATABASE_PORT: '8888'
       TEST_DATABASE_NAME: integration_test
       TEST_DATABASE_USER: root
@@ -31,7 +32,7 @@ jobs:
             --health-timeout 5s
             --health-retries 5
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         php-versions: ['8.2']
         branches: ['integration-pg']
