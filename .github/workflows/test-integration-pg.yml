@@ -34,7 +34,7 @@ jobs:
       fail-fast: false
       matrix:
         php-versions: ['8.2']
-        branches: ['master']
+        branches: ['integration-pg']
 
     steps:
     - uses: actions/checkout@v2
@@ -60,4 +60,4 @@ jobs:
       run: grunt test
 
     - name: Integration testing
-      run: vendor/bin/phpunit --testsuite unit
+      run: vendor/bin/phpunit -testsuite integration-pg
