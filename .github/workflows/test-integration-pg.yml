@@ -60,4 +60,4 @@ jobs:
       run: grunt test
 
     - name: Integration testing
-      run: vendor/bin/phpunit --testsuite=integration-pg
+      run: vendor/bin/phpunit --configuration phpunit.xml --testsuite integration-pg
