@@ -32,10 +32,19 @@ define('views/admin/entity-manager/record/edit-formula', ['views/record/base'], 
 
         template: 'admin/entity-manager/record/edit-formula',
 
+        data: function () {
+            return {
+                field: this.field,
+                fieldKey: this.field + 'Field',
+            };
+        },
+
         setup: function () {
             Dep.prototype.setup.call(this);
 
-            this.createField('beforeSaveCustomScript', 'views/fields/formula', {
+            this.field = this.options.type;
+
+            this.createField(this.field, 'views/fields/formula', {
                 targetEntityType: this.options.targetEntityType,
                 height: 500
             }, 'edit');
