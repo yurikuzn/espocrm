@@ -70,7 +70,7 @@ define('views/admin/entity-manager/formula', ['view', 'lib!espo', 'model'], func
                 throw new Espo.Exceptions.NotFound('No allowed formula type specified.');
             }
 
-            var model = this.model = new Model();
+            let model = this.model = new Model();
 
             model.name = 'EntityManager';
 
