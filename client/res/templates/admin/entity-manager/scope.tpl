@@ -113,7 +113,6 @@
                                 <a
                                     class="btn btn-default btn-lg action btn-full-wide"
                                     data-action="editFormula"
-                                    href="#Admin/entityManager/formula&type=beforeSaveCustomScript&scope={{scope}}"
                                 >
                                     <span class="fas fa-code"></span>
                                     {{translate 'Formula' scope='EntityManager'}}
