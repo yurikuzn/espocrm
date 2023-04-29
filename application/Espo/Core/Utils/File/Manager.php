@@ -106,7 +106,7 @@ class Manager
      * If TRUE - returns only file list, if FALSE - only directory list.
      * @param bool $returnSingleArray Return a single array.
      *
-     * @return string[]|array<string,string[]>
+     * @return string[]|array<string, string[]>
      */
     public function getFileList(
         string $path,
@@ -174,7 +174,7 @@ class Manager
             return $this->getSingleFileList($result, $onlyFileType, $path);
         }
 
-        /** @var array<string,string[]> */
+        /** @var array<string, string[]> */
         return $result;
     }
 
@@ -284,7 +284,7 @@ class Manager
      * Get array or stdClass data from PHP file.
      * If a file is not yet written, it will wait until it's ready.
      *
-     * @return array<mixed,mixed>|stdClass
+     * @return array<mixed, mixed>|stdClass
      * @throws FileError
      */
     public function getPhpSafeContents(string $path)
@@ -455,7 +455,7 @@ class Manager
     /**
      * Merge JSON file contents with existing and override the file.
      *
-     * @param array<mixed,mixed> $data
+     * @param array<string|int, mixed> $data
      */
     public function mergeJsonContents(string $path, array $data): bool
     {
@@ -492,7 +492,7 @@ class Manager
      * Unset specific items in a JSON file and override the file.
      * Items are specified as an array of JSON paths.
      *
-     * @param array<mixed,string> $unsets
+     * @param array<mixed, string> $unsets
      */
     public function unsetJsonContents(string $path, array $unsets): bool
     {
@@ -1036,7 +1036,7 @@ class Manager
     /**
      * Wrap data for export to PHP file.
      *
-     * @param array<mixed,mixed>|object|null $data
+     * @param array<string|int, mixed>|object|null $data
      * @return string|false
      */
     public function wrapForDataExport($data, bool $withObjects = false)

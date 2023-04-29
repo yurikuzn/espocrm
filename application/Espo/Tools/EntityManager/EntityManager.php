@@ -1466,7 +1466,7 @@ class EntityManager
     }
 
     /**
-     * @param array<string,string> $data
+     * @param array<string, string> $data
      * @throws Error
      */
     public function setFormulaData(string $scope, array $data): void
@@ -1478,7 +1478,7 @@ class EntityManager
     }
 
     /**
-     * @param ?array<string,mixed> $params
+     * @param ?array<string, mixed> $params
      */
     protected function processHook(string $methodName, string $type, string $name, &$params = null): void
     {
