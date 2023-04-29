@@ -46,7 +46,7 @@ class ThrowBadRequestType extends BaseFunction
     public function process(ArgumentList $args)
     {
         if (empty($this->getVariables()->__isRecordService)) {
-            throw new Error("recordService\\throwBadRequest function can be called only from API script.");
+            $this->throwError("Can be called only from API script.");
         }
 
         $statusText = isset($args[0]) ? $this->evaluate($args[0]) : '';

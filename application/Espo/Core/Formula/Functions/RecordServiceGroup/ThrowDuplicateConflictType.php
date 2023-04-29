@@ -29,19 +29,55 @@
 
 namespace Espo\Core\Formula\Functions\RecordServiceGroup;
 
+use Espo\Core\Di\EntityManagerAware;
+use Espo\Core\Di\EntityManagerSetter;
+use Espo\Core\Exceptions\Conflict;
+use Espo\Core\Exceptions\ConflictSilent;
 use Espo\Core\Formula\ArgumentList;
 use Espo\Core\Formula\Functions\BaseFunction;
+use Espo\Core\Utils\Json;
 
-class SkipDuplicateCheckType extends BaseFunction
+class ThrowDuplicateConflictType extends BaseFunction implements EntityManagerAware
 {
+    use EntityManagerSetter;
+
+    /**
+     * @inheritDoc
+     * @throws Conflict
+     */
     public function process(ArgumentList $args)
     {
         if (empty($this->getVariables()->__isRecordService)) {
             $this->throwError("Can be called only from API script.");
         }
 
-        $skipDuplicateCheck = $this->getVariables()->__skipDuplicateCheck ?? false;
+        if (count($args) < 1) {
+            $this->throwTooFewArguments(1);
+        }
 
-        return (bool) $skipDuplicateCheck;
+        $ids = $this->evaluate($args[0]);
+
+        if (is_string($ids)) {
+            $ids = [$ids];
+        }
+
+        if (!is_array($ids)) {
+            $this->throwBadArgumentType(1);
+        }
+
+        $entityType = $this->getEntity()->getEntityType();
+
+        $list = [];
+
+        foreach ($ids as $id) {
+            $entity = $this->entityManager->getEntityById($entityType, $id);
+
+            $name = $entity ? $entity->get('name') : $id;
+
+
+            $list[] = (object) ['id' => $id, 'name' => $name];
+        }
+
+        throw ConflictSilent::createWithBody('duplicate', Json::encode($list));
     }
 }
