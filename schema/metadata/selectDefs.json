@@ -19,21 +19,24 @@
                 "portalOnlyOwn": {"type": "string"}
             },
             "additionalProperties": {
-                "type": "string"
-            },
+                "type": "string",
+                "description": "A filter."
+            }
         },
         "primaryFilterClassNameMap": {
             "description": "Primary filters. Classes should implement Espo\\Core\\Select\\Primary\\Filter interface.",
             "type": "object",
             "additionalProperties": {
-                "type": "string"
+                "type": "string",
+                "description": "A filter."
             }
         },
         "boolFilterClassNameMap": {
             "description": "Bool filters. Classes should implement Espo\\Core\\Select\\Bool\\Filter interface.",
             "type": "object",
             "additionalProperties": {
-                "type": "string"
+                "type": "string",
+                "description": "A filter."
             }
         },
         "selectAttributesDependencyMap": {
@@ -41,7 +44,8 @@
             "additionalProperties": {
                 "type": "array",
                 "items": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "An attribute."
                 }
             }
         },
@@ -49,7 +53,8 @@
             "description": "Implementations for custom where items. Classes should implement Espo\\Core\\Select\\Where\\ItemConverter interface. The key format: '{fieldName}_{conditionItemType}'.",
             "type": "object",
             "additionalProperties": {
-                "type": "string"
+                "type": "string",
+                "description": "A key in `{fieldName}_{conditionItemType}` format."
             }
         },
         "accessControlFilterResolverClassName": {
@@ -61,17 +66,19 @@
             "type": "string"
         },
         "orderItemConverterClassNameMap": {
-            "description": "An order converter converts order parameters passed from the frontend to an order data acceptable for ORM. One can implement a custom converer for a specific field. Classes should implement Espo\\Core\\Select\\Order\\ItemConverter interface.",
+            "description": "An order converter converts order parameters passed from the frontend to an order data acceptable for ORM. One can implement a custom converter for a specific field. Classes should implement Espo\\Core\\Select\\Order\\ItemConverter interface.",
             "type": "object",
             "additionalProperties": {
-                "type": "string"
+                "type": "string",
+                "description": "A field."
             }
         },
         "ordererClassNameMap": {
             "description": "Provides the ability to apply custom order for a specific field. Classes should implement Espo\\Core\\Select\\Order\\Orderer interface.",
             "type": "object",
             "additionalProperties": {
-                "type": "string"
+                "type": "string",
+                "description": "A field."
             }
         }
     }

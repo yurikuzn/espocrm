@@ -11,6 +11,7 @@
             "additionalProperties": {
                 "type": "object",
                 "additionalProperties": true,
+                "description": "A field.",
                 "allOf": [
                     {
                         "if": {
@@ -490,6 +491,7 @@
             "type": "object",
             "additionalProperties": {
                 "type": "object",
+                "description": "A link.",
                 "additionalProperties": true,
                 "properties": {
                     "type": {
@@ -585,6 +587,7 @@
             "description": "Indexes for a middle table.",
             "additionalProperties": {
                 "type": "object",
+                "description": "An index.",
                 "properties": {
                     "columns": {
                         "type": "array",
