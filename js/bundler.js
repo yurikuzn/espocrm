@@ -28,6 +28,8 @@
 
 const typescript = require('typescript');
 const fs = require('fs');
+const {globSync} = require('glob');
+
 
 /**
  * Normalizes and concatenates Espo modules.
@@ -41,45 +43,57 @@ class Bundler {
     basePath = 'client/src'
 
     /**
-     * @param {string[]} pathList
+     * @param {{files: string[], patterns: string[]}} params
      * @return {string}
      */
-    bundle(pathList) {
+    bundle(params) {
         let bundleContents = '';
 
-        pathList = this.#sortPathList(pathList);
+        let files = [].concat(params.files);
 
-        pathList.forEach(path => {
-            bundleContents += this.normalizeSourceFile(path);
+        params.patterns.forEach(pattern => {
+            let itemFiles = globSync(pattern, {}).map(file => {
+                return file.replaceAll('\\', '/');
+            })
+
+            files = files.concat(itemFiles);
+        });
+
+        let sortedFiles = this.#sortFiles(files);
+
+        sortedFiles.forEach(file => {
+            bundleContents += this.normalizeSourceFile(file);
         });
 
         return bundleContents;
     }
 
     /**
-     * @param {string[]} pathList
+     * @param {string[]} files
      * @return {string[]}
      */
-    #sortPathList(pathList) {
+    #sortFiles(files) {
         /** @var {Object.<string, string[]>} */
         let map = {};
 
         let standalonePathList = [];
 
         let tree = {};
-        let moduleList = [];
+        let modules = [];
+        let moduleFileMap = {};
 
-        pathList.forEach(path => {
-            let data = this.#obtainModuleData(path);
+        files.forEach(file => {
+            let data = this.#obtainModuleData(file);
 
             if (!data) {
-                standalonePathList.push(path);
+                standalonePathList.push(file);
 
                 return;
             }
 
             map[data.name] = data.deps;
-            moduleList.push(data.name);
+            moduleFileMap[data.name] = file;
+            modules.push(data.name);
         });
 
         /** @var {Object.<string, number>} */
@@ -89,15 +103,15 @@ class Bundler {
             this.#buildTreeItem(name, tree, map, depthMap);
         }
 
-        moduleList.sort((v1, v2) => {
+        modules.sort((v1, v2) => {
             return depthMap[v1] - depthMap[v2];
         });
 
-        let modulePathList = moduleList.map(name => {
-            return name + '.js';
+        let modulePaths = modules.map(name => {
+            return moduleFileMap[name];
         });
 
-        return standalonePathList.concat(modulePathList);
+        return standalonePathList.concat(modulePaths);
     }
 
     /**

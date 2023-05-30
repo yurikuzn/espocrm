@@ -33,7 +33,6 @@ const fs = require('fs');
 const cp = require('child_process');
 const path = require('path');
 const buildUtils = require('./js/build-utils');
-const bundleConfig = require("./frontend/bundle-config.json");
 
 module.exports = grunt => {
 
@@ -255,7 +254,7 @@ module.exports = grunt => {
 
         let contents = (new Bundler()).bundle({
             files: bundleConfig.jsFiles,
-            dirs: ['client/src/'],
+            patterns: ['client/src/**/*.js'],
         });
 
         if (!fs.existsSync(originalLibDir)) {
