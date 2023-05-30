@@ -47,11 +47,154 @@ class Bundler {
     bundle(pathList) {
         let bundleContents = '';
 
+        pathList = this.#sortPathList(pathList);
+
         pathList.forEach(path => {
             bundleContents += this.normalizeSourceFile(path);
-        })
+        });
 
         return bundleContents;
+    }
+
+    /**
+     * @param {string[]} pathList
+     * @return {string[]}
+     */
+    #sortPathList(pathList) {
+        /** @var {Object.<string, string[]>} */
+        let map = {};
+
+        let standalonePathList = [];
+
+        let tree = {};
+        let moduleList = [];
+
+        pathList.forEach(path => {
+            let data = this.#obtainModuleData(path);
+
+            if (!data) {
+                standalonePathList.push(path);
+
+                return;
+            }
+
+            map[data.name] = data.deps;
+            moduleList.push(data.name);
+        });
+
+        /** @var {Object.<string, number>} */
+        let depthMap = {};
+
+        for (let name in map) {
+            this.#buildTreeItem(name, tree, map, depthMap);
+        }
+
+        moduleList.sort((v1, v2) => {
+            return depthMap[v1] - depthMap[v2];
+        });
+
+        let modulePathList = moduleList.map(name => {
+            return name + '.js';
+        });
+
+        return standalonePathList.concat(modulePathList);
+    }
+
+    /**
+     * @param {string} name
+     * @param {Object} tree
+     * @param {Object.<string, string[]>} map
+     * @param {Object.<string, number>} depthMap
+     * @param {number} [depth]
+     */
+    #buildTreeItem(name, tree, map, depthMap, depth) {
+        let deps = map[name] || [];
+        depth = depth || 0;
+
+        tree[name] = {};
+
+        if (deps.length === 0) {
+            if (!(name in depthMap)) {
+                depthMap[name] = depth;
+
+                return;
+            }
+
+            if (depth > depthMap[name]) {
+                depthMap[name] = depth;
+
+                return;
+            }
+
+            return;
+        }
+
+        deps.forEach(depName => {
+            this.#buildTreeItem(
+                depName,
+                tree[name],
+                map,
+                depthMap,
+                depth + 1
+            );
+        });
+    }
+
+    /**
+     * @param {string} path
+     * @return {{deps: string[], name: string}|null}
+     */
+    #obtainModuleData(path) {
+        if (!this.#isClientJsFile(path)) {
+            return null;
+        }
+
+        let tsSourceFile = typescript.createSourceFile(
+            path,
+            fs.readFileSync(path, 'utf-8'),
+            typescript.ScriptTarget.Latest
+        );
+
+        let rootStatement = tsSourceFile.statements[0];
+
+        if (
+            !rootStatement.expression ||
+            !rootStatement.expression.expression ||
+            rootStatement.expression.expression.escapedText !== 'define'
+        ) {
+            return null;
+        }
+
+        let moduleName = path.slice(this._getBathPath().length, -3);
+
+        let deps = [];
+
+        let argumentList = rootStatement.expression.arguments;
+
+        for (let argument of argumentList.slice(0, 2)) {
+            if (argument.elements) {
+                argument.elements.forEach(node => {
+                    if (!node.text) {
+                        return;
+                    }
+
+                    deps.push(node.text);
+                });
+            }
+        }
+
+        return {
+            name: moduleName,
+            deps: deps,
+        };
+    }
+
+    /**
+     * @param {string} path
+     * @return {boolean}
+     */
+    #isClientJsFile(path) {
+        return path.indexOf(this._getBathPath()) === 0 && path.slice(-3) === '.js';
     }
 
     /**
@@ -63,10 +206,7 @@ class Bundler {
         let sourceCode = fs.readFileSync(path, 'utf-8');
         let basePath = this._getBathPath();
 
-        if (
-            path.indexOf(basePath) !== 0 ||
-            path.slice(-3) !== '.js'
-        ) {
+        if (!this.#isClientJsFile(path)) {
             return sourceCode;
         }
 

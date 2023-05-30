@@ -33,6 +33,7 @@ const fs = require('fs');
 const cp = require('child_process');
 const path = require('path');
 const buildUtils = require('./js/build-utils');
+const bundleConfig = require("./frontend/bundle-config.json");
 
 module.exports = grunt => {
 
@@ -252,7 +253,10 @@ module.exports = grunt => {
     grunt.registerTask('espo-bundle', () => {
         const Bundler = require('./js/bundler');
 
-        let contents = (new Bundler()).bundle(bundleConfig.jsFiles);
+        let contents = (new Bundler()).bundle({
+            files: bundleConfig.jsFiles,
+            dirs: ['client/src/'],
+        });
 
         if (!fs.existsSync(originalLibDir)) {
             fs.mkdirSync(originalLibDir);
