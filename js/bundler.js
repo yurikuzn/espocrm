@@ -101,7 +101,6 @@ class Bundler {
 
         let standalonePathList = [];
 
-        let tree = {};
         let modules = [];
         let moduleFileMap = {};
 
@@ -123,11 +122,11 @@ class Bundler {
         let depthMap = {};
 
         for (let name in map) {
-            this.#buildTreeItem(name, tree, map, depthMap);
+            this.#buildTreeItem(name, map, depthMap);
         }
 
         modules.sort((v1, v2) => {
-            return depthMap[v1] - depthMap[v2];
+            return depthMap[v2] - depthMap[v1];
         });
 
         let modulePaths = modules.map(name => {
@@ -139,37 +138,33 @@ class Bundler {
 
     /**
      * @param {string} name
-     * @param {Object} tree
      * @param {Object.<string, string[]>} map
      * @param {Object.<string, number>} depthMap
      * @param {number} [depth]
      */
-    #buildTreeItem(name, tree, map, depthMap, depth) {
+    #buildTreeItem(name, map, depthMap, depth) {
+        /** @var {string[]} */
         let deps = map[name] || [];
         depth = depth || 0;
 
-        tree[name] = {};
+        if (!(name in depthMap)) {
+            depthMap[name] = depth;
+        }
+        else if (depth > depthMap[name]) {
+            depthMap[name] = depth;
+        }
 
         if (deps.length === 0) {
-            if (!(name in depthMap)) {
-                depthMap[name] = depth;
-
-                return;
-            }
-
-            if (depth > depthMap[name]) {
-                depthMap[name] = depth;
-
-                return;
-            }
-
             return;
         }
 
         deps.forEach(depName => {
+            if (depName.includes('!')) {
+                return;
+            }
+
             this.#buildTreeItem(
                 depName,
-                tree[name],
                 map,
                 depthMap,
                 depth + 1

@@ -129,7 +129,8 @@
     },
     {
         "src": "node_modules/cropper/dist/cropper.js",
-        "key": "Cropper"
+        "key": "Cropper",
+        "minify": true
     },
     {
         "src": "node_modules/cronstrue/dist/cronstrue-i18n.js",
