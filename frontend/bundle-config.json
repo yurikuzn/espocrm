@@ -50,5 +50,6 @@
         "client/src/views/detail.js",
         "client/src/views/edit.js",
         "client/src/views/list.js"
-    ]
+    ],
+    "chunkNumber": 4
 }

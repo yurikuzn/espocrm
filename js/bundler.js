@@ -43,29 +43,52 @@ class Bundler {
     basePath = 'client/src'
 
     /**
-     * @param {{files: string[], patterns: string[]}} params
-     * @return {string}
+     * Bundles Espo js files into chunks.
+     *
+     * @param {{
+     *   files: string[],
+     *   patterns: string[],
+     *   chunkNumber: number,
+     * }} params
+     * @return {string[]}
      */
     bundle(params) {
-        let bundleContents = '';
-
         let files = [].concat(params.files);
 
         params.patterns.forEach(pattern => {
-            let itemFiles = globSync(pattern, {}).map(file => {
-                return file.replaceAll('\\', '/');
-            })
+            let itemFiles = globSync(pattern, {})
+                .map(file => {
+                    return file.replaceAll('\\', '/');
+                })
+                .filter(file => !params.files.includes(file));
 
             files = files.concat(itemFiles);
         });
 
         let sortedFiles = this.#sortFiles(files);
 
-        sortedFiles.forEach(file => {
-            bundleContents += this.normalizeSourceFile(file);
+        let portions = [];
+        let portionSize = Math.floor(sortedFiles.length / params.chunkNumber);
+
+        for (let i = 0; i < params.chunkNumber; i++) {
+            let end = i === params.chunkNumber - 1 ?
+                sortedFiles.length :
+                (i + 1) * portionSize;
+
+            portions.push(sortedFiles.slice(i * portionSize, end));
+        }
+
+        let chunks = [];
+
+        portions.forEach(portion => {
+            let chunk = '';
+
+            portion.forEach(file => chunk += this.normalizeSourceFile(file));
+
+            chunks.push(chunk);
         });
 
-        return bundleContents;
+        return chunks;
     }
 
     /**
