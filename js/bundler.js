@@ -32,6 +32,9 @@ const {globSync} = require('glob');
 
 /**
  * Normalizes and concatenates Espo modules.
+ *
+ * Modules dependent on not bundled libs are ignored. Modules dependent on such modules
+ * are ignored as well and so on.
  */
 class Bundler {
 
@@ -47,6 +50,7 @@ class Bundler {
      * @param {{
      *   files: string[],
      *   patterns: string[],
+     *   allPatterns: string[],
      *   chunkNumber: number,
      *   libs: {
      *     src?: string,
@@ -57,23 +61,17 @@ class Bundler {
      * @return {string[]}
      */
     bundle(params) {
-        let files = [].concat(params.files);
+        let files = []
+            .concat(params.files)
+            .concat(this.#obtainFiles(params.patterns, params.files));
 
-        params.patterns.forEach(pattern => {
-            let itemFiles = globSync(pattern, {})
-                .map(file => {
-                    return file.replaceAll('\\', '/');
-                })
-                .filter(file => !params.files.includes(file));
-
-            files = files.concat(itemFiles);
-        });
+        let allFiles = this.#obtainFiles(params.allPatterns);
 
         let ignoreLibs = params.libs
             .filter(item => item.key && !item.bundle)
             .map(item => 'lib!' + item.key);
 
-        let sortedFiles = this.#sortFiles(files, ignoreLibs);
+        let sortedFiles = this.#sortFiles(files, allFiles, ignoreLibs);
 
         let portions = [];
         let portionSize = Math.floor(sortedFiles.length / params.chunkNumber);
@@ -100,11 +98,32 @@ class Bundler {
     }
 
     /**
+     * @param {string[]} patterns
+     * @param {string[]} [ignoreFiles]
+     * @return {string[]}
+     */
+    #obtainFiles(patterns, ignoreFiles) {
+        let files = [];
+        ignoreFiles = ignoreFiles || [];
+
+        patterns.forEach(pattern => {
+            let itemFiles = globSync(pattern, {})
+                .map(file => file.replaceAll('\\', '/'))
+                .filter(file => !ignoreFiles.includes(file));
+
+            files = files.concat(itemFiles);
+        });
+
+        return files;
+    }
+
+    /**
      * @param {string[]} files
+     * @param {string[]} allFiles
      * @param {string[]} ignoreLibs
      * @return {string[]}
      */
-    #sortFiles(files, ignoreLibs) {
+    #sortFiles(files, allFiles, ignoreLibs) {
         /** @var {Object.<string, string[]>} */
         let map = {};
 
@@ -113,26 +132,50 @@ class Bundler {
         let modules = [];
         let moduleFileMap = {};
 
-        files.forEach(file => {
+        allFiles.forEach(file => {
             let data = this.#obtainModuleData(file);
 
+            let isTarget = files.includes(file);
+
             if (!data) {
-                standalonePathList.push(file);
+                if (isTarget) {
+                    standalonePathList.push(file);
+                }
 
                 return;
             }
 
             map[data.name] = data.deps;
             moduleFileMap[data.name] = file;
-            modules.push(data.name);
+
+            if (isTarget) {
+                modules.push(data.name);
+            }
         });
+
+        let depModules = [];
+
+        modules
+            .forEach(name => {
+                let deps = this.#obtainAllDeps(name, map);
+
+                deps
+                    .filter(item => !item.includes('!'))
+                    .filter(item => !modules.includes(item))
+                    .filter(item => !depModules.includes(item))
+                    .forEach(item => {
+                        depModules.push(item);
+                    });
+            });
+
+        modules = modules.concat(depModules);
 
         /** @var {string[]} */
         let discardedModules = [];
         /** @var {Object.<string, number>} */
         let depthMap = {};
 
-        for (let name in map) {
+        for (let name of modules) {
             this.#buildTreeItem(
                 name,
                 map,
@@ -153,6 +196,33 @@ class Bundler {
         });
 
         return standalonePathList.concat(modulePaths);
+    }
+
+    /**
+     * @param {string} name
+     * @param {Object.<string, string[]>} map
+     * @param {string[]} [list]
+     */
+    #obtainAllDeps(name, map, list) {
+        if (!list) {
+            list = [];
+        }
+
+        let deps = map[name] || [];
+
+        deps.forEach(depName => {
+            if (!list.includes(depName)) {
+                list.push(depName);
+            }
+
+            if (depName.includes('!')) {
+                return;
+            }
+
+            this.#obtainAllDeps(depName, map, list);
+        });
+
+        return list;
     }
 
     /**

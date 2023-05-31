@@ -259,8 +259,9 @@ module.exports = grunt => {
         const Bundler = require('./js/bundler');
 
         let chunks = (new Bundler()).bundle({
-            files: bundleConfig.jsFiles,
-            patterns: ['client/src/**/*.js'],
+            files: bundleConfig.files,
+            patterns: bundleConfig.patterns,
+            allPatterns: ['client/src/**/*.js'],
             chunkNumber: bundleConfig.chunkNumber,
             libs: libs,
         });
