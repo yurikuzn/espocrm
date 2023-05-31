@@ -262,6 +262,7 @@ module.exports = grunt => {
             files: bundleConfig.jsFiles,
             patterns: ['client/src/**/*.js'],
             chunkNumber: bundleConfig.chunkNumber,
+            libs: libs,
         });
 
         if (!fs.existsSync(originalLibDir)) {

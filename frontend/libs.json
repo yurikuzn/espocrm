@@ -110,18 +110,18 @@
     },
     {
         "src": "node_modules/summernote/dist/summernote.js",
-        "bundle": true,
-        "key": "Summernote"
+        "key": "Summernote",
+        "minify": true
     },
     {
         "src": "node_modules/espo-funnel-chart/build/espo-funnel-chart.js",
-        "bundle": true,
-        "key": "espo-funnel-chart"
+        "key": "espo-funnel-chart",
+        "minify": true
     },
     {
         "src": "node_modules/flotr2/flotr2.js",
-        "bundle": true,
-        "key": "Flotr"
+        "key": "Flotr",
+        "minify": true
     },
     {
         "src": "node_modules/bootstrap-colorpicker/dist/js/bootstrap-colorpicker.js",

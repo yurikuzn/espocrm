@@ -30,7 +30,6 @@ const typescript = require('typescript');
 const fs = require('fs');
 const {globSync} = require('glob');
 
-
 /**
  * Normalizes and concatenates Espo modules.
  */
@@ -49,6 +48,11 @@ class Bundler {
      *   files: string[],
      *   patterns: string[],
      *   chunkNumber: number,
+     *   libs: {
+     *     src?: string,
+     *     bundle?: boolean,
+     *     key?: string,
+     *   }[],
      * }} params
      * @return {string[]}
      */
@@ -65,7 +69,11 @@ class Bundler {
             files = files.concat(itemFiles);
         });
 
-        let sortedFiles = this.#sortFiles(files);
+        let ignoreLibs = params.libs
+            .filter(item => item.key && !item.bundle)
+            .map(item => 'lib!' + item.key);
+
+        let sortedFiles = this.#sortFiles(files, ignoreLibs);
 
         let portions = [];
         let portionSize = Math.floor(sortedFiles.length / params.chunkNumber);
@@ -93,9 +101,10 @@ class Bundler {
 
     /**
      * @param {string[]} files
+     * @param {string[]} ignoreLibs
      * @return {string[]}
      */
-    #sortFiles(files) {
+    #sortFiles(files, ignoreLibs) {
         /** @var {Object.<string, string[]>} */
         let map = {};
 
@@ -118,16 +127,26 @@ class Bundler {
             modules.push(data.name);
         });
 
+        /** @var {string[]} */
+        let discardedModules = [];
         /** @var {Object.<string, number>} */
         let depthMap = {};
 
         for (let name in map) {
-            this.#buildTreeItem(name, map, depthMap);
+            this.#buildTreeItem(
+                name,
+                map,
+                depthMap,
+                ignoreLibs,
+                discardedModules
+            );
         }
 
         modules.sort((v1, v2) => {
             return depthMap[v2] - depthMap[v1];
         });
+
+        modules = modules.filter(item => !discardedModules.includes(item));
 
         let modulePaths = modules.map(name => {
             return moduleFileMap[name];
@@ -140,12 +159,26 @@ class Bundler {
      * @param {string} name
      * @param {Object.<string, string[]>} map
      * @param {Object.<string, number>} depthMap
+     * @param {string[]} ignoreLibs
+     * @param {string[]} discardedModules
      * @param {number} [depth]
+     * @param {string[]} [path]
      */
-    #buildTreeItem(name, map, depthMap, depth) {
+    #buildTreeItem(
+        name,
+        map,
+        depthMap,
+        ignoreLibs,
+        discardedModules,
+        depth,
+        path
+    ) {
         /** @var {string[]} */
         let deps = map[name] || [];
         depth = depth || 0;
+        path = [].concat(path || []);
+
+        path.push(name);
 
         if (!(name in depthMap)) {
             depthMap[name] = depth;
@@ -158,6 +191,16 @@ class Bundler {
             return;
         }
 
+        for (let depName of deps) {
+            if (ignoreLibs.includes(depName)) {
+                path
+                    .filter(item => !discardedModules.includes(item))
+                    .forEach(item => discardedModules.push(item));
+
+                return;
+            }
+        }
+
         deps.forEach(depName => {
             if (depName.includes('!')) {
                 return;
@@ -167,7 +210,10 @@ class Bundler {
                 depName,
                 map,
                 depthMap,
-                depth + 1
+                ignoreLibs,
+                discardedModules,
+                depth + 1,
+                path
             );
         });
     }
