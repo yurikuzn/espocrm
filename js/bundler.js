@@ -55,9 +55,10 @@ class Bundler {
      * Bundles Espo js files into chunks.
      *
      * @param {{
-     *   files: string[],
+     *   files?: string[],
      *   patterns: string[],
      *   allPatterns: string[],
+     *   ignoreFiles?: string[],
      *   libs: {
      *     src?: string,
      *     bundle?: boolean,
@@ -72,8 +73,9 @@ class Bundler {
      */
     bundle(params) {
         let files = []
-            .concat(params.files)
-            .concat(this.#obtainFiles(params.patterns, params.files));
+            .concat(params.files || [])
+            .concat(this.#obtainFiles(params.patterns, params.files))
+            .filter(file => !params.ignoreFiles.includes(file));
 
         let allFiles = this.#obtainFiles(params.allPatterns);
 
@@ -81,7 +83,12 @@ class Bundler {
             .filter(item => item.key && !item.bundle)
             .map(item => 'lib!' + item.key);
 
-        let sortedFiles = this.#sortFiles(files, allFiles, ignoreLibs);
+        let sortedFiles = this.#sortFiles(
+            files,
+            allFiles,
+            ignoreLibs,
+            params.ignoreFiles || []
+        );
 
         let contents = '';
 
@@ -120,9 +127,10 @@ class Bundler {
      * @param {string[]} files
      * @param {string[]} allFiles
      * @param {string[]} ignoreLibs
+     * @param {string[]} ignoreFiles
      * @return {string[]}
      */
-    #sortFiles(files, allFiles, ignoreLibs) {
+    #sortFiles(files, allFiles, ignoreLibs, ignoreFiles) {
         /** @var {Object.<string, string[]>} */
         let map = {};
 
@@ -130,6 +138,8 @@ class Bundler {
 
         let modules = [];
         let moduleFileMap = {};
+
+        let ignoreModules = ignoreFiles.map(file => this.#obtainModuleName(file));
 
         allFiles.forEach(file => {
             let data = this.#obtainModuleData(file);
@@ -167,7 +177,9 @@ class Bundler {
                     });
             });
 
-        modules = modules.concat(depModules);
+        modules = modules
+            .concat(depModules)
+            .filter(module => !ignoreModules.includes(module));
 
         /** @var {string[]} */
         let discardedModules = [];

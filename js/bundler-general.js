@@ -53,17 +53,21 @@ class BundlerGeneral {
         this.config = config;
         this.libs = libs;
         this.mainBundleFiles = [];
-        this.filePattern = filePattern || 'client/lib/original/espo-{*}.js';
+        this.filePattern = filePattern || 'client/lib/espo-{*}.min.js';
     }
 
     /**
-     * @param {string[]} names
      * @return {Object.<string, string>}
      */
-    bundle(names) {
+    bundle() {
         let result = {};
         let mapping = {};
         let mainName = null;
+
+        let names = ['main'].concat(
+            Object.keys(this.config.chunks)
+                .filter(item => item !== 'main')
+        );
 
         names.forEach((name, i) => {
             const data = this.#bundleChunk(name, i === 0);
@@ -85,7 +89,7 @@ class BundlerGeneral {
 
         let mappingPart = JSON.stringify(mapping);
 
-        result[mainName] += `\nEspo.loader.setBundleMapping(${mappingPart});`
+        result[mainName] += `\nEspo.loader.addBundleMapping(${mappingPart});`
 
         return result;
     }
@@ -103,7 +107,7 @@ class BundlerGeneral {
         let modules = [];
 
         if (params.patterns) {
-            let data = (new Bundler(modulePaths)).bundle({
+            let data = (new Bundler(this.config.modulePaths)).bundle({
                 files: params.files,
                 patterns: params.patterns,
                 allPatterns: params.allPatterns,

@@ -75,6 +75,7 @@
         this._responseCacheIsSet = false;
         this._internalModuleListIsSet = false;
         this._bundleFileMap = {};
+        this._bundleMapping = {};
 
         this._addLibsConfigCallCount = 0;
         this._addLibsConfigCallMaxCount = 2;
@@ -767,6 +768,14 @@
         },
 
         /**
+         * @param {Object.<string, string>} mapping
+         * @internal
+         */
+        addBundleMapping: function (mapping) {
+            Object.assign(this._bundleMapping, mapping);
+        },
+
+        /**
          * Require a module or multiple modules.
          *
          * @param {...string} subject A module or modules to require.
@@ -880,6 +889,23 @@
          */
         addLibsConfig: function (data) {
             loader.addLibsConfig(data);
+        },
+
+        /**
+         * @param {string} name A bundle name.
+         * @param {string} file A bundle file.
+         * @internal
+         */
+        mapBundleFile: function (name, file) {
+            loader.mapBundleFile(name, file);
+        },
+
+        /**
+         * @param {Object.<string, string>} mapping
+         * @internal
+         */
+        addBundleMapping: function (mapping) {
+            loader.addBundleMapping(mapping);
         },
     };
 

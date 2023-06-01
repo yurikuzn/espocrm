@@ -44,11 +44,17 @@ module.exports = grunt => {
 
     const originalLibDir = 'client/lib/original';
 
-    let bundleFileMap = {
-        'client/lib/espo-libs.min.js': buildUtils.getPreparedBundleLibList(libs),
-        'client/lib/espo-templates.min.js': 'client/lib/original/espo-templates.js',
-        'client/lib/espo.min.js': originalLibDir + `/espo.js`,
-    };
+    let bundleFileMap = {'client/lib/espo-libs.min.js': buildUtils.getPreparedBundleLibList(libs)};
+
+    for (let name in bundleConfig.chunks) {
+        let namePart = 'espo-' + name;
+
+        if (name === 'main') {
+            namePart = 'espo';
+        }
+
+        bundleFileMap[`client/lib/${namePart}.min.js`] = originalLibDir + `/${namePart}.js`
+    }
 
     let copyJsFileList = buildUtils.getCopyLibDataList(libs);
 
@@ -255,12 +261,6 @@ module.exports = grunt => {
         },
     });
 
-    grunt.registerTask('bundle', [
-        'bundle-espo',
-        'bundle-templates',
-        'bundle-admin',
-    ]);
-
     const writeOriginalLib = (name, contents) => {
         if (!fs.existsSync(originalLibDir)) {
             fs.mkdirSync(originalLibDir);
@@ -271,50 +271,24 @@ module.exports = grunt => {
         fs.writeFileSync(file, contents, 'utf8');
     };
 
-    grunt.registerTask('bundle-espo', () => {
-        let chunkConfig = bundleConfig.chunks.main;
+    grunt.registerTask('bundle', () => {
+        let bundler = new BundlerGeneral(bundleConfig, libs);
 
-        (new BundlerGeneral(bundleConfig)).bundle()
+        let result = bundler.bundle();
 
+        for (let name in result) {
+            let contents = result[name];
 
+            let key = 'espo-' + name;
 
-        let contents = (new BundlerGeneral()).bundle({
-            files: chunkConfig.files,
-            patterns: chunkConfig.patterns,
-            allPatterns: chunkConfig.allPatterns,
-            libs: libs,
-        });
+            if (name === 'main') {
+                contents += '\n' + (new LayoutTypeBundler()).bundle();
 
-        contents += '\n' + (new LayoutTypeBundler()).bundle();
+                key = 'espo';
+            }
 
-        writeOriginalLib('espo', contents);
-    });
-
-    grunt.registerTask('bundle-templates', () => {
-        let chunkConfig = bundleConfig.chunks.templates;
-
-        let contents = (new BundlerGeneral()).bundle({
-            templatePatterns: chunkConfig.templatePatterns,
-            modulePaths: bundleConfig.modulePaths,
-        });
-
-        writeOriginalLib('espo-templates', contents);
-    });
-
-    grunt.registerTask('bundle-admin', () => {
-        let chunkConfig = bundleConfig.chunks.admin;
-
-        let contents = (new BundlerGeneral()).bundle({
-            files: chunkConfig.files,
-            patterns: chunkConfig.patterns,
-            allPatterns: chunkConfig.allPatterns,
-            templatePatterns: chunkConfig.templatePatterns,
-            libs: libs,
-        });
-
-        contents += '\n' + (new LayoutTypeBundler()).bundle();
-
-        writeOriginalLib('espo-admin', contents);
+            writeOriginalLib(key, contents);
+        }
     });
 
     grunt.registerTask('prepare-lib-original', () => {
