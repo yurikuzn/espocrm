@@ -26,6 +26,9 @@
                 "client/src/models/*.js",
                 "client/src/collections/*.js",
                 "client/src/acl/*.js"
+            ],
+            "allPatterns": [
+                "client/src/**/*.js"
             ]
         },
         "templates": {
@@ -65,6 +68,26 @@
                 "client/res/templates/fields/varchar/*.tpl",
                 "client/res/templates/fields/wysiwyg/*.tpl"
             ]
+        },
+        "admin": {
+            "patterns": [
+                "client/src/views/admin/**/*.js",
+                "client/src/controllers/admin.js",
+                "client/src/controllers/inbound-email.js",
+                "client/src/controllers/layout-set.js",
+                "client/src/controllers/api-user.js",
+                "client/src/controllers/role.js",
+                "client/src/controllers/portal-role.js"
+            ],
+            "templatePatterns": [
+                "client/res/templates/admin/**/*.tpl"
+            ],
+            "allPatterns": [
+                "client/src/**/*.js"
+            ]
         }
+    },
+    "modulePaths": {
+        "crm": "client/modules/crm"
     }
 }

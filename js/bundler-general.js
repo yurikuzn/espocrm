@@ -28,47 +28,110 @@
 
 const Bundler = require("./bundler");
 const Precompiler = require('./template-precompiler');
+const {result} = require("underscore");
 
 class BundlerGeneral {
 
     /**
      * @param {{
-     *   files: string[],
-     *   patterns?: string[],
-     *   allPatterns?: string[],
-     *   libs: {
-     *     src?: string,
-     *     bundle?: boolean,
-     *     key?: string,
-     *   }[],
-     *   templatePatterns?: string[],
-     *   modulePaths?: Object.<string, string>,
-     * }} params
-     * @return {string}
+     * chunks: Object.<string, {
+     *     files?: string[],
+     *     patterns?: string[],
+     *     allPatterns?: string[],
+     *     templatePatterns?: string[],
+     *   }>,
+     *   modulePaths?: Object.<string, string>
+     * }} config
+     * @param {{
+     *    src?: string,
+     *    bundle?: boolean,
+     *    key?: string,
+     *  }[]} libs
+     *  @param {string} [filePattern]
      */
-    bundle(params) {
+    constructor(config, libs, filePattern) {
+        this.config = config;
+        this.libs = libs;
+        this.mainBundleFiles = [];
+        this.filePattern = filePattern || 'client/lib/original/espo-{*}.js';
+    }
+
+    /**
+     * @param {string[]} names
+     * @return {Object.<string, string>}
+     */
+    bundle(names) {
+        let result = {};
+        let mapping = {};
+        let mainName = null;
+
+        names.forEach((name, i) => {
+            const data = this.#bundleChunk(name, i === 0);
+
+            result[name] = data.contents;
+
+            if (i === 0) {
+                mainName = name;
+
+                return;
+            }
+
+            data.modules.forEach(item => mapping[item] = name);
+
+            let bundleFile = this.filePattern.replace('{*}', name);
+
+            result[mainName] += `\nEspo.loader.mapBundleFile('${name}', '${bundleFile}');\n`;
+        });
+
+        let mappingPart = JSON.stringify(mapping);
+
+        result[mainName] += `\nEspo.loader.setBundleMapping(${mappingPart});`
+
+        return result;
+    }
+
+    /**
+     * @param {string} name
+     * @param {boolean} isMain
+     * @return {{contents: string, modules: string[]}}
+     */
+    #bundleChunk(name, isMain) {
         let contents = '';
 
+        let params = this.config.chunks[name];
+
+        let modules = [];
+
         if (params.patterns) {
-            let chunks = (new Bundler()).bundle({
+            let data = (new Bundler(modulePaths)).bundle({
                 files: params.files,
                 patterns: params.patterns,
                 allPatterns: params.allPatterns,
-                libs: params.libs,
+                libs: this.libs,
+                ignoreFiles: !isMain ? this.mainBundleFiles : [],
             });
 
-            contents += chunks[0];
+            contents += data.contents;
+
+            if (isMain) {
+                this.mainBundleFiles = data.files;
+            }
+
+            modules = data.modules;
         }
 
         if (params.templatePatterns) {
             contents += '\n' +
                 (new Precompiler()).precompile({
                     patterns: params.templatePatterns,
-                    modulePaths: params.modulePaths,
+                    modulePaths: this.config.modulePaths || {},
                 });
         }
 
-        return contents;
+        return {
+            contents: contents,
+            modules: modules,
+        };
     }
 }
 

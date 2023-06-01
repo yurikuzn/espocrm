@@ -39,6 +39,13 @@ const {globSync} = require('glob');
 class Bundler {
 
     /**
+     * @param {Object.<string, string>} modulePaths
+     */
+    constructor(modulePaths) {
+        this.modulePaths = modulePaths;
+    }
+
+    /**
      * @private
      * @type {string}
      */
@@ -51,18 +58,19 @@ class Bundler {
      *   files: string[],
      *   patterns: string[],
      *   allPatterns: string[],
-     *   chunkNumber?: number,
      *   libs: {
      *     src?: string,
      *     bundle?: boolean,
      *     key?: string,
      *   }[],
      * }} params
-     * @return {string[]}
+     * @return {{
+     *   contents: string,
+     *   files: string[],
+     *   modules: string[],
+     * }}
      */
     bundle(params) {
-        let chunkNumber = params.chunkNumber || 1;
-
         let files = []
             .concat(params.files)
             .concat(this.#obtainFiles(params.patterns, params.files));
@@ -75,28 +83,17 @@ class Bundler {
 
         let sortedFiles = this.#sortFiles(files, allFiles, ignoreLibs);
 
-        let portions = [];
-        let portionSize = Math.floor(sortedFiles.length / chunkNumber);
+        let contents = '';
 
-        for (let i = 0; i < chunkNumber; i++) {
-            let end = i === chunkNumber - 1 ?
-                sortedFiles.length :
-                (i + 1) * portionSize;
+        sortedFiles.forEach(file => contents += this.#normalizeSourceFile(file));
 
-            portions.push(sortedFiles.slice(i * portionSize, end));
-        }
+        let modules = files.map(file => this.#obtainModuleName(file));
 
-        let chunks = [];
-
-        portions.forEach(portion => {
-            let chunk = '';
-
-            portion.forEach(file => chunk += this.normalizeSourceFile(file));
-
-            chunks.push(chunk);
-        });
-
-        return chunks;
+        return {
+            contents: contents,
+            files: sortedFiles,
+            modules: modules,
+        };
     }
 
     /**
@@ -291,6 +288,22 @@ class Bundler {
     }
 
     /**
+     * @param {string} file
+     * @return string
+     */
+    #obtainModuleName(file) {
+        for (let mod in this.modulePaths) {
+            let part = this.modulePaths[mod];
+
+            if (file.indexOf(part) === 0) {
+                return file.substring(part.length, part.length - 3);
+            }
+        }
+
+        return file.slice(this.#getBathPath().length, -3);
+    }
+
+    /**
      * @param {string} path
      * @return {{deps: string[], name: string}|null}
      */
@@ -315,7 +328,7 @@ class Bundler {
             return null;
         }
 
-        let moduleName = path.slice(this._getBathPath().length, -3);
+        let moduleName = this.#obtainModuleName(path);
 
         let deps = [];
 
@@ -344,7 +357,7 @@ class Bundler {
      * @return {boolean}
      */
     #isClientJsFile(path) {
-        return path.indexOf(this._getBathPath()) === 0 && path.slice(-3) === '.js';
+        return path.indexOf(this.#getBathPath()) === 0 && path.slice(-3) === '.js';
     }
 
     /**
@@ -352,9 +365,9 @@ class Bundler {
      * @param {string} path
      * @return {string}
      */
-    normalizeSourceFile(path) {
+    #normalizeSourceFile(path) {
         let sourceCode = fs.readFileSync(path, 'utf-8');
-        let basePath = this._getBathPath();
+        let basePath = this.#getBathPath();
 
         if (!this.#isClientJsFile(path)) {
             return sourceCode;
@@ -401,7 +414,7 @@ class Bundler {
      * @private
      * @return {string}
      */
-    _getBathPath() {
+    #getBathPath() {
         let path = this.basePath;
 
         if (path.slice(-1) !== '/') {

@@ -74,6 +74,7 @@
         this._cacheIsSet = false;
         this._responseCacheIsSet = false;
         this._internalModuleListIsSet = false;
+        this._bundleFileMap = {};
 
         this._addLibsConfigCallCount = 0;
         this._addLibsConfigCallMaxCount = 2;
@@ -754,6 +755,15 @@
             }
 
             return this._internalModuleMap[moduleName];
+        },
+
+        /**
+         * @param {string} name A bundle name.
+         * @param {string} file A bundle file.
+         * @internal
+         */
+        mapBundleFile: function (name, file) {
+            this._bundleFileMap[name] = file;
         },
 
         /**
