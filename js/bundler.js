@@ -57,7 +57,7 @@ class Bundler {
      * @param {{
      *   files?: string[],
      *   patterns: string[],
-     *   allPatterns: string[],
+     *   allPatterns?: string[],
      *   ignoreFiles?: string[],
      *   libs: {
      *     src?: string,
@@ -77,7 +77,7 @@ class Bundler {
             .concat(this.#obtainFiles(params.patterns, params.files))
             .filter(file => !params.ignoreFiles.includes(file));
 
-        let allFiles = this.#obtainFiles(params.allPatterns);
+        let allFiles = this.#obtainFiles(params.allPatterns || params.patterns);
 
         let ignoreLibs = params.libs
             .filter(item => item.key && !item.bundle)
@@ -203,6 +203,10 @@ class Bundler {
         modules = modules.filter(item => !discardedModules.includes(item));
 
         let modulePaths = modules.map(name => {
+            if (!moduleFileMap[name]) {
+                throw Error(`Can't obtain ${name}. Might be missing in allPatterns.`);
+            }
+
             return moduleFileMap[name];
         });
 
@@ -305,10 +309,10 @@ class Bundler {
      */
     #obtainModuleName(file) {
         for (let mod in this.modulePaths) {
-            let part = this.modulePaths[mod];
+            let part = this.modulePaths[mod] + '/src/';
 
             if (file.indexOf(part) === 0) {
-                return file.substring(part.length, part.length - 3);
+                return mod + ':' + file.substring(part.length, file.length - 3);
             }
         }
 
@@ -369,7 +373,25 @@ class Bundler {
      * @return {boolean}
      */
     #isClientJsFile(path) {
-        return path.indexOf(this.#getBathPath()) === 0 && path.slice(-3) === '.js';
+        if (path.slice(-3) !== '.js') {
+            return false;
+        }
+
+        let startParts = [this.#getBathPath()];
+
+        for (let mod in this.modulePaths) {
+            let modPath = this.modulePaths[mod];
+
+            startParts.push(modPath);
+        }
+
+        for (let starPart of startParts) {
+            if (path.indexOf(starPart) === 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

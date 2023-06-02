@@ -40,7 +40,8 @@ class BundlerGeneral {
      *     allPatterns?: string[],
      *     templatePatterns?: string[],
      *   }>,
-     *   modulePaths?: Object.<string, string>
+     *   modulePaths?: Object.<string, string>,
+     *   allPatterns: string[],
      * }} config
      * @param {{
      *    src?: string,
@@ -107,10 +108,14 @@ class BundlerGeneral {
         let modules = [];
 
         if (params.patterns) {
+            let allPatterns = []
+                .concat(this.config.allPatterns)
+                .concat(params.allPatterns || []);
+
             let data = (new Bundler(this.config.modulePaths)).bundle({
                 files: params.files,
                 patterns: params.patterns,
-                allPatterns: params.allPatterns,
+                allPatterns: allPatterns,
                 libs: this.libs,
                 ignoreFiles: !isMain ? this.mainBundleFiles : [],
             });

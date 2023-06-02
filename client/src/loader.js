@@ -502,6 +502,25 @@
                     return;
                 }
 
+                if (name in this._bundleMapping) {
+                    let bundleName = this._bundleMapping[name];
+
+                    this._addBundle(bundleName).then(() => {
+                        let classObj = this._getClass(name);
+
+                        if (!classObj) {
+                            let msg = `Could not obtain class '${name}' from bundle '${bundleName}'.`;
+                            console.error(msg);
+
+                            throw new Error(msg);
+                        }
+
+                        callback(classObj);
+                    });
+
+                    return;
+                }
+
                 path = this._nameToPath(name);
             }
 
@@ -578,6 +597,42 @@
                             this._handleResponse(dto, cached);
                         });
                 });
+        },
+
+        /**
+         * @private
+         * @param {string} name
+         * @return {Promise}
+         */
+        _addBundle: function (name) {
+            let scriptEl = document.createElement('script');
+
+            let src = this._bundleFileMap[name];
+
+            if (!src) {
+                throw new Error(`Unknown bundle '${name}'.`);
+            }
+
+            if (this._cacheTimestamp) {
+                let sep = (src.indexOf('?') > -1) ? '&' : '?';
+
+                src += sep + 'r=' + this._cacheTimestamp;
+            }
+
+            src = this._basePath + src;
+
+            scriptEl.setAttribute('type', 'text/javascript')
+            scriptEl.setAttribute('src', src);
+
+            scriptEl.addEventListener('error', event => {
+                console.error(`Could not load bundle '${name}'.`, event);
+            });
+
+            return new Promise(resolve => {
+                document.head.appendChild(scriptEl);
+
+                scriptEl.addEventListener('load', () => resolve());
+            });
         },
 
         /**

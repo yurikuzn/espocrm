@@ -26,9 +26,6 @@
                 "client/src/models/*.js",
                 "client/src/collections/*.js",
                 "client/src/acl/*.js"
-            ],
-            "allPatterns": [
-                "client/src/**/*.js"
             ]
         },
         "templates": {
@@ -81,13 +78,24 @@
             ],
             "templatePatterns": [
                 "client/res/templates/admin/**/*.tpl"
+            ]
+        },
+        "crm": {
+            "patterns": [
+                "client/modules/crm/src/**/*.js"
+            ],
+            "templatePatterns": [
+                "client/modules/crm/res/templates/**/*.tpl"
             ],
             "allPatterns": [
-                "client/src/**/*.js"
+                "client/modules/crm/src/**/*.js"
             ]
         }
     },
     "modulePaths": {
         "crm": "client/modules/crm"
-    }
+    },
+    "allPatterns": [
+        "client/src/**/*.js"
+    ]
 }
