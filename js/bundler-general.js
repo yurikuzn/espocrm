@@ -71,9 +71,11 @@ class BundlerGeneral {
         let result = {};
         let mapping = {};
         let files = [];
+        let modules = [];
         let templateFiles = [];
         let mainName = this.config.order[0];
 
+        /** @var {Object.<string, string[]>} */
         let notBundledMap = {};
 
         this.config.order.forEach((name, i) => {
@@ -84,7 +86,8 @@ class BundlerGeneral {
 
             files = files.concat(data.files);
             templateFiles = templateFiles.concat(data.templateFiles);
-
+            modules = modules.concat(data.modules);
+            notBundledMap[name] = data.notBundledModules;
             result[name] = data.contents;
 
             if (i === 0) {
@@ -97,6 +100,23 @@ class BundlerGeneral {
 
             result[mainName] += `Espo.loader.mapBundleFile('${name}', '${bundleFile}');\n`;
         });
+
+        let notBundledModules = [];
+
+        this.config.order.forEach(name => {
+            notBundledMap[name]
+                .filter(item => !modules.includes(item))
+                .filter(item => !notBundledModules.includes(item))
+                .forEach(item => notBundledModules.push(item));
+        });
+
+        if (notBundledModules.length) {
+            let part = notBundledModules
+                .map(item => ' ' + item)
+                .join('\n');
+
+            console.log(`\nNot bundled:\n${part}`);
+        }
 
         result[mainName] += `Espo.loader.addBundleMapping(${JSON.stringify(mapping)});`
 
@@ -112,6 +132,7 @@ class BundlerGeneral {
      *   modules: string[],
      *   files: string[],
      *   templateFiles: string[],
+     *   notBundledModules: string[],
      * }}
      */
     #bundleChunk(name, isMain, alreadyBundled) {
@@ -128,6 +149,7 @@ class BundlerGeneral {
 
         let bundledFiles = [];
         let bundledTemplateFiles = [];
+        let notBundledModules = [];
 
         if (params.patterns) {
             let bundler = (new Bundler(this.config.modulePaths));
@@ -161,13 +183,9 @@ class BundlerGeneral {
                 contents = this.#bundleLibs(params.libs) + '\n' + contents;
             }
 
-            if (data.notBundledModules.length) {
-                let part = data.notBundledModules
-                    .map(item => ' ' + item)
-                    .join('\n');
+            notBundledModules = data.notBundledModules;
 
-                console.log(`\nNot bundled in '${name}':\n${part}`);
-            }
+
         }
 
         if (params.templatePatterns) {
@@ -188,6 +206,7 @@ class BundlerGeneral {
             modules: modules,
             files: bundledFiles,
             templateFiles: bundledTemplateFiles,
+            notBundledModules: notBundledModules,
         };
     }
 
