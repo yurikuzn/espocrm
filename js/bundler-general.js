@@ -28,7 +28,6 @@
 
 const Bundler = require("./bundler");
 const Precompiler = require('./template-precompiler');
-const {result} = require("underscore");
 
 class BundlerGeneral {
 
@@ -39,9 +38,11 @@ class BundlerGeneral {
      *     patterns?: string[],
      *     allPatterns?: string[],
      *     templatePatterns?: string[],
+     *     noDuplicates?: boolean,
      *   }>,
-     *   modulePaths?: Object.<string, string>,
+     *   modulePaths?: Record.<string, string>,
      *   allPatterns: string[],
+     *   order: string[],
      * }} config
      * @param {{
      *    src?: string,
@@ -63,21 +64,22 @@ class BundlerGeneral {
     bundle() {
         let result = {};
         let mapping = {};
-        let mainName = null;
+        let files = [];
+        let templateFiles = [];
+        let mainName = this.config.order[0];
 
-        let names = ['main'].concat(
-            Object.keys(this.config.chunks)
-                .filter(item => item !== 'main')
-        );
+        this.config.order.forEach((name, i) => {
+            let data = this.#bundleChunk(name, i === 0, {
+                files: files,
+                templateFiles: templateFiles,
+            });
 
-        names.forEach((name, i) => {
-            const data = this.#bundleChunk(name, i === 0);
+            files = files.concat(data.files);
+            templateFiles = templateFiles.concat(data.templateFiles);
 
             result[name] = data.contents;
 
             if (i === 0) {
-                mainName = name;
-
                 return;
             }
 
@@ -85,12 +87,10 @@ class BundlerGeneral {
 
             let bundleFile = this.filePattern.replace('{*}', name);
 
-            result[mainName] += `\nEspo.loader.mapBundleFile('${name}', '${bundleFile}');\n`;
+            result[mainName] += `Espo.loader.mapBundleFile('${name}', '${bundleFile}');\n`;
         });
 
-        let mappingPart = JSON.stringify(mapping);
-
-        result[mainName] += `\nEspo.loader.addBundleMapping(${mappingPart});`
+        result[mainName] += `Espo.loader.addBundleMapping(${JSON.stringify(mapping)});`
 
         return result;
     }
@@ -98,26 +98,45 @@ class BundlerGeneral {
     /**
      * @param {string} name
      * @param {boolean} isMain
-     * @return {{contents: string, modules: string[]}}
+     * @param {{files: [], templateFiles: []}} alreadyBundled
+     * @return {{
+     *   contents: string,
+     *   modules: string[],
+     *   files: string[],
+     *   templateFiles: string[],
+     * }}
      */
-    #bundleChunk(name, isMain) {
+    #bundleChunk(name, isMain, alreadyBundled) {
         let contents = '';
-
-        let params = this.config.chunks[name];
 
         let modules = [];
 
-        if (params.patterns) {
-            let allPatterns = []
-                .concat(this.config.allPatterns)
-                .concat(params.allPatterns || []);
+        let params = this.config.chunks[name];
 
-            let data = (new Bundler(this.config.modulePaths)).bundle({
+        let patterns = params.patterns;
+        let allPatterns = []
+            .concat(this.config.allPatterns)
+            .concat(params.allPatterns || []);
+
+        let bundledFiles = [];
+        let bundledTemplateFiles = [];
+
+        if (params.patterns) {
+            let bundler = (new Bundler(this.config.modulePaths));
+
+            // The main bundle is always loaded, duplicates are not needed.
+            let ignoreFiles = [].concat(this.mainBundleFiles);
+
+            if (params.noDuplicates) {
+                ignoreFiles = ignoreFiles.concat(alreadyBundled.files);
+            }
+
+            let data = bundler.bundle({
                 files: params.files,
-                patterns: params.patterns,
+                patterns: patterns,
                 allPatterns: allPatterns,
                 libs: this.libs,
-                ignoreFiles: !isMain ? this.mainBundleFiles : [],
+                ignoreFiles: ignoreFiles,
             });
 
             contents += data.contents;
@@ -127,19 +146,35 @@ class BundlerGeneral {
             }
 
             modules = data.modules;
+            bundledFiles = data.files;
+
+            if (data.notBundledModules.length) {
+                let part = data.notBundledModules
+                    .map(item => ' ' + item)
+                    .join('\n');
+
+                console.log(`\nNot bundled in '${name}':\n${part}`);
+            }
         }
 
         if (params.templatePatterns) {
-            contents += '\n' +
-                (new Precompiler()).precompile({
-                    patterns: params.templatePatterns,
-                    modulePaths: this.config.modulePaths || {},
-                });
+            let ignoreFiles = params.noDuplicates ? [].concat(alreadyBundled.templateFiles) : [];
+
+            let data = (new Precompiler()).precompile({
+                patterns: params.templatePatterns,
+                modulePaths: this.config.modulePaths,
+                ignoreFiles: ignoreFiles,
+            });
+
+            contents += '\n' + data.contents;
+            bundledTemplateFiles = data.files;
         }
 
         return {
             contents: contents,
             modules: modules,
+            files: bundledFiles,
+            templateFiles: bundledTemplateFiles,
         };
     }
 }

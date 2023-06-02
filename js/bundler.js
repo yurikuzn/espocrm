@@ -69,6 +69,7 @@ class Bundler {
      *   contents: string,
      *   files: string[],
      *   modules: string[],
+     *   notBundledModules: string[],
      * }}
      */
     bundle(params) {
@@ -83,23 +84,27 @@ class Bundler {
             .filter(item => item.key && !item.bundle)
             .map(item => 'lib!' + item.key);
 
+        let notBundledModules = [];
+
         let sortedFiles = this.#sortFiles(
             files,
             allFiles,
             ignoreLibs,
-            params.ignoreFiles || []
+            params.ignoreFiles || [],
+            notBundledModules
         );
 
         let contents = '';
 
         sortedFiles.forEach(file => contents += this.#normalizeSourceFile(file));
 
-        let modules = files.map(file => this.#obtainModuleName(file));
+        let modules = sortedFiles.map(file => this.#obtainModuleName(file));
 
         return {
             contents: contents,
             files: sortedFiles,
             modules: modules,
+            notBundledModules: notBundledModules,
         };
     }
 
@@ -128,9 +133,10 @@ class Bundler {
      * @param {string[]} allFiles
      * @param {string[]} ignoreLibs
      * @param {string[]} ignoreFiles
+     * @param {string[]} notBundledModules
      * @return {string[]}
      */
-    #sortFiles(files, allFiles, ignoreLibs, ignoreFiles) {
+    #sortFiles(files, allFiles, ignoreLibs, ignoreFiles, notBundledModules) {
         /** @var {Object.<string, string[]>} */
         let map = {};
 
@@ -199,6 +205,10 @@ class Bundler {
         modules.sort((v1, v2) => {
             return depthMap[v2] - depthMap[v1];
         });
+
+        discardedModules.forEach(item => notBundledModules.push(item));
+
+
 
         modules = modules.filter(item => !discardedModules.includes(item));
 

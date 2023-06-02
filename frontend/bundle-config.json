@@ -1,4 +1,11 @@
 {
+    "order": [
+        "main",
+        "templates",
+        "admin",
+        "crm",
+        "extra"
+    ],
     "chunks": {
         "main": {
             "files": [
@@ -69,6 +76,15 @@
         "admin": {
             "patterns": [
                 "client/src/views/admin/**/*.js",
+                "client/src/views/authentication-provider/**/*.js",
+                "client/src/views/inbound-email/**/*.js",
+                "client/src/views/templates/**/*.js",
+                "client/src/views/role/**/*.js",
+                "client/src/views/portal-role/**/*.js",
+                "client/src/views/scheduled-job/**/*.js",
+                "client/src/views/lead-capture/**/*.js",
+                "client/src/views/lead-capture-log-record/**/*.js",
+                "client/src/views/webhooks/**/*.js",
                 "client/src/controllers/admin.js",
                 "client/src/controllers/inbound-email.js",
                 "client/src/controllers/layout-set.js",
@@ -90,6 +106,15 @@
             "allPatterns": [
                 "client/modules/crm/src/**/*.js"
             ]
+        },
+        "extra": {
+            "patterns": [
+                "client/src/**/*.js"
+            ],
+            "templatePatterns": [
+                "client/res/templates/**/*.tpl"
+            ],
+            "noDuplicates": true
         }
     },
     "modulePaths": {
