@@ -5,6 +5,9 @@
         "admin",
         "crm",
         "wysiwyg",
+        "chart",
+        "calendar",
+        "timeline",
         "extra"
     ],
     "chunks": {
@@ -116,7 +119,47 @@
             "dependentOn": [
                 "lib!Summernote"
             ],
-            "libs": ["Summernote"]
+            "libs": ["Summernote"],
+            "allPatterns": [
+                "client/modules/crm/src/**/*.js"
+            ]
+        },
+        "chart": {
+            "patterns": [
+                "client/modules/crm/src/**/*.js"
+            ],
+            "dependentOn": [
+                "lib!Flotr",
+                "lib!espo-funnel-chart"
+            ],
+            "libs": ["Flotr", "espo-funnel-chart"],
+            "allPatterns": [
+                "client/modules/crm/src/**/*.js"
+            ]
+        },
+        "calendar": {
+            "patterns": [
+                "client/modules/crm/src/**/*.js"
+            ],
+            "dependentOn": [
+                "lib!full-calendar"
+            ],
+            "libs": ["full-calendar"],
+            "allPatterns": [
+                "client/modules/crm/src/**/*.js"
+            ]
+        },
+        "timeline": {
+            "patterns": [
+                "client/modules/crm/src/**/*.js"
+            ],
+            "dependentOn": [
+                "lib!vis"
+            ],
+            "libs": ["vis"],
+            "allPatterns": [
+                "client/modules/crm/src/**/*.js"
+            ]
         },
         "extra": {
             "patterns": [
