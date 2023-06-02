@@ -179,13 +179,11 @@ class BundlerGeneral {
             modules = data.modules;
             bundledFiles = data.files;
 
-            if (params.libs) {
+            /*if (params.libs) {
                 contents = this.#bundleLibs(params.libs) + '\n' + contents;
-            }
+            }*/
 
             notBundledModules = data.notBundledModules;
-
-
         }
 
         if (params.templatePatterns) {
