@@ -98,6 +98,14 @@ class BundlerGeneral {
 
             let bundleFile = this.filePattern.replace('{*}', name);
 
+            let libs = this.config.chunks[name].libs;
+
+            if (libs) {
+                let part = JSON.stringify(libs.map(item => 'lib!' + item));
+
+                result[mainName] += `Espo.loader.mapBundleDependencies('${name}', ${part});\n`;
+            }
+
             result[mainName] += `Espo.loader.mapBundleFile('${name}', '${bundleFile}');\n`;
         });
 

@@ -76,6 +76,8 @@
         this._internalModuleListIsSet = false;
         this._bundleFileMap = {};
         this._bundleMapping = {};
+        /** @type Object.<string, string[]> */
+        this._bundleDependenciesMap = {};
 
         this._addLibsConfigCallCount = 0;
         this._addLibsConfigCallMaxCount = 2;
@@ -605,8 +607,29 @@
          * @return {Promise}
          */
         _addBundle: function (name) {
-            let scriptEl = document.createElement('script');
+            let dependencies = this._bundleDependenciesMap[name] || [];
 
+            if (!dependencies.length) {
+                return this._addBundleInternal(name);
+            }
+
+            return new Promise(resolve => {
+                let list = dependencies.map(item => Espo.loader.requirePromise(item));
+
+                Promise.all(list)
+                    .then(() => {
+                        return this._addBundleInternal(name);
+                    })
+                    .then(() => resolve());
+            });
+        },
+
+        /**
+         * @private
+         * @param {string} name
+         * @return {Promise}
+         */
+        _addBundleInternal: function (name) {
             let src = this._bundleFileMap[name];
 
             if (!src) {
@@ -620,6 +643,8 @@
             }
 
             src = this._basePath + src;
+
+            let scriptEl = document.createElement('script');
 
             scriptEl.setAttribute('type', 'text/javascript')
             scriptEl.setAttribute('src', src);
@@ -823,6 +848,15 @@
         },
 
         /**
+         * @param {string} name A bundle name.
+         * @param {string} list Dependencies..
+         * @internal
+         */
+        mapBundleDependencies: function (name, list) {
+            this._bundleDependenciesMap[name] = list;
+        },
+
+        /**
          * @param {Object.<string, string>} mapping
          * @internal
          */
@@ -953,6 +987,15 @@
          */
         mapBundleFile: function (name, file) {
             loader.mapBundleFile(name, file);
+        },
+
+        /**
+         * @param {string} name A bundle name.
+         * @param {string} list Dependencies..
+         * @internal
+         */
+        mapBundleDependencies: function (name, list) {
+            loader.mapBundleDependencies(name, list);
         },
 
         /**
