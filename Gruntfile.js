@@ -473,8 +473,8 @@ module.exports = grunt => {
     grunt.registerTask('internal', [
         'less',
         'cssmin',
-        'bundle',
         'prepare-lib-original',
+        'bundle',
         'uglify:bundle',
         'copy:frontendLib',
         'prepare-lib',

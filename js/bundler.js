@@ -59,6 +59,7 @@ class Bundler {
      *   patterns: string[],
      *   allPatterns?: string[],
      *   ignoreFiles?: string[],
+     *   dependentOn?: string[],
      *   libs: {
      *     src?: string,
      *     bundle?: boolean,
@@ -82,7 +83,8 @@ class Bundler {
 
         let ignoreLibs = params.libs
             .filter(item => item.key && !item.bundle)
-            .map(item => 'lib!' + item.key);
+            .map(item => 'lib!' + item.key)
+            .filter(item => !(params.dependentOn || []).includes(item));
 
         let notBundledModules = [];
 
@@ -91,7 +93,8 @@ class Bundler {
             allFiles,
             ignoreLibs,
             params.ignoreFiles || [],
-            notBundledModules
+            notBundledModules,
+            params.dependentOn || null,
         );
 
         let contents = '';
@@ -134,14 +137,20 @@ class Bundler {
      * @param {string[]} ignoreLibs
      * @param {string[]} ignoreFiles
      * @param {string[]} notBundledModules
+     * @param {string[]|null} dependentOn
      * @return {string[]}
      */
-    #sortFiles(files, allFiles, ignoreLibs, ignoreFiles, notBundledModules) {
+    #sortFiles(
+        files,
+        allFiles,
+        ignoreLibs,
+        ignoreFiles,
+        notBundledModules,
+        dependentOn
+    ) {
         /** @var {Object.<string, string[]>} */
         let map = {};
-
         let standalonePathList = [];
-
         let modules = [];
         let moduleFileMap = {};
 
@@ -191,6 +200,8 @@ class Bundler {
         let discardedModules = [];
         /** @var {Object.<string, number>} */
         let depthMap = {};
+        /** @var {string[]} */
+        let pickedModules = [];
 
         for (let name of modules) {
             this.#buildTreeItem(
@@ -198,8 +209,14 @@ class Bundler {
                 map,
                 depthMap,
                 ignoreLibs,
-                discardedModules
+                dependentOn,
+                discardedModules,
+                pickedModules
             );
+        }
+
+        if (dependentOn) {
+            modules = pickedModules;
         }
 
         modules.sort((v1, v2) => {
@@ -207,8 +224,6 @@ class Bundler {
         });
 
         discardedModules.forEach(item => notBundledModules.push(item));
-
-
 
         modules = modules.filter(item => !discardedModules.includes(item));
 
@@ -255,7 +270,9 @@ class Bundler {
      * @param {Object.<string, string[]>} map
      * @param {Object.<string, number>} depthMap
      * @param {string[]} ignoreLibs
+     * @param {string[]} dependentOn
      * @param {string[]} discardedModules
+     * @param {string[]} pickedModules
      * @param {number} [depth]
      * @param {string[]} [path]
      */
@@ -264,7 +281,9 @@ class Bundler {
         map,
         depthMap,
         ignoreLibs,
+        dependentOn,
         discardedModules,
+        pickedModules,
         depth,
         path
     ) {
@@ -294,6 +313,12 @@ class Bundler {
 
                 return;
             }
+
+            if (dependentOn && dependentOn.includes(depName)) {
+                path
+                    .filter(item => !pickedModules.includes(item))
+                    .forEach(item => pickedModules.push(item));
+            }
         }
 
         deps.forEach(depName => {
@@ -306,7 +331,9 @@ class Bundler {
                 map,
                 depthMap,
                 ignoreLibs,
+                dependentOn,
                 discardedModules,
+                pickedModules,
                 depth + 1,
                 path
             );

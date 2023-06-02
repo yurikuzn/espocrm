@@ -4,6 +4,7 @@
         "templates",
         "admin",
         "crm",
+        "wysiwyg",
         "extra"
     ],
     "chunks": {
@@ -106,6 +107,16 @@
             "allPatterns": [
                 "client/modules/crm/src/**/*.js"
             ]
+        },
+        "wysiwyg": {
+            "patterns": [
+                "client/src/**/*.js",
+                "client/modules/crm/src/**/*.js"
+            ],
+            "dependentOn": [
+                "lib!Summernote"
+            ],
+            "libs": ["Summernote"]
         },
         "extra": {
             "patterns": [

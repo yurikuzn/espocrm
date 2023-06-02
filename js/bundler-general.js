@@ -28,6 +28,7 @@
 
 const Bundler = require("./bundler");
 const Precompiler = require('./template-precompiler');
+const fs = require('fs');
 
 class BundlerGeneral {
 
@@ -39,6 +40,8 @@ class BundlerGeneral {
      *     allPatterns?: string[],
      *     templatePatterns?: string[],
      *     noDuplicates?: boolean,
+     *     dependentOn?: string[],
+     *     libs?: string[],
      *   }>,
      *   modulePaths?: Record.<string, string>,
      *   allPatterns: string[],
@@ -48,6 +51,9 @@ class BundlerGeneral {
      *    src?: string,
      *    bundle?: boolean,
      *    key?: string,
+     *    files?: {
+     *        src: string,
+     *    }[]
      *  }[]} libs
      *  @param {string} [filePattern]
      */
@@ -67,6 +73,8 @@ class BundlerGeneral {
         let files = [];
         let templateFiles = [];
         let mainName = this.config.order[0];
+
+        let notBundledMap = {};
 
         this.config.order.forEach((name, i) => {
             let data = this.#bundleChunk(name, i === 0, {
@@ -137,6 +145,7 @@ class BundlerGeneral {
                 allPatterns: allPatterns,
                 libs: this.libs,
                 ignoreFiles: ignoreFiles,
+                dependentOn: params.dependentOn,
             });
 
             contents += data.contents;
@@ -147,6 +156,10 @@ class BundlerGeneral {
 
             modules = data.modules;
             bundledFiles = data.files;
+
+            if (params.libs) {
+                contents = this.#bundleLibs(params.libs) + '\n' + contents;
+            }
 
             if (data.notBundledModules.length) {
                 let part = data.notBundledModules
@@ -176,6 +189,36 @@ class BundlerGeneral {
             files: bundledFiles,
             templateFiles: bundledTemplateFiles,
         };
+    }
+
+    /**
+     * @param {string[]} libs
+     * @return {string}
+     */
+    #bundleLibs(libs) {
+        let files = [];
+
+        this.libs
+            .filter(item => libs.includes(item.key))
+            .forEach(item => {
+                if (item.src) {
+                    files.push(item.src);
+
+                    return;
+                }
+
+                if (!item.files) {
+                    return;
+                }
+
+                item.files.forEach(item => {
+                    files.push(item.src);
+                });
+            });
+
+        let contents = files.map(file => fs.readFileSync(file, 'utf-8'));
+
+        return contents.join('\n');
     }
 }
 
