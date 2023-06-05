@@ -26,86 +26,82 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('model-factory', [], function () {
+/**
+ * A model factory.
+ *
+ * @class
+ */
+let Class = function (metadata, user) {
+    this.metadata = metadata;
+    this.user = user;
+};
+
+_.extend(Class.prototype, /** @lends Class# */ {
 
     /**
-     * A model factory.
-     *
-     * @class
-     * @name Class
-     * @memberOf module:model-factory
+     * @private
      */
-    let ModelFactory = function (metadata, user) {
-        this.metadata = metadata;
-        this.user = user;
-    };
+    metadata: null,
 
-    _.extend(ModelFactory.prototype, /** @lends module:model-factory.Class# */ {
+    /**
+     * @public
+     * @type {module:date-time.Class|null}
+     * @internal
+     */
+    dateTime: null,
 
-        /**
-         * @private
-         */
-        metadata: null,
+    /**
+     * @private
+     */
+    user: null,
 
-        /**
-         * @public
-         * @type {module:date-time.Class|null}
-         * @internal
-         */
-        dateTime: null,
+    /**
+     * Create a model.
+     *
+     * @param {string} name An entity type.
+     * @param {Function} [callback] Deprecated.
+     * @param {Object} [context] Deprecated.
+     * @returns {Promise<module:model.Class>}
+     */
+    create: function (name, callback, context) {
+        return new Promise(resolve => {
+            context = context || this;
 
-        /**
-         * @private
-         */
-        user: null,
+            this.getSeed(name, seed => {
+                let model = new seed();
 
-        /**
-         * Create a model.
-         *
-         * @param {string} name An entity type.
-         * @param {Function} [callback] Deprecated.
-         * @param {Object} [context] Deprecated.
-         * @returns {Promise<module:model.Class>}
-         */
-        create: function (name, callback, context) {
-            return new Promise(resolve => {
-                context = context || this;
+                if (callback) {
+                    callback.call(context, model);
+                }
 
-                this.getSeed(name, seed => {
-                    let model = new seed();
-
-                    if (callback) {
-                        callback.call(context, model);
-                    }
-
-                    resolve(model);
-                });
+                resolve(model);
             });
-        },
+        });
+    },
 
-        /**
-         * Get a class.
-         *
-         * @param {string} name An entity type.
-         * @param {function(module:model.Class): void} callback A callback.
-         * @public
-         */
-        getSeed: function (name, callback) {
-            let className = this.metadata.get(['clientDefs', name, 'model']) || 'model';
+    /**
+     * Get a class.
+     *
+     * @param {string} name An entity type.
+     * @param {function(module:model.Class): void} callback A callback.
+     * @public
+     */
+    getSeed: function (name, callback) {
+        let className = this.metadata.get(['clientDefs', name, 'model']) || 'model';
 
-            require(className, modelClass => {
-                let seed = modelClass.extend({
-                    name: name,
-                    entityType: name,
-                    defs: this.metadata.get(['entityDefs', name]) || {},
-                    dateTime: this.dateTime,
-                    _user: this.user,
-                });
-
-                callback(seed);
+        require(className, modelClass => {
+            let seed = modelClass.extend({
+                name: name,
+                entityType: name,
+                defs: this.metadata.get(['entityDefs', name]) || {},
+                dateTime: this.dateTime,
+                _user: this.user,
             });
-        },
-    });
 
-    return ModelFactory;
+            callback(seed);
+        });
+    },
 });
+
+/** @module model-factory */
+export default Class;

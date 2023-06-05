@@ -37,7 +37,7 @@ let Dep = Backbone.Model;
  * @param {Object} [options] Options.
  * @returns {Promise}
  *
- * @fires Model#sync
+ * @fires Class#sync
  */
 
 /**
@@ -61,16 +61,16 @@ let Dep = Backbone.Model;
 /**
  * When attributes have changed.
  *
- * @event Model#change
- * @param {Model} model A model.
+ * @event Class#change
+ * @param {Class} model A model.
  * @param {Object} o Options.
  */
 
 /**
  * On sync with backend.
  *
- * @event Model#sync
- * @param {Model} model A model.
+ * @event Class#sync
+ * @param {Class} model A model.
  * @param {Object} response Response from backend.
  * @param {Object} o Options.
  */
@@ -82,7 +82,7 @@ let Dep = Backbone.Model;
  * @extends Backbone.Model
  * @mixes Backbone.Events
  */
-let Model = Dep.extend(/** @lends Model# */{
+let Class = Dep.extend(/** @lends Class# */{
 
     /**
      * A record ID.
@@ -90,7 +90,7 @@ let Model = Dep.extend(/** @lends Model# */{
      * @name cid
      * @type {string|null}
      * @public
-     * @memberof Model.prototype
+     * @memberof Class.prototype
      */
 
     /**
@@ -99,7 +99,7 @@ let Model = Dep.extend(/** @lends Model# */{
      * @name cid
      * @type {string}
      * @public
-     * @memberof Model.prototype
+     * @memberof Class.prototype
      */
 
     /**
@@ -108,7 +108,7 @@ let Model = Dep.extend(/** @lends Model# */{
      * @name attributes
      * @type {Object}
      * @public
-     * @memberof Model.prototype
+     * @memberof Class.prototype
      */
 
     /**
@@ -167,7 +167,7 @@ let Model = Dep.extend(/** @lends Model# */{
 
     /**
      * @param {string} [method] HTTP method.
-     * @param {Model} [model]
+     * @param {Class} [model]
      * @param {Object} [options]
      * @returns {Promise}
      */
@@ -187,7 +187,7 @@ let Model = Dep.extend(/** @lends Model# */{
      * @param {Object} [options] Options. `silent` won't trigger a `change` event.
      * @returns {this}
      *
-     * @fires Model#change Unless `{silent: true}`.
+     * @fires Class#change Unless `{silent: true}`.
      */
     set: function (key, val, options) {
         if (typeof key === 'object') {
@@ -507,7 +507,7 @@ let Model = Dep.extend(/** @lends Model# */{
 
     /**
      * @protected
-     * @returns {Espo.Models.User}
+     * @returns {Espo.Classs.User}
      */
     getUser: function () {
         return this._user;
@@ -562,7 +562,7 @@ let Model = Dep.extend(/** @lends Model# */{
      * @param {Object} [options] Options.
      * @returns {Promise<Object>}
      *
-     * @fires Model#sync
+     * @fires Class#sync
      */
     fetch: function (options) {
         this.lastXhr = Dep.prototype.fetch.call(this, options);
@@ -580,7 +580,7 @@ let Model = Dep.extend(/** @lends Model# */{
     },
 });
 
-Model.extend = Bull.View.extend;
+Class.extend = Bull.View.extend;
 
 /** @module model */
-export default Model;
+export default Class;

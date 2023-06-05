@@ -26,78 +26,69 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
- define('collection-factory', [], function () {
+/**
+ * A collection factory.
+ *
+ * @class
+ */
+let Class = function (modelFactory, config) {
+    this.modelFactory = modelFactory;
+    this.config = config;
+};
+
+_.extend(Class.prototype, /** @lends Class# */ {
+
+    /** @private */
+    modelFactory: null,
+    /** @private */
+    recordListMaxSizeLimit: 200,
 
     /**
-     * A collection factory.
+     * Create a collection.
      *
-     * @class
-     * @name Class
-     * @memberOf module:collection-factory
+     * @param {string} name An entity type.
+     * @param {Function} [callback] Deprecated.
+     * @param {Object} [context] Deprecated.
+     * @returns {Promise<module:collection.Class>}
      */
-    let CollectionFactory = function (modelFactory, config) {
-        this.modelFactory = modelFactory;
-        this.config = config;
-    };
+    create: function (name, callback, context) {
+        return new Promise(resolve => {
+            context = context || this;
 
-    _.extend(CollectionFactory.prototype, /** @lends module:collection-factory.Class# */ {
+            this.modelFactory.getSeed(name, seed => {
+                let orderBy = this.modelFactory.metadata
+                    .get(['entityDefs', name, 'collection', 'orderBy']);
 
-        /**
-         * @private
-         */
-        modelFactory: null,
+                let order = this.modelFactory.metadata
+                    .get(['entityDefs', name, 'collection', 'order']);
 
-        /**
-         * @private
-         */
-        recordListMaxSizeLimit: 200,
+                let className = this.modelFactory.metadata
+                    .get(['clientDefs', name, 'collection']) || 'collection';
 
-        /**
-         * Create a collection.
-         *
-         * @param {string} name An entity type.
-         * @param {Function} [callback] Deprecated.
-         * @param {Object} [context] Deprecated.
-         * @returns {Promise<module:collection.Class>}
-         */
-        create: function (name, callback, context) {
-            return new Promise(resolve => {
-                context = context || this;
-
-                this.modelFactory.getSeed(name, seed => {
-                    let orderBy = this.modelFactory.metadata
-                        .get(['entityDefs', name, 'collection', 'orderBy']);
-
-                    let order = this.modelFactory.metadata
-                        .get(['entityDefs', name, 'collection', 'order']);
-
-                    let className = this.modelFactory.metadata
-                        .get(['clientDefs', name, 'collection']) || 'collection';
-
-                    require(className, collectionClass => {
-                        let collection = new collectionClass(null, {
-                            name: name,
-                            orderBy: orderBy,
-                            order: order,
-                        });
-
-                        collection.model = seed;
-                        collection._user = this.modelFactory.user;
-                        collection.entityType = name;
-
-                        collection.maxMaxSize = this.config.get('recordListMaxSizeLimit') ||
-                            this.recordListMaxSizeLimit;
-
-                        if (callback) {
-                            callback.call(context, collection);
-                        }
-
-                        resolve(collection);
+                Espo.loader.require(className, collectionClass => {
+                    let collection = new collectionClass(null, {
+                        name: name,
+                        orderBy: orderBy,
+                        order: order,
                     });
+
+                    collection.model = seed;
+                    collection._user = this.modelFactory.user;
+                    collection.entityType = name;
+
+                    collection.maxMaxSize = this.config.get('recordListMaxSizeLimit') ||
+                        this.recordListMaxSizeLimit;
+
+                    if (callback) {
+                        callback.call(context, collection);
+                    }
+
+                    resolve(collection);
                 });
             });
-        },
-    });
-
-    return CollectionFactory;
+        });
+    },
 });
+
+/** @module collection-factory */
+export default Class;
