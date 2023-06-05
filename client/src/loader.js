@@ -64,6 +64,7 @@
         this._basePath = '';
 
         this._internalModuleList = [];
+        this._transpiledModuleList = [];
         this._internalModuleMap = {};
         this._isDeveloperMode = false;
 
@@ -163,6 +164,13 @@
         },
 
         /**
+         * @param {string[]} transpiledModuleList
+         */
+        setTranspiledModuleList: function (transpiledModuleList) {
+            this._transpiledModuleList = transpiledModuleList;
+        },
+
+        /**
          * @private
          */
         _getClass: function (name) {
@@ -185,22 +193,26 @@
          */
         _nameToPath: function (name) {
             if (name.indexOf(':') === -1) {
-                return 'client/src/' + name + '.js';
+                return 'client/lib/transpiled/src/' + name + '.js';
             }
 
             let arr = name.split(':');
             let namePart = arr[1];
-            let modulePart = arr[0];
+            let mod = arr[0];
 
-            if (modulePart === 'custom') {
-                return 'client/custom/src/' + namePart + '.js' ;
+            if (mod === 'custom') {
+                return 'client/custom/src/' + namePart + '.js';
             }
 
-            if (this._isModuleInternal(modulePart)) {
-                return 'client/modules/' + modulePart + '/src/' + namePart + '.js';
+            if (this._transpiledModuleList.includes(mod)) {
+                return `client/lib/transpiled/modules/${mod}/src/${name}.js`;
             }
 
-            return 'client/custom/modules/' + modulePart + '/src/' + namePart + '.js';
+            if (this._isModuleInternal(mod)) {
+                return 'client/modules/' + mod + '/src/' + namePart + '.js';
+            }
+
+            return 'client/custom/modules/' + mod + '/src/' + namePart + '.js';
         },
 
         /**
@@ -958,6 +970,13 @@
         },
 
         /**
+         * @param {string[]} transpiledModuleList
+         */
+        setTranspiledModuleList: function (transpiledModuleList) {
+            loader.setTranspiledModuleList(transpiledModuleList);
+        },
+
+        /**
          * Define a module.
          *
          * @param {string} subject A module name to be defined.
@@ -1085,6 +1104,7 @@
             Espo.loader.setCacheTimestamp(params.cacheTimestamp);
             Espo.loader.setBasePath(params.basePath);
             Espo.loader.setInternalModuleList(params.internalModuleList);
+            Espo.loader.setTranspiledModuleList(params.transpiledModuleList);
         }
 
         let jsLibsTag = document.querySelector('script[data-name="js-libs"]');

@@ -37,23 +37,31 @@ class Transpiler {
      *     path?: string,
      *     modulePaths?: modulePaths,
      *     destDir?: string,
+     *     mod?: string,
      * }} config
      */
     constructor(config) {
-        this.path = config.path ?? 'client/src'
+        this.path = (config.path ?? 'client') + '/src';
         this.modulePaths = config.modulePaths || {};
         this.destDir = config.destDir || 'client/lib/transpiled';
+        this.mod = config.mod;
 
         this.contentsCache = {};
     }
 
     process() {
-        let files = globSync(this.path + '/**/*.js')
-            .map(file => file.replaceAll('\\', '/'))
-            .filter(file => this.#isToBeTranspiled(file));
+        let allFiles = globSync(this.path + '/**/*.js')
+            .map(file => file.replaceAll('\\', '/'));
+
+        let files = allFiles.filter(file => this.#isToBeTranspiled(file));
+        let otherFiles = allFiles.filter(file => !files.includes(file));
 
         files.forEach(file => {
             this.#processFile(file);
+        });
+
+        otherFiles.forEach(file => {
+            this.#copyFile(file);
         });
     }
 
@@ -80,8 +88,21 @@ class Transpiler {
 
         fs.writeFileSync(destFile, resultContent, 'utf-8');
         fs.writeFileSync(destFile + '.map', result.map.toString(), 'utf-8');
+    }
 
-        console.log(destFile);
+    /**
+     * @param {string} file
+     */
+    #copyFile(file) {
+        let module = this.#obtainModuleName(file);
+        let dir = this.#obtainTargetDir(module);
+
+        fs.mkdirSync(dir, {recursive: true});
+
+        let destFile = dir + file.split('/').slice(-1)[0];
+
+        fs.mkdirSync(dir, {recursive: true});
+        fs.copyFileSync(file, destFile);
     }
 
     /**
@@ -138,29 +159,11 @@ class Transpiler {
      * @return string
      */
     #obtainModuleName(file) {
-        for (let mod in this.modulePaths) {
-            let part = this.modulePaths[mod] + '/src/';
-
-            if (file.indexOf(part) === 0) {
-                return mod + ':' + file.substring(part.length, file.length - 3);
-            }
+        if (this.mod) {
+            return this.mod + ':' + file.slice(this.path.length + 1, -3);
         }
 
-        return file.slice(this.#getBathPath().length, -3);
-    }
-
-    /**
-     * @private
-     * @return {string}
-     */
-    #getBathPath() {
-        let path = this.path;
-
-        if (path.slice(-1) !== '/') {
-            path += '/';
-        }
-
-        return path;
+        return file.slice(this.path.length + 1, -3);
     }
 }
 

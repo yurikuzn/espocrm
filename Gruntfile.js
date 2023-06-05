@@ -303,6 +303,11 @@ module.exports = grunt => {
 
     grunt.registerTask('transpile', () => {
         (new Transpiler({})).process();
+
+        (new Transpiler({
+            mod: 'crm',
+            path: 'client/modules/crm',
+        })).process();
     });
 
     grunt.registerTask('chmod-folders', () => {
