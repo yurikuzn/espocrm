@@ -298,8 +298,8 @@
                 return;
             }
 
-            this.require(dependency, (...arguments) => {
-                this._defineProceed(callback, subject, arguments);
+            this.require(dependency, (...args) => {
+                this._defineProceed(callback, subject, args);
             });
         },
 

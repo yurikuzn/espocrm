@@ -35,6 +35,7 @@ const path = require('path');
 const buildUtils = require('./js/build-utils');
 const BundlerGeneral = require("./js/bundler-general");
 const LayoutTypeBundler = require('./js/layout-template-bundler');
+const Transpiler = require('./js/transpiler');
 const bundleConfig = require('./frontend/bundle-config.json');
 const libs = require('./frontend/libs.json');
 
@@ -298,6 +299,10 @@ module.exports = grunt => {
 
     grunt.registerTask('prepare-lib', () => {
         cp.execSync("node js/scripts/prepare-lib");
+    });
+
+    grunt.registerTask('transpile', () => {
+        (new Transpiler({})).process();
     });
 
     grunt.registerTask('chmod-folders', () => {
