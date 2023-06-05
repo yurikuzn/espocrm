@@ -422,10 +422,6 @@
          * @private
          */
         _normalizeClassName: function (name) {
-            if (name.startsWith('./')) {
-                name = name.substring(2);
-            }
-
             if (~name.indexOf('.') && !~name.indexOf('!')) {
                 console.warn(
                     name + ': ' +

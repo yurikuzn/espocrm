@@ -26,7 +26,7 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-import Model from './model';
+import Model from 'model';
 
 const Dep = Backbone.Collection;
 

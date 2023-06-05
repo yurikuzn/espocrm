@@ -26,8 +26,8 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-import Acl from './acl';
-import Utils from './utils';
+import Acl from 'acl';
+import Utils from 'utils';
 
 /**
  * Access checking.
