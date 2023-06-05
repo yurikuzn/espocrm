@@ -205,7 +205,7 @@
             }
 
             if (this._transpiledModuleList.includes(mod)) {
-                return `client/lib/transpiled/modules/${mod}/src/${name}.js`;
+                return `client/lib/transpiled/modules/${mod}/src/${namePart}.js`;
             }
 
             if (this._isModuleInternal(mod)) {
@@ -305,28 +305,40 @@
             }
 
             if (!dependency) {
-                this._defineProceed(callback, subject, []);
+                this._defineProceed(callback, subject, [], -1);
 
                 return;
             }
 
+            let indexOfExports = dependency.indexOf('exports');
+
             this.require(dependency, (...args) => {
-                this._defineProceed(callback, subject, args);
+                this._defineProceed(callback, subject, args, indexOfExports);
             });
         },
 
         /**
          * @private
+         * @param {function} callback
+         * @param {string} subject
+         * @param {Array} args
+         * @param {number} indexOfExports
          */
-        _defineProceed: function (callback, subject, args) {
+        _defineProceed: function (callback, subject, args, indexOfExports) {
             let o = callback.apply(root, args);
 
-            if (!o) {
+            if (!o && indexOfExports === -1) {
                 if (this._cache) {
                     this._cache.clear('a', subject);
                 }
 
                 throw new Error("Could not load '" + subject + "'");
+            }
+
+            if (indexOfExports !== -1) {
+                let exports = args[indexOfExports];
+
+                o = ('default' in exports) ? exports.default : exports;
             }
 
             this._setClass(subject, o);
@@ -410,6 +422,10 @@
          * @private
          */
         _normalizeClassName: function (name) {
+            if (name.startsWith('./')) {
+                name = name.substring(2);
+            }
+
             if (~name.indexOf('.') && !~name.indexOf('!')) {
                 console.warn(
                     name + ': ' +
@@ -450,6 +466,12 @@
          * @private
          */
         _load: function (name, callback, errorCallback) {
+            if (name === 'exports') {
+                callback({});
+
+                return;
+            }
+
             let dataType, type, path, exportsTo, exportsAs;
 
             let realName = name;
