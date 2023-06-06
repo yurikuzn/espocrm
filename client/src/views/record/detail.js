@@ -41,14 +41,10 @@ import ActionItemSetup from "helpers/action-item-setup";
  */
 export default Dep.extend(/** @lends Class# */{
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     template: 'record/detail',
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     type: 'detail',
 
     /**

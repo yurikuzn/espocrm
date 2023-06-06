@@ -31,7 +31,8 @@ define('views/fields/base', ['view', 'ui/select'], function (Dep, /** module:ui/
     /**
      * A base field view. Can be in different modes. Each mode uses a separate template.
      *
-     * @todo Document all options.
+     * @todo Document all options. Introduce separate constructor arguments to pass general field options
+     *   and specific field type options.
      * @todo Document events.
      *
      * @class
