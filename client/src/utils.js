@@ -26,6 +26,8 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
+/** @module utils */
+
 const IS_MAC = /Mac/.test(navigator.userAgent);
 
 /**
@@ -623,5 +625,4 @@ const keyMap = {
  */
 Espo.utils = Espo.Utils;
 
-/** @module utils */
 export default Espo.Utils;

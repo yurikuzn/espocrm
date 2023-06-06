@@ -26,6 +26,8 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
+/** @module view */
+
 /**
  * A base view.
  *
@@ -34,10 +36,10 @@
  * @class
  * @extends Bull.View
  */
-let Class = Bull.View.extend(/** @lends Class# */{
+const View = Bull.View.extend(/** @lends View# */{
 
     /**
-     * @callback Class~actionHandlerCallback
+     * @callback module:view~actionHandlerCallback
      * @param {Event} e A DOM event.
      */
 
@@ -45,8 +47,8 @@ let Class = Bull.View.extend(/** @lends Class# */{
      * A model.
      *
      * @name model
-     * @type {module:model.Class|null}
-     * @memberOf Class.prototype
+     * @type {module:model|null}
+     * @memberOf View.prototype
      * @public
      */
 
@@ -54,8 +56,8 @@ let Class = Bull.View.extend(/** @lends Class# */{
      * A collection.
      *
      * @name collection
-     * @type {module:collection.Class|null}
-     * @memberOf Class.prototype
+     * @type {module:collection|null}
+     * @memberOf View.prototype
      * @public
      */
 
@@ -63,8 +65,8 @@ let Class = Bull.View.extend(/** @lends Class# */{
      * A helper.
      *
      * @name _helper
-     * @type {module:view-helper.Class}
-     * @memberOf Class.prototype
+     * @type {module:view-helper}
+     * @memberOf View.prototype
      * @private
      */
 
@@ -73,7 +75,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
      *
      * @todo Add an `<a>` tag support.
      * @param {string} action An action name.
-     * @param {Class~actionHandlerCallback} handler A handler.
+     * @param {module:view~actionHandlerCallback} handler A handler.
      */
     addActionHandler: function (action, handler) {
         let fullAction = 'click button[data-action=\"'+action+'\"]';
@@ -95,13 +97,13 @@ let Class = Bull.View.extend(/** @lends Class# */{
      * Show a notify-message.
      *
      * @deprecated Use `Espo.Ui.notify`.
-     * @param {string} label
+     * @param {string|false} label
      * @param {string} [type]
      * @param {number} [timeout]
      * @param {string} [scope]
      */
     notify: function (label, type, timeout, scope) {
-        if (label == false) {
+        if (!label) {
             Espo.Ui.notify(false);
 
             return;
@@ -122,7 +124,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get a view-helper.
      *
-     * @returns {module:view-helper.Class}
+     * @returns {module:view-helper}
      */
     getHelper: function () {
         return this._helper;
@@ -131,7 +133,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get a current user.
      *
-     * @returns {module:models/user.Class}
+     * @returns {module:models/user}
      */
     getUser: function () {
         return this._helper.user;
@@ -140,7 +142,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the preferences.
      *
-     * @returns {module:models/preferences.Class}
+     * @returns {module:models/preferences}
      */
     getPreferences: function () {
         return this._helper.preferences;
@@ -149,7 +151,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the config.
      *
-     * @returns {module:models/settings.Class}
+     * @returns {module:models/settings}
      */
     getConfig: function () {
         return this._helper.settings;
@@ -158,7 +160,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the ACL.
      *
-     * @returns {module:acl-manager.Class}
+     * @returns {module:acl-manager}
      */
     getAcl: function () {
         return this._helper.acl;
@@ -167,7 +169,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the model factory.
      *
-     * @returns {module:model-factory.Class}
+     * @returns {module:model-factory}
      */
     getModelFactory: function () {
         return this._helper.modelFactory;
@@ -176,7 +178,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the collection factory.
      *
-     * @returns {module:collection-factory.Class}
+     * @returns {module:collection-factory}
      */
     getCollectionFactory: function () {
         return this._helper.collectionFactory;
@@ -185,7 +187,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the router.
      *
-     * @returns {module:router.Class}
+     * @returns {module:router}
      */
     getRouter: function () {
         return this._helper.router;
@@ -194,7 +196,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the storage-util.
      *
-     * @returns {module:storage.Class}
+     * @returns {module:storage}
      */
     getStorage: function () {
         return this._helper.storage;
@@ -203,7 +205,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the session-storage-util.
      *
-     * @returns {module:session-storage.Class}
+     * @returns {module:session-storage}
      */
     getSessionStorage: function () {
         return this._helper.sessionStorage;
@@ -212,7 +214,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the language-util.
      *
-     * @returns {module:language.Class}
+     * @returns {module:language}
      */
     getLanguage: function () {
         return this._helper.language;
@@ -221,7 +223,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get metadata.
      *
-     * @returns {module:metadata.Class}
+     * @returns {module:metadata}
      */
     getMetadata: function () {
         return this._helper.metadata;
@@ -230,7 +232,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the cache-util.
      *
-     * @returns {module:cache.Class}
+     * @returns {module:cache}
      */
     getCache: function () {
         return this._helper.cache;
@@ -248,7 +250,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the number-util.
      *
-     * @returns {module:number.Class}
+     * @returns {module:number}
      */
     getNumberUtil: function () {
         return this._helper.numberUtil;
@@ -257,7 +259,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the field manager.
      *
-     * @returns {module:field-manager.Class}
+     * @returns {module:field-manager}
      */
     getFieldManager: function () {
         return this._helper.fieldManager;
@@ -266,7 +268,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the base-controller.
      *
-     * @returns {module:controllers/base.Class}
+     * @returns {module:controllers/base}
      */
     getBaseController: function () {
         return this._helper.baseController;
@@ -275,7 +277,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the theme manager.
      *
-     * @returns {module:theme-manager.Class}
+     * @returns {module:theme-manager}
      */
     getThemeManager: function () {
         return this._helper.themeManager;
@@ -426,7 +428,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     },
 
     /**
-     * @typedef {Object} Class~ConfirmOptions
+     * @typedef {Object} module:view~ConfirmOptions
      *
      * @property {string} message A message.
      * @property {string} [confirmText] A confirm-button text.
@@ -439,7 +441,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Show a confirmation dialog.
      *
-     * @param {string|Class~ConfirmOptions} o A message or options.
+     * @param {string|module:view~ConfirmOptions} o A message or options.
      * @param [callback] A callback. Deprecated, use a promise.
      * @param [context] A context. Deprecated.
      * @returns {Promise} To be resolved if confirmed.
@@ -478,5 +480,5 @@ let Class = Bull.View.extend(/** @lends Class# */{
     },
 });
 
-/** @module view */
-export default Class;
+
+export default View;
