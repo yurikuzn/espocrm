@@ -33,7 +33,7 @@
  * for a specific scope.
  *
  * @class
- * @param {module:models/user.Class} user A user.
+ * @param {module:models/user} user A user.
  * @param {string} scope A scope.
  * @param {Object} params Parameters.
  */
@@ -53,7 +53,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
     /**
      * A user.
      *
-     * @type {module:models/user.Class}
+     * @type {module:models/user}
      * @protected
      */
     user: null,
@@ -61,7 +61,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
     /**
      * Get a user.
      *
-     * @returns {module:models/user.Class}
+     * @returns {module:models/user}
      * @protected
      */
     getUser: function () {
@@ -72,7 +72,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
      * Check access to a scope.
      *
      * @param {string|boolean|Object} data Access data.
-     * @param {module:acl-manager.Class~action|null} [action=null] An action.
+     * @param {module:acl-manager~action|null} [action=null] An action.
      * @param {boolean} [precise=false] To return `null` if `inTeam == null`.
      * @param {Object|null} [entityAccessData=null] Entity access data. `inTeam`, `isOwner`.
      * @returns {boolean|null} True if has access.
@@ -173,9 +173,9 @@ _.extend(Class.prototype, /** @lends Class# */ {
     /**
      * Check access to model (entity).
      *
-     * @param {module:model.Class} model A model.
+     * @param {module:model} model A model.
      * @param {Object|string|null} data Access data.
-     * @param {module:acl-manager.Class~action|null} [action=null] Action to check.
+     * @param {module:acl-manager~action|null} [action=null] Action to check.
      * @param {boolean} [precise=false] To return `null` if not enough data is set in a model.
      *   E.g. the `teams` field is not yet loaded.
      * @returns {boolean|null} True if has access, null if not clear.
@@ -196,7 +196,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
     /**
      * Check `delete` access to model.
      *
-     * @param {module:model.Class} model A model.
+     * @param {module:model} model A model.
      * @param {Object|string|null} data Access data.
      * @param {boolean} [precise=false] To return `null` if not enough data is set in a model.
      *   E.g. the `teams` field is not yet loaded.
@@ -242,7 +242,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
     /**
      * Check if a user is owner to a model.
      *
-     * @param {module:model.Class} model A model.
+     * @param {module:model} model A model.
      * @returns {boolean|null} True if owner. Null if not clear.
      */
     checkIsOwner: function (model) {
@@ -287,7 +287,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
     /**
      * Check if a user in a team of a model.
      *
-     * @param {module:model.Class} model A model.
+     * @param {module:model} model A model.
      * @returns {boolean|null} True if in a team. Null if not clear.
      */
     checkInTeam: function (model) {

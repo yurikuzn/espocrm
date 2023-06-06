@@ -509,11 +509,11 @@ export default Dep.extend(/** @lends Class# */{
         'click .button-container .action': function (e) {
             Espo.Utils.handleAction(this, e);
         },
-        /** @this module:views/record/detail.Class */
+        /** @this module:views/record/detail */
         'click [data-action="showMoreDetailPanels"]': function () {
             this.showMoreDetailPanels();
         },
-        /** @this module:views/record/detail.Class */
+        /** @this module:views/record/detail */
         'click .middle-tabs > button': function (e) {
             let tab = parseInt($(e.currentTarget).attr('data-tab'));
 
@@ -1611,7 +1611,7 @@ export default Dep.extend(/** @lends Class# */{
      * Get field views.
      *
      * @param {boolean} [withHidden] With hidden.
-     * @return {Object.<string,module:views/fields/base.Class>}
+     * @return {Object.<string, module:views/fields/base>}
      */
     getFieldViews: function (withHidden) {
         let fields = {};
@@ -1641,7 +1641,7 @@ export default Dep.extend(/** @lends Class# */{
      * Get a field view.
      *
      * @param {string} name A field name.
-     * @return {module:views/fields/base.Class|null}
+     * @return {module:views/fields/base|null}
      */
     getFieldView: function (name) {
         let view;
@@ -1786,7 +1786,6 @@ export default Dep.extend(/** @lends Class# */{
             throw new Error('Model has not been injected into record view.');
         }
 
-        /** @type {module:view-record-helper.Class} */
         this.recordHelper = new ViewRecordHelper(this.defaultFieldStates, this.defaultFieldStates);
 
         this._initInlineEditSave();
@@ -2354,8 +2353,8 @@ export default Dep.extend(/** @lends Class# */{
 
         let selectDisabled =
             !this.getUser().isAdmin() &&
-            this.getAcl().get('followerManagementPermission') === 'no' &&
-            this.getAcl().get('portalPermission') === 'no';
+            this.getAcl().getPermissionLevel('followerManagementPermission') === 'no' &&
+            this.getAcl().getPermissionLevel('portalPermission') === 'no';
 
         let options = {
             model: this.model,
@@ -2553,7 +2552,7 @@ export default Dep.extend(/** @lends Class# */{
     /**
      * Get the middle-view.
      *
-     * @return {module:views/record/detail-middle.Class}
+     * @return {module:views/record/detail-middle}
      */
     getMiddleView: function () {
         return this.getView('middle');
@@ -3351,7 +3350,7 @@ export default Dep.extend(/** @lends Class# */{
         this.recordUpdateWebSocketTopic = topic;
         this.isSubscribedToWebSocket = true;
 
-        this.getHelper().webSocketManager.subscribe(topic, (t, data) => {
+        this.getHelper().webSocketManager.subscribe(topic, () => {
             this.handleRecordUpdate();
         });
     },

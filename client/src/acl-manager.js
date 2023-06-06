@@ -36,12 +36,12 @@ import Utils from 'utils';
  *
  * @class
  * @name Class
- * @param {module:models/user.Class} user A user.
+ * @param {module:models/user} user A user.
  * @param {Object} implementationClassMap `acl` implementations.
  * @param {boolean} aclAllowDeleteCreated Allow a user to delete records they created regardless a
  *   role access level.
  */
-let Class = function (user, implementationClassMap, aclAllowDeleteCreated) {
+const Class = function (user, implementationClassMap, aclAllowDeleteCreated) {
     this.setEmpty();
 
     this.user = user || null;
@@ -52,7 +52,7 @@ let Class = function (user, implementationClassMap, aclAllowDeleteCreated) {
 /**
  * An action.
  *
- * @typedef {'create'|'read'|'edit'|'delete'|'stream'} Class~action
+ * @typedef {'create'|'read'|'edit'|'delete'|'stream'} module:acl-manager~action
  */
 
 _.extend(Class.prototype, /** @lends Class# */{
@@ -85,7 +85,7 @@ _.extend(Class.prototype, /** @lends Class# */{
      *
      * @protected
      * @param {string} scope A scope.
-     * @returns {module:acl.Class}
+     * @returns {module:acl}
      */
     getImplementation: function (scope) {
         if (!(scope in this.implementationHash)) {
@@ -157,7 +157,7 @@ _.extend(Class.prototype, /** @lends Class# */{
      * Get access level to a scope action.
      *
      * @param {string} scope A scope.
-     * @param {Class~action} action An action.
+     * @param {module:acl-manager~action} action An action.
      * @returns {'yes'|'all'|'team'|'no'|null}
      */
     getLevel: function (scope, action) {
@@ -201,7 +201,7 @@ _.extend(Class.prototype, /** @lends Class# */{
      * Check access to a scope.
      *
      * @param {string} scope A scope.
-     * @param {Class~action|null} [action=null] An action.
+     * @param {module:acl-manager~action|null} [action=null] An action.
      * @param {boolean} [precise=false] Deprecated. Not used.
      * @returns {boolean} True if has access.
      */
@@ -218,8 +218,8 @@ _.extend(Class.prototype, /** @lends Class# */{
     /**
      * Check access to a model.
      *
-     * @param {module:model.Class} model A model.
-     * @param {Class~action|null} [action=null] An action.
+     * @param {module:model} model A model.
+     * @param {module:acl-manager~action|null} [action=null] An action.
      * @param {boolean} [precise=false] To return `null` if not enough data is set in a model.
      *   E.g. the `teams` field is not yet loaded.
      * @returns {boolean|null} True if has access, null if not clear.
@@ -262,8 +262,8 @@ _.extend(Class.prototype, /** @lends Class# */{
     /**
      * Check access to a scope or a model.
      *
-     * @param {string|module:model.Class} subject What to check. A scope or a model.
-     * @param {Class~action|null} [action=null] An action.
+     * @param {string|module:model} subject What to check. A scope or a model.
+     * @param {module:acl-manager~action|null} [action=null] An action.
      * @param {boolean} [precise=false]  To return `null` if not enough data is set in a model.
      *   E.g. the `teams` field is not yet loaded.
      * @returns {boolean|null} {boolean|null} True if has access, null if not clear.
@@ -279,7 +279,7 @@ _.extend(Class.prototype, /** @lends Class# */{
     /**
      * Check if a user is owner to a model.
      *
-     * @param {module:model.Class} model A model.
+     * @param {module:model} model A model.
      * @returns {boolean|null} True if owner, null if not clear.
      */
     checkIsOwner: function (model) {
@@ -289,7 +289,7 @@ _.extend(Class.prototype, /** @lends Class# */{
     /**
      * Check if a user in a team of a model.
      *
-     * @param {module:model.Class} model A model.
+     * @param {module:model} model A model.
      * @returns {boolean|null} True if in a team, null if not clear.
      */
     checkInTeam: function (model) {
@@ -299,7 +299,7 @@ _.extend(Class.prototype, /** @lends Class# */{
     /**
      * Check an assignment permission to a user.
      *
-     * @param {module:models/User.Class} user A user.
+     * @param {module:models/user} user A user.
      * @returns {boolean} True if has access.
      */
     checkAssignmentPermission: function (user) {
@@ -309,7 +309,7 @@ _.extend(Class.prototype, /** @lends Class# */{
     /**
      * Check a user permission to a user.
      *
-     * @param {module:models/User.Class} user A user.
+     * @param {module:models/user} user A user.
      * @returns {boolean} True if has access.
      */
     checkUserPermission: function (user) {
@@ -320,7 +320,7 @@ _.extend(Class.prototype, /** @lends Class# */{
      * Check a specific permission to a user.
      *
      * @param {string} permission A permission name.
-     * @param {module:models/User.Class} user A user.
+     * @param {module:models/user} user A user.
      * @returns {boolean} True if has access.
      */
     checkPermission: function (permission, user) {
