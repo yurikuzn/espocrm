@@ -38,7 +38,7 @@ Espo.Utils = {
     /**
      * Process a view event action.
      *
-     * @param {module:view.Class} viewObject A view.
+     * @param {module:view} viewObject A view.
      * @param {JQueryKeyEventObject} e An event.
      * @param {string} [action] An action. If not specified, will be fetched from a target element.
      * @param {string} [handler] A handler name.
@@ -132,7 +132,7 @@ Espo.Utils = {
     /**
      * Check action availability.
      *
-     * @param {module:view-helper.Class} helper A view helper.
+     * @param {module:view-helper} helper A view helper.
      * @param {Espo.Utils~ActionAvailabilityDefs} item Definitions.
      * @returns {boolean}
      */
@@ -175,8 +175,8 @@ Espo.Utils = {
     /**
      * Check access to an action.
      *
-     * @param {module:acl-manager.Class} acl An ACL manager.
-     * @param {string|module:model.Class|null} [obj] A scope or a model.
+     * @param {module:acl-manager} acl An ACL manager.
+     * @param {string|module:model|null} [obj] A scope or a model.
      * @param {Espo.Utils~ActionAccessDefs} item Definitions.
      * @param {boolean} [isPrecise=false] To return `null` if not enough data is set in a model.
      *   E.g. the `teams` field is not yet loaded.
@@ -226,9 +226,9 @@ Espo.Utils = {
      * Check access to an action.
      *
      * @param {Espo.Utils~AccessDefs[]} dataList List of definitions.
-     * @param {module:acl-manager.Class} acl An ACL manager.
-     * @param {module:models/user.Class} user A user.
-     * @param {module:model.Class|null} [entity] A model.
+     * @param {module:acl-manager} acl An ACL manager.
+     * @param {module:models/user} user A user.
+     * @param {module:model|null} [entity] A model.
      * @param {boolean} [allowAllForAdmin=false] Allow all for an admin.
      * @returns {boolean}
      */
