@@ -32,14 +32,9 @@ import Bull from "lib!bullbone";
 
 /**
  * A base view.
- *
  * @see {@link https://docs.espocrm.com/development/view/}
- *
- * @class
- * @name Class
- * @extends Bull.View
  */
-export default Bull.View.extend(/** @lends Class# */{
+const Class = class extends Bull.View {
 
     /**
      * @callback module:view~actionHandlerCallback
@@ -80,11 +75,11 @@ export default Bull.View.extend(/** @lends Class# */{
      * @param {string} action An action name.
      * @param {module:view~actionHandlerCallback} handler A handler.
      */
-    addActionHandler: function (action, handler) {
+    addActionHandler(action, handler) {
         let fullAction = 'click button[data-action=\"'+action+'\"]';
 
         this.events[fullAction] = handler;
-    },
+    }
 
     /**
      * Escape a string.
@@ -92,9 +87,9 @@ export default Bull.View.extend(/** @lends Class# */{
      * @param {string} string
      * @returns {string}
      */
-    escapeString: function (string) {
+    escapeString(string) {
         return Handlebars.Utils.escapeExpression(string);
-    },
+    }
 
     /**
      * Show a notify-message.
@@ -105,7 +100,7 @@ export default Bull.View.extend(/** @lends Class# */{
      * @param {number} [timeout]
      * @param {string} [scope]
      */
-    notify: function (label, type, timeout, scope) {
+    notify(label, type, timeout, scope) {
         if (!label) {
             Espo.Ui.notify(false);
 
@@ -122,187 +117,187 @@ export default Bull.View.extend(/** @lends Class# */{
         let text = this.getLanguage().translate(label, 'labels', scope);
 
         Espo.Ui.notify(text, type, timeout);
-    },
+    }
 
     /**
      * Get a view-helper.
      *
      * @returns {module:view-helper}
      */
-    getHelper: function () {
+    getHelper() {
         return this._helper;
-    },
+    }
 
     /**
      * Get a current user.
      *
      * @returns {module:models/user}
      */
-    getUser: function () {
+    getUser() {
         return this._helper.user;
-    },
+    }
 
     /**
      * Get the preferences.
      *
      * @returns {module:models/preferences}
      */
-    getPreferences: function () {
+    getPreferences() {
         return this._helper.preferences;
-    },
+    }
 
     /**
      * Get the config.
      *
      * @returns {module:models/settings}
      */
-    getConfig: function () {
+    getConfig() {
         return this._helper.settings;
-    },
+    }
 
     /**
      * Get the ACL.
      *
      * @returns {module:acl-manager}
      */
-    getAcl: function () {
+    getAcl() {
         return this._helper.acl;
-    },
+    }
 
     /**
      * Get the model factory.
      *
      * @returns {module:model-factory}
      */
-    getModelFactory: function () {
+    getModelFactory() {
         return this._helper.modelFactory;
-    },
+    }
 
     /**
      * Get the collection factory.
      *
      * @returns {module:collection-factory}
      */
-    getCollectionFactory: function () {
+    getCollectionFactory() {
         return this._helper.collectionFactory;
-    },
+    }
 
     /**
      * Get the router.
      *
      * @returns {module:router}
      */
-    getRouter: function () {
+    getRouter() {
         return this._helper.router;
-    },
+    }
 
     /**
      * Get the storage-util.
      *
      * @returns {module:storage}
      */
-    getStorage: function () {
+    getStorage() {
         return this._helper.storage;
-    },
+    }
 
     /**
      * Get the session-storage-util.
      *
      * @returns {module:session-storage}
      */
-    getSessionStorage: function () {
+    getSessionStorage() {
         return this._helper.sessionStorage;
-    },
+    }
 
     /**
      * Get the language-util.
      *
      * @returns {module:language}
      */
-    getLanguage: function () {
+    getLanguage() {
         return this._helper.language;
-    },
+    }
 
     /**
      * Get metadata.
      *
      * @returns {module:metadata}
      */
-    getMetadata: function () {
+    getMetadata() {
         return this._helper.metadata;
-    },
+    }
 
     /**
      * Get the cache-util.
      *
      * @returns {module:cache}
      */
-    getCache: function () {
+    getCache() {
         return this._helper.cache;
-    },
+    }
 
     /**
      * Get the date-time util.
      *
      * @returns {module:date-time}
      */
-    getDateTime: function () {
+    getDateTime() {
         return this._helper.dateTime;
-    },
+    }
 
     /**
      * Get the number-util.
      *
      * @returns {module:number}
      */
-    getNumberUtil: function () {
+    getNumberUtil() {
         return this._helper.numberUtil;
-    },
+    }
 
     /**
      * Get the field manager.
      *
      * @returns {module:field-manager}
      */
-    getFieldManager: function () {
+    getFieldManager() {
         return this._helper.fieldManager;
-    },
+    }
 
     /**
      * Get the base-controller.
      *
      * @returns {module:controllers/base}
      */
-    getBaseController: function () {
+    getBaseController() {
         return this._helper.baseController;
-    },
+    }
 
     /**
      * Get the theme manager.
      *
      * @returns {module:theme-manager}
      */
-    getThemeManager: function () {
+    getThemeManager() {
         return this._helper.themeManager;
-    },
+    }
 
     /**
      * Update a page title. Supposed to be overridden if needed.
      */
-    updatePageTitle: function () {
+    updatePageTitle() {
         var title = this.getConfig().get('applicationName') || 'EspoCRM';
 
         this.setPageTitle(title);
-    },
+    }
 
     /**
      * Set a page title.
      *
      * @param {string} title A title.
      */
-    setPageTitle: function (title) {
+    setPageTitle(title) {
         this.getHelper().pageTitle.setTitle(title);
-    },
+    }
 
     /**
      * Translate a label.
@@ -312,18 +307,18 @@ export default Bull.View.extend(/** @lends Class# */{
      * @param {string} [scope] Scope.
      * @returns {string}
      */
-    translate: function (label, category, scope) {
+    translate(label, category, scope) {
         return this.getLanguage().translate(label, category, scope);
-    },
+    }
 
     /**
      * Get a base path.
      *
      * @returns {string}
      */
-    getBasePath: function () {
+    getBasePath() {
         return this._helper.basePath || '';
-    },
+    }
 
     /**
      * Ajax request.
@@ -335,7 +330,7 @@ export default Bull.View.extend(/** @lends Class# */{
      * @param {Object} [options] Options.
      * @returns {Promise<any>}
      */
-    ajaxRequest: function (url, type, data, options) {
+    ajaxRequest(url, type, data, options) {
         options = options || {};
 
         options.type = type;
@@ -347,7 +342,7 @@ export default Bull.View.extend(/** @lends Class# */{
         }
 
         return $.ajax(options);
-    },
+    }
 
     /**
      * POST request.
@@ -358,13 +353,13 @@ export default Bull.View.extend(/** @lends Class# */{
      * @param {Object} [options] Options.
      * @returns {Promise<any>}
      */
-    ajaxPostRequest: function (url, data, options) {
+    ajaxPostRequest(url, data, options) {
         if (data) {
             data = JSON.stringify(data);
         }
 
         return this.ajaxRequest(url, 'POST', data, options);
-    },
+    }
 
     /**
      * PATCH request.
@@ -375,13 +370,13 @@ export default Bull.View.extend(/** @lends Class# */{
      * @param {Object} [options] Options.
      * @returns {Promise<any>}
      */
-    ajaxPatchRequest: function (url, data, options) {
+    ajaxPatchRequest(url, data, options) {
         if (data) {
             data = JSON.stringify(data);
         }
 
         return this.ajaxRequest(url, 'PATCH', data, options);
-    },
+    }
 
     /**
      * PUT request.
@@ -392,13 +387,13 @@ export default Bull.View.extend(/** @lends Class# */{
      * @param {Object} [options] Options.
      * @returns {Promise<any>}
      */
-    ajaxPutRequest: function (url, data, options) {
+    ajaxPutRequest(url, data, options) {
         if (data) {
             data = JSON.stringify(data);
         }
 
         return this.ajaxRequest(url, 'PUT', data, options);
-    },
+    }
 
     /**
      * GET request.
@@ -409,9 +404,9 @@ export default Bull.View.extend(/** @lends Class# */{
      * @param {Object} [options] Options.
      * @returns {Promise<any>}
      */
-    ajaxGetRequest: function (url, data, options) {
+    ajaxGetRequest(url, data, options) {
         return this.ajaxRequest(url, 'GET', data, options);
-    },
+    }
 
     /**
      * DELETE request.
@@ -422,13 +417,13 @@ export default Bull.View.extend(/** @lends Class# */{
      * @param {Object} [options] Options.
      * @returns {Promise<any>}
      */
-    ajaxDeleteRequest: function (url, data, options) {
+    ajaxDeleteRequest(url, data, options) {
         if (data) {
             data = JSON.stringify(data);
         }
 
         return this.ajaxRequest(url, 'DELETE', data, options);
-    },
+    }
 
     /**
      * @typedef {Object} module:view~ConfirmOptions
@@ -449,7 +444,7 @@ export default Bull.View.extend(/** @lends Class# */{
      * @param [context] A context. Deprecated.
      * @returns {Promise} To be resolved if confirmed.
      */
-    confirm: function (o, callback, context) {
+    confirm(o, callback, context) {
         let message;
 
         if (typeof o === 'string' || o instanceof String) {
@@ -480,5 +475,7 @@ export default Bull.View.extend(/** @lends Class# */{
             backdrop: ('backdrop' in o) ? o.backdrop : true,
             isHtml: true,
         }, callback, context);
-    },
-});
+    }
+}
+
+export default Class;

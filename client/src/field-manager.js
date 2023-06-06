@@ -37,7 +37,7 @@
  * @param {module:metadata} metadata Metadata.
  * @param {modules:acl-manager} [acl] An ACL.
  */
-let FieldManager = function (defs, metadata, acl) {
+const FieldManager = function (defs, metadata, acl) {
 
     /**
      * @public
