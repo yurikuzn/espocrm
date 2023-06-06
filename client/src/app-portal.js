@@ -26,35 +26,30 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('app-portal', ['app', 'acl-portal-manager'],
-function (
-    Dep,
-    /** typeof module:acl-portal-manager.Class */ AclPortalManager
-) {
+/** @module app-portal */
+
+import Dep from 'app';
+import AclPortalManager from 'acl-portal-manager';
+
+/**
+ * A portal application class.
+ *
+ * @class
+ * @name Class
+ * @extends Dep
+ */
+export default Dep.extend(/** @lends Class# */{
+
+    /** @inheritDoc */
+    aclName: 'aclPortal',
+
+    /** @inheritDoc */
+    masterView: 'views/site-portal/master',
+
     /**
-     * A portal application class.
-     * @class
-     * @name Class
-     * @extends module:app.Class
-     * @memberOf module:app-portal
+     * @inheritDoc
      */
-    return Dep.extend(/** @lends module:app-portal.Class# */{
-
-        /**
-         * @inheritDoc
-         */
-        aclName: 'aclPortal',
-
-        /**
-         * @inheritDoc
-         */
-        masterView: 'views/site-portal/master',
-
-        /**
-         * @inheritDoc
-         */
-        createAclManager: function () {
-            return new AclPortalManager(this.user, null, this.settings.get('aclAllowDeleteCreated'));
-        },
-    });
+    createAclManager: function () {
+        return new AclPortalManager(this.user, null, this.settings.get('aclAllowDeleteCreated'));
+    },
 });

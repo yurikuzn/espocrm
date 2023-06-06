@@ -289,13 +289,13 @@ _.extend(App.prototype, /** @lends App# */{
 
     /**
      * @private
-     * @type {module:broadcast-channel.Class|null}
+     * @type {module:broadcast-channel|null}
      */
     broadcastChannel: null,
 
     /**
      * @private
-     * @type {module:date-time.Class|null}
+     * @type {module:date-time|null}
      */
     dateTime: null,
 
@@ -385,6 +385,10 @@ _.extend(App.prototype, /** @lends App# */{
         this.appParams = {};
         this.controllers = {};
 
+        /**
+         * @type {Espo.loader}
+         * @private
+         */
         this.loader = Espo.loader;
 
         this.loader.setCache(this.cache);
@@ -769,7 +773,7 @@ _.extend(App.prototype, /** @lends App# */{
         helper.broadcastChannel = this.broadcastChannel;
 
         this.viewLoader = (viewName, callback) => {
-            require(Utils.composeViewClassName(viewName), callback);
+            this.loader.require(Utils.composeViewClassName(viewName), callback);
         };
 
         let internalModuleMap = {};

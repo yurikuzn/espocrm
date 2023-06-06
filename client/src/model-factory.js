@@ -45,7 +45,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
 
     /**
      * @public
-     * @type {module:date-time.Class|null}
+     * @type {module:date-time|null}
      * @internal
      */
     dateTime: null,

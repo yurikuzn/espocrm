@@ -26,594 +26,593 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('controller', [], function () {
+/** @module controller */
+
+import Exceptions from 'exceptions';
+import Backbone from 'lib!backbone';
+
+/**
+ * @callback module:controller~viewCallback
+ * @param {module:view} view A view.
+ */
+
+/**
+ * A controller. To be extended.
+ *
+ * @class
+ * @mixes Backbone.Events
+ * @param {Object} params
+ * @param {Object} injections
+ */
+const Controller = function (params, injections) {
+    this.params = params || {};
+
+    this.baseController = injections.baseController;
+    this.viewFactory = injections.viewFactory;
+    this.modelFactory = injections.modelFactory;
+    this.collectionFactory = injections.collectionFactory;
+
+    this.initialize();
+
+    this._settings = injections.settings || null;
+    this._user = injections.user || null;
+    this._preferences = injections.preferences || null;
+    this._acl = injections.acl || null;
+    this._cache = injections.cache || null;
+    this._router = injections.router || null;
+    this._storage = injections.storage || null;
+    this._metadata = injections.metadata || null;
+    this._dateTime = injections.dateTime || null;
+    this._broadcastChannel = injections.broadcastChannel || null;
+
+    if (!this.baseController) {
+        this.on('logout', () => this.clearAllStoredMainViews());
+    }
+
+    this.set('masterRendered', false);
+};
+
+_.extend(Controller.prototype, /** @lends Controller# */ {
 
     /**
-     * @callback module:controller.Class~viewCallback
-     * @param {module:view.Class} view A view.
+     * A default action.
+     *
+     * @type {string}
      */
+    defaultAction: 'index',
 
     /**
-     * A controller. To be extended.
+     * A name.
      *
-     * @class
-     * @name Class
-     * @mixes Backbone.Events
-     * @memberOf module:controller
-     *
-     * @param {Object} params
-     * @param {Object} injections
+     * @type {string|null}
+     * @public
      */
-    const Controller = function (params, injections) {
-        this.params = params || {};
+    name: null,
 
-        this.baseController = injections.baseController;
-        this.viewFactory = injections.viewFactory;
-        this.modelFactory = injections.modelFactory;
-        this.collectionFactory = injections.collectionFactory;
+    /**
+     * Params.
+     *
+     * @type {Object}
+     * @private
+     */
+    params: null,
 
-        this.initialize();
+    /**
+     * A view factory.
+     *
+     * @type {Bull.Factory}
+     * @protected
+     */
+    viewFactory: null,
 
-        this._settings = injections.settings || null;
-        this._user = injections.user || null;
-        this._preferences = injections.preferences || null;
-        this._acl = injections.acl || null;
-        this._cache = injections.cache || null;
-        this._router = injections.router || null;
-        this._storage = injections.storage || null;
-        this._metadata = injections.metadata || null;
-        this._dateTime = injections.dateTime || null;
-        this._broadcastChannel = injections.broadcastChannel || null;
+    /**
+     * A model factory.
+     *
+     * @type {module:model-factory.Class}
+     * @protected
+     */
+    modelFactory: null,
 
-        if (!this.baseController) {
-            this.on('logout', () => this.clearAllStoredMainViews());
+    /**
+     * A body view.
+     *
+     * @public
+     * @type {string|null}
+     */
+    masterView: null,
+
+    /**
+     * Initialize.
+     *
+     * @protected
+     */
+    initialize: function () {},
+
+    /**
+     * Set the router.
+     *
+     * @internal
+     * @param {module:router.Class} router
+     */
+    setRouter: function (router) {
+        this._router = router;
+
+        this.trigger('router-set', router);
+    },
+
+    /**
+     * @protected
+     * @returns {module:models/settings.Class}
+     */
+    getConfig: function () {
+        return this._settings;
+    },
+
+    /**
+     * @protected
+     * @returns {module:models/user.Class}
+     */
+    getUser: function () {
+        return this._user;
+    },
+
+    /**
+     * @protected
+     * @returns {module:models/preferences.Class}
+     */
+    getPreferences: function () {
+        return this._preferences;
+    },
+
+    /**
+     * @protected
+     * @returns {module:acl-manager.Class}
+     */
+    getAcl: function () {
+        return this._acl;
+    },
+
+    /**
+     * @protected
+     * @returns {module:cache.Class}
+     */
+    getCache: function () {
+        return this._cache;
+    },
+
+    /**
+     * @protected
+     * @returns {module:router.Class}
+     */
+    getRouter: function () {
+        return this._router;
+    },
+
+    /**
+     * @protected
+     * @returns {module:storage.Class}
+     */
+    getStorage: function () {
+        return this._storage;
+    },
+
+    /**
+     * @protected
+     * @returns {module:metadata.Class}
+     */
+    getMetadata: function () {
+        return this._metadata;
+    },
+
+    /**
+     * @protected
+     * @returns {module:date-time}
+     */
+    getDateTime: function () {
+        return this._dateTime;
+    },
+
+    /**
+     * Get a parameter of all controllers.
+     *
+     * @param {string} key A key.
+     * @return {*} Null if a key doesn't exist.
+     */
+    get: function (key) {
+        if (key in this.params) {
+            return this.params[key];
         }
 
-        this.set('masterRendered', false);
-    };
+        return null;
+    },
 
-    _.extend(Controller.prototype, /** @lends module:controller.Class# */ {
+    /**
+     * Set a parameter for all controllers.
+     *
+     * @param {string} key A name of a view.
+     * @param {*} value
+     */
+    set: function (key, value) {
+        this.params[key] = value;
+    },
 
-        /**
-         * A default action.
-         *
-         * @type {string}
-         */
-        defaultAction: 'index',
+    /**
+     * Unset a parameter.
+     *
+     * @param {string} key A key.
+     */
+    unset: function (key) {
+        delete this.params[key];
+    },
 
-        /**
-         * A name.
-         *
-         * @type {string|null}
-         * @public
-         */
-        name: null,
+    /**
+     * Has a parameter.
+     *
+     * @param {string} key A key.
+     * @returns {boolean}
+     */
+    has: function (key) {
+        return key in this.params;
+    },
 
-        /**
-         * Params.
-         *
-         * @type {Object}
-         * @private
-         */
-        params: null,
+    /**
+     * Get a stored main view.
+     *
+     * @param {string} key A key.
+     * @returns {module:view.Class|null}
+     */
+    getStoredMainView: function (key) {
+        return this.get('storedMainView-' + key);
+    },
 
-        /**
-         * A view factory.
-         *
-         * @type {Bull.Factory}
-         * @protected
-         */
-        viewFactory: null,
+    /**
+     * Has a stored main view.
+     * @param {string} key
+     * @returns {boolean}
+     */
+    hasStoredMainView: function (key) {
+        return this.has('storedMainView-' + key);
+    },
 
-        /**
-         * A model factory.
-         *
-         * @type {module:model-factory.Class}
-         * @protected
-         */
-        modelFactory: null,
+    /**
+     * Clear a stored main view.
+     * @param {string} key
+     */
+    clearStoredMainView: function (key) {
+        let view = this.getStoredMainView(key);
 
-        /**
-         * A body view.
-         *
-         * @public
-         * @type {string|null}
-         */
-        masterView: null,
+        if (view) {
+            view.remove(true);
+        }
 
-        /**
-         * Initialize.
-         *
-         * @protected
-         */
-        initialize: function () {},
+        this.unset('storedMainView-' + key);
+    },
 
-        /**
-         * Set the router.
-         *
-         * @internal
-         * @param {module:router.Class} router
-         */
-        setRouter: function (router) {
-            this._router = router;
+    /**
+     * Store a main view.
+     *
+     * @param {string} key A key.
+     * @param {module:view.Class} view A view.
+     */
+    storeMainView: function (key, view) {
+        this.set('storedMainView-' + key, view);
 
-            this.trigger('router-set', router);
-        },
+        this.listenTo(view, 'remove', (o) => {
+            o = o || {};
 
-        /**
-         * @protected
-         * @returns {module:models/settings.Class}
-         */
-        getConfig: function () {
-            return this._settings;
-        },
-
-        /**
-         * @protected
-         * @returns {module:models/user.Class}
-         */
-        getUser: function () {
-            return this._user;
-        },
-
-        /**
-         * @protected
-         * @returns {module:models/preferences.Class}
-         */
-        getPreferences: function () {
-            return this._preferences;
-        },
-
-        /**
-         * @protected
-         * @returns {module:acl-manager.Class}
-         */
-        getAcl: function () {
-            return this._acl;
-        },
-
-        /**
-         * @protected
-         * @returns {module:cache.Class}
-         */
-        getCache: function () {
-            return this._cache;
-        },
-
-        /**
-         * @protected
-         * @returns {module:router.Class}
-         */
-        getRouter: function () {
-            return this._router;
-        },
-
-        /**
-         * @protected
-         * @returns {module:storage.Class}
-         */
-        getStorage: function () {
-            return this._storage;
-        },
-
-        /**
-         * @protected
-         * @returns {module:metadata.Class}
-         */
-        getMetadata: function () {
-            return this._metadata;
-        },
-
-        /**
-         * @protected
-         * @returns {module:date-time.Class}
-         */
-        getDateTime: function () {
-            return this._dateTime;
-        },
-
-        /**
-         * Get a parameter of all controllers.
-         *
-         * @param {string} key A key.
-         * @return {*} Null if a key doesn't exist.
-         */
-        get: function (key) {
-            if (key in this.params) {
-                return this.params[key];
+            if (o.ignoreCleaning) {
+                return;
             }
 
-            return null;
-        },
+            this.stopListening(view, 'remove');
 
-        /**
-         * Set a parameter for all controllers.
-         *
-         * @param {string} key A name of a view.
-         * @param {*} value
-         */
-        set: function (key, value) {
-            this.params[key] = value;
-        },
+            this.clearStoredMainView(key);
+        });
+    },
 
-        /**
-         * Unset a parameter.
-         *
-         * @param {string} key A key.
-         */
-        unset: function (key) {
-            delete this.params[key];
-        },
-
-        /**
-         * Has a parameter.
-         *
-         * @param {string} key A key.
-         * @returns {boolean}
-         */
-        has: function (key) {
-            return key in this.params;
-        },
-
-        /**
-         * Get a stored main view.
-         *
-         * @param {string} key A key.
-         * @returns {module:view.Class|null}
-         */
-        getStoredMainView: function (key) {
-            return this.get('storedMainView-' + key);
-        },
-
-        /**
-         * Has a stored main view.
-         * @param {string} key
-         * @returns {boolean}
-         */
-        hasStoredMainView: function (key) {
-            return this.has('storedMainView-' + key);
-        },
-
-        /**
-         * Clear a stored main view.
-         * @param {string} key
-         */
-        clearStoredMainView: function (key) {
-            let view = this.getStoredMainView(key);
-
-            if (view) {
-                view.remove(true);
+    /**
+     * Clear all stored main views.
+     */
+    clearAllStoredMainViews: function () {
+        for (let k in this.params) {
+            if (k.indexOf('storedMainView-') !== 0) {
+                continue;
             }
 
-            this.unset('storedMainView-' + key);
-        },
+            let key = k.substr(15);
 
-        /**
-         * Store a main view.
-         *
-         * @param {string} key A key.
-         * @param {module:view.Class} view A view.
-         */
-        storeMainView: function (key, view) {
-            this.set('storedMainView-' + key, view);
+            this.clearStoredMainView(key);
+        }
+    },
 
-            this.listenTo(view, 'remove', (o) => {
-                o = o || {};
+    /**
+     * Check access to an action.
+     *
+     * @param {string} action An action.
+     * @returns {boolean}
+     */
+    checkAccess: function (action) {
+        return true;
+    },
 
-                if (o.ignoreCleaning) {
-                    return;
-                }
+    /**
+     * Process access check to the controller.
+     */
+    handleAccessGlobal: function () {
+        if (!this.checkAccessGlobal()) {
+            throw new Exceptions.AccessDenied("Denied access to '" + this.name + "'");
+        }
+    },
 
-                this.stopListening(view, 'remove');
+    /**
+     * Check access to the controller.
+     *
+     * @returns {boolean}
+     */
+    checkAccessGlobal: function () {
+        return true;
+    },
 
-                this.clearStoredMainView(key);
-            });
-        },
+    /**
+     * Check access to an action. Throwing an exception.
+     *
+     * @param {string} action An action.
+     */
+    handleCheckAccess: function (action) {
+        if (!this.checkAccess(action)) {
+            let msg;
 
-        /**
-         * Clear all stored main views.
-         */
-        clearAllStoredMainViews: function () {
-            for (let k in this.params) {
-                if (k.indexOf('storedMainView-') !== 0) {
-                    continue;
-                }
-
-                let key = k.substr(15);
-
-                this.clearStoredMainView(key);
+            if (action) {
+                msg = "Denied access to action '" + this.name + "#" + action + "'";
             }
-        },
-
-        /**
-         * Check access to an action.
-         *
-         * @param {string} action An action.
-         * @returns {boolean}
-         */
-        checkAccess: function (action) {
-            return true;
-        },
-
-        /**
-         * Process access check to the controller.
-         */
-        handleAccessGlobal: function () {
-            if (!this.checkAccessGlobal()) {
-                throw new Espo.Exceptions.AccessDenied("Denied access to '" + this.name + "'");
-            }
-        },
-
-        /**
-         * Check access to the controller.
-         *
-         * @returns {boolean}
-         */
-        checkAccessGlobal: function () {
-            return true;
-        },
-
-        /**
-         * Check access to an action. Throwing an exception.
-         *
-         * @param {string} action An action.
-         */
-        handleCheckAccess: function (action) {
-            if (!this.checkAccess(action)) {
-                let msg;
-
-                if (action) {
-                    msg = "Denied access to action '" + this.name + "#" + action + "'";
-                }
-                else {
-                    msg = "Denied access to scope '" + this.name + "'";
-                }
-
-                throw new Espo.Exceptions.AccessDenied(msg);
-            }
-        },
-
-        /**
-         * Process an action.
-         *
-         * @param {string} action
-         * @param {Object} options
-         */
-        doAction: function (action, options) {
-            this.handleAccessGlobal();
-
-            action = action || this.defaultAction;
-
-            let method = 'action' + Espo.Utils.upperCaseFirst(action);
-
-            if (!(method in this)) {
-                throw new Espo.Exceptions.NotFound("Action '" + this.name + "#" + action + "' is not found");
+            else {
+                msg = "Denied access to scope '" + this.name + "'";
             }
 
-            let preMethod = 'before' + Espo.Utils.upperCaseFirst(action);
-            let postMethod = 'after' + Espo.Utils.upperCaseFirst(action);
+            throw new Exceptions.AccessDenied(msg);
+        }
+    },
 
-            if (preMethod in this) {
-                this[preMethod].call(this, options || {});
-            }
+    /**
+     * Process an action.
+     *
+     * @param {string} action
+     * @param {Object} options
+     */
+    doAction: function (action, options) {
+        this.handleAccessGlobal();
 
-            this[method].call(this, options || {});
+        action = action || this.defaultAction;
 
-            if (postMethod in this) {
-                this[postMethod].call(this, options || {});
-            }
-        },
+        let method = 'action' + Espo.Utils.upperCaseFirst(action);
 
-        /**
-         * Create a master view, render if not already rendered.
-         *
-         * @param {module:controller.Class~viewCallback} callback A callback with a created master view.
-         */
-        master: function (callback) {
-            let entire = this.get('entire');
+        if (!(method in this)) {
+            throw new Exceptions.NotFound("Action '" + this.name + "#" + action + "' is not found");
+        }
 
-            if (entire) {
-                entire.remove();
+        let preMethod = 'before' + Espo.Utils.upperCaseFirst(action);
+        let postMethod = 'after' + Espo.Utils.upperCaseFirst(action);
 
-                this.set('entire', null);
-            }
+        if (preMethod in this) {
+            this[preMethod].call(this, options || {});
+        }
 
-            let master = this.get('master');
+        this[method].call(this, options || {});
 
-            if (master) {
-                callback.call(this, master);
+        if (postMethod in this) {
+            this[postMethod].call(this, options || {});
+        }
+    },
+
+    /**
+     * Create a master view, render if not already rendered.
+     *
+     * @param {module:controller~viewCallback} callback A callback with a created master view.
+     */
+    master: function (callback) {
+        let entire = this.get('entire');
+
+        if (entire) {
+            entire.remove();
+
+            this.set('entire', null);
+        }
+
+        let master = this.get('master');
+
+        if (master) {
+            callback.call(this, master);
+
+            return;
+        }
+
+        let masterView = this.masterView || 'views/site/master';
+
+        this.viewFactory.create(masterView, {el: 'body'}, (master) => {
+            this.set('master', master);
+
+            if (!this.get('masterRendered')) {
+                master.render(() => {
+                    this.set('masterRendered', true);
+
+                    callback.call(this, master);
+                });
 
                 return;
             }
 
-            let masterView = this.masterView || 'views/site/master';
+            callback.call(this, master);
+        });
+    },
 
-            this.viewFactory.create(masterView, {el: 'body'}, (master) => {
-                this.set('master', master);
+    /**
+     * Create a main view in the master.
+     * @param {String} view A view name.
+     * @param {Object} options Options for view.
+     * @param {module:controller~viewCallback} [callback] A callback with a created view.
+     * @param {boolean} [useStored] Use a stored view if available.
+     * @param {string} [storedKey] A stored view key.
+     */
+    main: function (view, options, callback, useStored, storedKey) {
+        let isCanceled = false;
+        let isRendered = false;
 
-                if (!this.get('masterRendered')) {
-                    master.render(() => {
-                        this.set('masterRendered', true);
+        this.listenToOnce(this.baseController, 'action', () => {
+            isCanceled = true;
+        });
 
-                        callback.call(this, master);
-                    });
+        view = view || 'views/base';
 
-                    return;
-                }
+        this.master(master => {
+            if (isCanceled) {
+                return;
+            }
 
-                callback.call(this, master);
-            });
-        },
+            options = options || {};
+            options.el = '#main';
 
-        /**
-         * Create a main view in the master.
-         * @param {String} view A view name.
-         * @param {Object} options Options for view.
-         * @param {module:controller.Class~viewCallback} [callback] A callback with a created view.
-         * @param {boolean} [useStored] Use a stored view if available.
-         * @param {string} [storedKey] A stored view key.
-         */
-        main: function (view, options, callback, useStored, storedKey) {
-            let isCanceled = false;
-            let isRendered = false;
-
-            this.listenToOnce(this.baseController, 'action', () => {
-                isCanceled = true;
-            });
-
-            view = view || 'views/base';
-
-            this.master(master => {
+            let process = main => {
                 if (isCanceled) {
                     return;
                 }
 
-                options = options || {};
-                options.el = '#main';
-
-                let process = main => {
-                    if (isCanceled) {
-                        return;
-                    }
-
-                    if (storedKey) {
-                        this.storeMainView(storedKey, main);
-                    }
-
-                    main.listenToOnce(this.baseController, 'action', () => {
-                        if (isRendered) {
-                            return;
-                        }
-
-                        main.cancelRender();
-
-                        isCanceled = true;
-                    });
-
-                    if (master.currentViewKey) {
-                        this.set('storedScrollTop-' + master.currentViewKey, $(window).scrollTop());
-
-                        if (this.hasStoredMainView(master.currentViewKey)) {
-                            let mainView = master.getView('main');
-
-                            if (mainView) {
-                                mainView.propagateEvent('remove', {ignoreCleaning: true});
-                            }
-
-                            master.unchainView('main');
-                        }
-                    }
-
-                    master.currentViewKey = storedKey;
-                    master.setView('main', main);
-
-                    let afterRender = () => {
-                        isRendered = true;
-
-                        main.updatePageTitle();
-
-                        if (useStored && this.has('storedScrollTop-' + storedKey)) {
-                            $(window).scrollTop(this.get('storedScrollTop-' + storedKey));
-
-                            return;
-                        }
-
-                        $(window).scrollTop(0);
-                    };
-
-                    if (callback) {
-                        this.listenToOnce(main, 'after:render', afterRender);
-
-                        callback.call(this, main);
-
-                        return;
-                    }
-
-                    main.render()
-                        .then(afterRender);
-                };
-
-                if (useStored && this.hasStoredMainView(storedKey)) {
-                    let main = this.getStoredMainView(storedKey);
-
-                    let isActual = true;
-
-                    if (main && typeof main.isActualForReuse === 'function') {
-                        isActual = main.isActualForReuse();
-                    }
-
-                    if (
-                        (!main.lastUrl || main.lastUrl === this.getRouter().getCurrentUrl()) &&
-                        isActual
-                    ) {
-                        process(main);
-
-                        if (main && typeof main.setupReuse === 'function') {
-                            main.setupReuse(options.params || {});
-                        }
-
-                        return;
-                    }
-
-                    this.clearStoredMainView(storedKey);
+                if (storedKey) {
+                    this.storeMainView(storedKey, main);
                 }
 
-                this.viewFactory.create(view, options, process);
-            });
-        },
+                main.listenToOnce(this.baseController, 'action', () => {
+                    if (isRendered) {
+                        return;
+                    }
 
-        /**
-         * Show a loading notify-message.
-         */
-        showLoadingNotification: function () {
-            let master = this.get('master');
+                    main.cancelRender();
 
-            if (master) {
-                master.showLoadingNotification();
+                    isCanceled = true;
+                });
+
+                if (master.currentViewKey) {
+                    this.set('storedScrollTop-' + master.currentViewKey, $(window).scrollTop());
+
+                    if (this.hasStoredMainView(master.currentViewKey)) {
+                        let mainView = master.getView('main');
+
+                        if (mainView) {
+                            mainView.propagateEvent('remove', {ignoreCleaning: true});
+                        }
+
+                        master.unchainView('main');
+                    }
+                }
+
+                master.currentViewKey = storedKey;
+                master.setView('main', main);
+
+                let afterRender = () => {
+                    isRendered = true;
+
+                    main.updatePageTitle();
+
+                    if (useStored && this.has('storedScrollTop-' + storedKey)) {
+                        $(window).scrollTop(this.get('storedScrollTop-' + storedKey));
+
+                        return;
+                    }
+
+                    $(window).scrollTop(0);
+                };
+
+                if (callback) {
+                    this.listenToOnce(main, 'after:render', afterRender);
+
+                    callback.call(this, main);
+
+                    return;
+                }
+
+                main.render()
+                    .then(afterRender);
+            };
+
+            if (useStored && this.hasStoredMainView(storedKey)) {
+                let main = this.getStoredMainView(storedKey);
+
+                let isActual = true;
+
+                if (main && typeof main.isActualForReuse === 'function') {
+                    isActual = main.isActualForReuse();
+                }
+
+                if (
+                    (!main.lastUrl || main.lastUrl === this.getRouter().getCurrentUrl()) &&
+                    isActual
+                ) {
+                    process(main);
+
+                    if (main && typeof main.setupReuse === 'function') {
+                        main.setupReuse(options.params || {});
+                    }
+
+                    return;
+                }
+
+                this.clearStoredMainView(storedKey);
             }
-        },
 
-        /**
-         * Hide a loading notify-message.
-         */
-        hideLoadingNotification: function () {
-            let master = this.get('master');
+            this.viewFactory.create(view, options, process);
+        });
+    },
 
-            if (master) {
-                master.hideLoadingNotification();
-            }
-        },
+    /**
+     * Show a loading notify-message.
+     */
+    showLoadingNotification: function () {
+        let master = this.get('master');
 
-        /**
-         * Create a view in the <body> element.
-         *
-         * @param {String} view A view name.
-         * @param {Object} options Options for a view.
-         * @param {module:controller.Class~viewCallback} [callback] A callback with a created view.
-         */
-        entire: function (view, options, callback) {
-            let master = this.get('master');
+        if (master) {
+            master.showLoadingNotification();
+        }
+    },
 
-            if (master) {
-                master.remove();
-            }
+    /**
+     * Hide a loading notify-message.
+     */
+    hideLoadingNotification: function () {
+        let master = this.get('master');
 
-            this.set('master', null);
-            this.set('masterRendered', false);
+        if (master) {
+            master.hideLoadingNotification();
+        }
+    },
 
-            options = options || {};
-            options.el = 'body';
+    /**
+     * Create a view in the <body> element.
+     *
+     * @param {String} view A view name.
+     * @param {Object} options Options for a view.
+     * @param {module:controller~viewCallback} [callback] A callback with a created view.
+     */
+    entire: function (view, options, callback) {
+        let master = this.get('master');
 
-            this.viewFactory.create(view, options, view => {
-                this.set('entire', view);
-
-                callback(view);
-            });
+        if (master) {
+            master.remove();
         }
 
-    }, Backbone.Events);
+        this.set('master', null);
+        this.set('masterRendered', false);
 
-    Controller.extend = Bull.View.extend;
+        options = options || {};
+        options.el = 'body';
 
-    return Controller;
-});
+        this.viewFactory.create(view, options, view => {
+            this.set('entire', view);
+
+            callback(view);
+        });
+    }
+
+}, Backbone.Events);
+
+Controller.extend = Bull.View.extend;
+
+export default Controller;

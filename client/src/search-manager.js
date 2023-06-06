@@ -72,7 +72,7 @@ define('search-manager', [], function () {
      * @param {module:collection.Class} collection A collection.
      * @param {string|null} type A type. Used for a storage key.
      * @param {module:storage.Class|null} storage A storage.
-     * @param {module:date-time.Class|null} dateTime A date-time util.
+     * @param {module:date-time|null} dateTime A date-time util.
      * @param {module:search-manager~data|null} [defaultData=null] Default search data.
      * @param {boolean} [emptyOnReset=false] To empty on reset.
      */
@@ -112,7 +112,7 @@ define('search-manager', [], function () {
 
         /**
          * @private
-         * @type {module:date-time.Class|null}
+         * @type {module:date-time|null}
          */
         this.dateTime = dateTime;
 

@@ -26,79 +26,77 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('model-offline', ['model'], function (Model) {
+/** @module model-offline */
 
-    /**
-     * @internal Not used.
-     *
-     * @class
-     * @name Class
-     * @extends module:model.Class
-     * @memberOf module:model-offline
-     */
-    return Model.extend(/** @lends module:model-offline.Class# */{
+import Model from 'model';
 
-        cache: null,
+/**
+ * @internal Not used.
+ *
+ * @class
+ * @name Class
+ * @extends module:model
+ */
+export default Model.extend(/** @lends Class# */{
 
-        _key: null,
+    cache: null,
+    _key: null,
 
-        initialize: function (attributes, options) {
-            Model.prototype.initialize.apply(this, arguments);
+    initialize: function (attributes, options) {
+        Model.prototype.initialize.apply(this, arguments);
 
-            options = options || {};
+        options = options || {};
 
-            this._key = this.url = this.name;
+        this._key = this.url = this.name;
+        this.cache = options.cache || null;
+    },
 
-            this.cache = options.cache || null;
-        },
+    load: function (callback, disableCache) {
+        this.once('sync', callback);
 
-        load: function (callback, disableCache) {
-            this.once('sync', callback);
+        if (!disableCache) {
+            if (this.loadFromCache()) {
+                this.trigger('sync');
 
-            if (!disableCache) {
-                if (this.loadFromCache()) {
-                    this.trigger('sync');
-
-                    return new Promise(resolve => resolve());
-                }
+                return new Promise(resolve => resolve());
             }
+        }
 
-            return new Promise(resolve => {
-                this.fetch()
-                    .then(() => {
-                        this.storeToCache();
+        return new Promise(resolve => {
+            this.fetch()
+                .then(() => {
+                    this.storeToCache();
 
-                        resolve();
-                    });
-            });
-        },
+                    resolve();
+                });
+        });
+    },
 
-        loadSkipCache: function () {
-            return this.load(null, true);
-        },
+    loadSkipCache: function () {
+        return this.load(null, true);
+    },
 
-        loadFromCache: function () {
-            if (this.cache) {
-                let cached = this.cache.get('app', this._key);
+    loadFromCache: function () {
+        if (this.cache) {
+            let cached = this.cache.get('app', this._key);
 
-                if (cached) {
-                    this.set(cached);
+            if (cached) {
+                this.set(cached);
 
-                    return true;
-                }
+                return true;
             }
+        }
 
-            return null;
-        },
+        return null;
+    },
 
-        storeToCache: function () {
-            if (this.cache) {
-                this.cache.set('app', this._key, this.toJSON());
-            }
-        },
+    storeToCache: function () {
+        if (this.cache) {
+            this.cache.set('app', this._key, this.toJSON());
+        }
+    },
 
-        isNew: function () {
-            return false;
-        },
-    });
+    isNew: function () {
+        return false;
+    },
 });

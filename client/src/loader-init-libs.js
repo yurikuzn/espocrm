@@ -63,6 +63,10 @@ Espo.loader.addLibsConfig(
         "base64": {
             "exportsTo": "window",
             "exportsAs": "Base64"
+        },
+        "moment": {
+            "exportsTo": "window",
+            "exportsAs": "moment"
         }
     }
 );

@@ -239,7 +239,7 @@ let Class = Bull.View.extend(/** @lends Class# */{
     /**
      * Get the date-time util.
      *
-     * @returns {module:date-time.Class}
+     * @returns {module:date-time}
      */
     getDateTime: function () {
         return this._helper.dateTime;

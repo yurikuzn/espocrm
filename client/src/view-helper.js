@@ -169,7 +169,7 @@ function (marked, DOMPurify, /** typeof Handlebars */Handlebars) {
         /**
          * A date-time util.
          *
-         * @type {module:date-time.Class}
+         * @type {module:date-time}
          */
         dateTime: null,
 
@@ -232,7 +232,7 @@ function (marked, DOMPurify, /** typeof Handlebars */Handlebars) {
         /**
          * A broadcast channel.
          *
-         * @type {?module:broadcast-channel.Class}
+         * @type {?module:broadcast-channel}
          */
         broadcastChannel: null,
 
