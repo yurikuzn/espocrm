@@ -783,7 +783,6 @@ export default Dep.extend(/** @lends Class# */{
         }
 
         if (this.type === this.TYPE_DETAIL) {
-            /** @var {module:helpers/action-item-setup.Class} */
             let actionItemSetup = new ActionItemSetup(
                 this.getMetadata(),
                 this.getHelper(),
