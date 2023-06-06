@@ -304,7 +304,7 @@ _.extend(FieldManager.prototype, /** @lends FieldManager# */{
     },
 
     /**
-     * @typedef {Object} module:field-manager.Class~FieldFilters
+     * @typedef {Object} module:field-manager~FieldFilters
      *
      * @property {string} [type] Only of a specific field type.
      * @property {string[]} [typeList] Only of a specific field types.
@@ -317,7 +317,7 @@ _.extend(FieldManager.prototype, /** @lends FieldManager# */{
      * Get a list of fields of a specific entity type.
      *
      * @param {string} entityType An entity type.
-     * @param {module:field-manager.Class~FieldFilters} [o] Filters.
+     * @param {module:field-manager~FieldFilters} [o] Filters.
      * @returns {string[]}
      */
     getEntityTypeFieldList: function (entityType, o) {

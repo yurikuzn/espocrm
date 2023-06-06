@@ -406,8 +406,8 @@ _.extend(DateTime.prototype, /** @lends DateTime# */{
     /**
      * Set settings and preferences.
      *
-     * @param {module:models/settings.Class} settings Settings.
-     * @param {module:models/preferences.Class} preferences Preferences.
+     * @param {module:models/settings} settings Settings.
+     * @param {module:models/preferences} preferences Preferences.
      * @internal
      */
     setSettingsAndPreferences: function (settings, preferences) {
@@ -457,7 +457,7 @@ _.extend(DateTime.prototype, /** @lends DateTime# */{
     /**
      * Set a language.
      *
-     * @param {module:language.Class} language A language.
+     * @param {module:language} language A language.
      * @internal
      */
     setLanguage: function (language) {

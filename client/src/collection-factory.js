@@ -51,7 +51,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
      * @param {string} name An entity type.
      * @param {Function} [callback] Deprecated.
      * @param {Object} [context] Deprecated.
-     * @returns {Promise<module:collection.Class>}
+     * @returns {Promise<module:collection>}
      */
     create: function (name, callback, context) {
         return new Promise(resolve => {

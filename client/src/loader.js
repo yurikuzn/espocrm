@@ -48,8 +48,8 @@
      * Handles caching.
      *
      * @class
-     * @param {?module:cache.Class} [cache=null]
-     * @param {?int} [_cacheTimestamp=null]
+     * @param {module:cache|null} [cache=null]
+     * @param {int|null} [_cacheTimestamp=null]
      */
     let Loader = function (cache, _cacheTimestamp) {
         this._cacheTimestamp = _cacheTimestamp || null;
@@ -127,7 +127,7 @@
         },
 
         /**
-         * @param {module:cache.Class} cache
+         * @param {module:cache} cache
          */
         setCache: function (cache) {
             if (this._cacheIsSet) {
@@ -978,7 +978,7 @@
         },
 
         /**
-         * @param {module:cache.Class} cache
+         * @param {module:cache} cache
          * @internal
          */
         setCache: function (cache) {

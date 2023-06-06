@@ -33,7 +33,7 @@
  *
  * @class
  * @param {Object} defs Definitions.
- * @param {module:views/record/base.Class} recordView A record view.
+ * @param {module:views/record/base} recordView A record view.
  *
  * @internal Instantiated in advanced-pack.
  */
@@ -46,7 +46,7 @@ const DynamicLogic = function (defs, recordView) {
 
     /**
      *
-     * @type {module:views/record/base.Class}
+     * @type {module:views/record/base}
      * @private
      */
     this.recordView = recordView;

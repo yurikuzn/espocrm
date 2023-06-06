@@ -33,9 +33,9 @@
  *
  * @class
  * @param {module:language} language A language.
- * @param {module:models/user.Class} user A user.
+ * @param {module:models/user} user A user.
  * @param {module:date-time} dateTime A date-time util.
- * @param {module:acl-manager.Class} acl An ACL manager.
+ * @param {module:acl-manager} acl An ACL manager.
  */
 const EmailHelper = function (language, user, dateTime, acl) {
     /**
@@ -45,7 +45,7 @@ const EmailHelper = function (language, user, dateTime, acl) {
     this.language = language;
 
     /**
-     * @type {module:models/user.Class}
+     * @type {module:models/user}
      * @private
      */
     this.user = user;
@@ -57,7 +57,7 @@ const EmailHelper = function (language, user, dateTime, acl) {
     this.dateTime = dateTime;
 
     /**
-     * @type {module:acl-manager.Class}
+     * @type {module:acl-manager}
      * @private
      */
     this.acl = acl;
@@ -79,7 +79,7 @@ _.extend(EmailHelper.prototype, /** @lends EmailHelper# */{
     },
 
     /**
-     * @returns {module:models/user.Class}
+     * @returns {module:models/user}
      */
     getUser: function () {
         return this.user;
@@ -272,7 +272,7 @@ _.extend(EmailHelper.prototype, /** @lends EmailHelper# */{
     /**
      * Get forward email attributes.
      *
-     * @param {module:model.Class} model An email model.
+     * @param {module:model} model An email model.
      * @returns {Object}
      */
     getForwardAttributes: function (model) {
@@ -304,7 +304,7 @@ _.extend(EmailHelper.prototype, /** @lends EmailHelper# */{
     /**
      * Add body attributes for a forward email.
      *
-     * @param {module:model.Class} model An email model.
+     * @param {module:model} model An email model.
      * @param {Object} attributes
      */
     addForwardBodyAttributes: function (model, attributes) {
@@ -448,7 +448,7 @@ _.extend(EmailHelper.prototype, /** @lends EmailHelper# */{
     /**
      * Add body attributes for a reply email.
      *
-     * @param {module:model.Class} model An email model.
+     * @param {module:model} model An email model.
      * @param {Object} attributes
      */
     addReplyBodyAttributes: function (model, attributes) {

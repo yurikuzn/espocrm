@@ -61,7 +61,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
      * @param {string} name An entity type.
      * @param {Function} [callback] Deprecated.
      * @param {Object} [context] Deprecated.
-     * @returns {Promise<module:model.Class>}
+     * @returns {Promise<module:model>}
      */
     create: function (name, callback, context) {
         return new Promise(resolve => {
@@ -83,7 +83,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
      * Get a class.
      *
      * @param {string} name An entity type.
-     * @param {function(module:model.Class): void} callback A callback.
+     * @param {function(module:model): void} callback A callback.
      * @public
      */
     getSeed: function (name, callback) {

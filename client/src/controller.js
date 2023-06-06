@@ -108,7 +108,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
     /**
      * A model factory.
      *
-     * @type {module:model-factory.Class}
+     * @type {module:model-factory}
      * @protected
      */
     modelFactory: null,
@@ -132,7 +132,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * Set the router.
      *
      * @internal
-     * @param {module:router.Class} router
+     * @param {module:router} router
      */
     setRouter: function (router) {
         this._router = router;
@@ -142,7 +142,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
 
     /**
      * @protected
-     * @returns {module:models/settings.Class}
+     * @returns {module:models/settings}
      */
     getConfig: function () {
         return this._settings;
@@ -150,7 +150,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
 
     /**
      * @protected
-     * @returns {module:models/user.Class}
+     * @returns {module:models/user}
      */
     getUser: function () {
         return this._user;
@@ -158,7 +158,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
 
     /**
      * @protected
-     * @returns {module:models/preferences.Class}
+     * @returns {module:models/preferences}
      */
     getPreferences: function () {
         return this._preferences;
@@ -166,7 +166,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
 
     /**
      * @protected
-     * @returns {module:acl-manager.Class}
+     * @returns {module:acl-manager}
      */
     getAcl: function () {
         return this._acl;
@@ -174,7 +174,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
 
     /**
      * @protected
-     * @returns {module:cache.Class}
+     * @returns {module:cache}
      */
     getCache: function () {
         return this._cache;
@@ -182,7 +182,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
 
     /**
      * @protected
-     * @returns {module:router.Class}
+     * @returns {module:router}
      */
     getRouter: function () {
         return this._router;
@@ -190,7 +190,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
 
     /**
      * @protected
-     * @returns {module:storage.Class}
+     * @returns {module:storage}
      */
     getStorage: function () {
         return this._storage;
@@ -198,7 +198,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
 
     /**
      * @protected
-     * @returns {module:metadata.Class}
+     * @returns {module:metadata}
      */
     getMetadata: function () {
         return this._metadata;
@@ -259,7 +259,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * Get a stored main view.
      *
      * @param {string} key A key.
-     * @returns {module:view.Class|null}
+     * @returns {module:view|null}
      */
     getStoredMainView: function (key) {
         return this.get('storedMainView-' + key);
@@ -292,7 +292,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * Store a main view.
      *
      * @param {string} key A key.
-     * @param {module:view.Class} view A view.
+     * @param {module:view} view A view.
      */
     storeMainView: function (key, view) {
         this.set('storedMainView-' + key, view);

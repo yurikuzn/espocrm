@@ -36,7 +36,7 @@ import AclPortal from 'acl-portal';
  *
  * @class
  * @name Class
- * @extends module:acl-manager.Class
+ * @extends module:acl-manager
  */
 export default Dep.extend(/** @lends Class# */{
 

@@ -148,49 +148,49 @@ _.extend(App.prototype, /** @lends App# */{
 
     /**
      * @private
-     * @type {module:models/user.Class}
+     * @type {module:models/user}
      */
     user: null,
 
     /**
      * @private
-     * @type {module:models/preferences.Class}
+     * @type {module:models/preferences}
      */
     preferences: null,
 
     /**
      * @private
-     * @type {module:models/settings.Class}
+     * @type {module:models/settings}
      */
     settings: null,
 
     /**
      * @private
-     * @type {module:metadata.Class}
+     * @type {module:metadata}
      */
     metadata: null,
 
     /**
      * @private
-     * @type {module:language.Class}
+     * @type {module:language}
      */
     language: null,
 
     /**
      * @private
-     * @type {module:field-manager.Class}
+     * @type {module:field-manager}
      */
     fieldManager: null,
 
     /**
      * @private
-     * @type {module:cache.Class|null}
+     * @type {module:cache|null}
      */
     cache: null,
 
     /**
      * @private
-     * @type {module:storage.Class|null}
+     * @type {module:storage|null}
      */
     storage: null,
 
@@ -226,7 +226,7 @@ _.extend(App.prototype, /** @lends App# */{
      * A base controller.
      *
      * @private
-     * @type {module:controllers/base.Class}
+     * @type {module:controllers/base}
      */
     baseController: null,
 
@@ -237,19 +237,19 @@ _.extend(App.prototype, /** @lends App# */{
 
     /**
      * @private
-     * @type {module:router.Class}
+     * @type {module:router}
      */
     router: null,
 
     /**
      * @private
-     * @type {module:model-factory.Class}
+     * @type {module:model-factory}
      */
     modelFactory: null,
 
     /**
      * @private
-     * @type {module:collection-factory.Class}
+     * @type {module:collection-factory}
      */
     collectionFactory: null,
 
@@ -269,7 +269,7 @@ _.extend(App.prototype, /** @lends App# */{
 
     /**
      * @private
-     * @type {module:view-helper.Class}
+     * @type {module:view-helper}
      */
     viewHelper: null,
 
@@ -301,13 +301,13 @@ _.extend(App.prototype, /** @lends App# */{
 
     /**
      * @private
-     * @type {module:number.Class|null}
+     * @type {NumberUtil|null}
      */
     numberUtil: null,
 
     /**
      * @private
-     * @type {module:web-socket-manager.Class|null}
+     * @type {module:web-socket-manager|null}
      */
     webSocketManager: null,
 
@@ -666,7 +666,7 @@ _.extend(App.prototype, /** @lends App# */{
 
     /**
      * @param {string} name
-     * @param {function(module:controller.Class): void} callback
+     * @param {function(module:controller): void} callback
      * @private
      */
     getController: function (name, callback) {
@@ -700,12 +700,11 @@ _.extend(App.prototype, /** @lends App# */{
 
     /**
      * @private
-     * @return {module:controller.Class}
+     * @return {module:controller}
      */
     createController: function (className, name, callback) {
         require(
             className,
-            /** typeof module:controller.Class */
             controllerClass => {
                 let injections = this.getControllerInjection();
 

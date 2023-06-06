@@ -32,14 +32,14 @@
  * Not used. Maybe utilize for post-loading additional resources in idle, after the page is fully rendered.
  *
  * @class
- * @param {module:cache.Class} cache A cache.
+ * @param {module:cache} cache A cache.
  * @param {Bull.Factory} viewFactory A view factory.
  * @param {string} [basePath] A base path.
  */
 const PreLoader = function (cache, viewFactory, basePath) {
     /**
      * @private
-     * @type {module:cache.Class}
+     * @type {module:cache}
      */
     this.cache = cache;
 
@@ -68,7 +68,7 @@ _.extend(PreLoader.prototype, /** @lends PreLoader# */{
      * Load.
      *
      * @param {Function} callback A callback.
-     * @param {module:app.Class} app An application instance.
+     * @param {module:app} app An application instance.
      */
     load: function (callback, app) {
         let bar = $(

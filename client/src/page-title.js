@@ -32,7 +32,7 @@
  * A page-title util.
  *
  * @class
- * @param {module:models/settings.Class} config A config.
+ * @param {module:models/settings} config A config.
  */
 const PageTitle = function (config) {
 
