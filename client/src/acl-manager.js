@@ -117,7 +117,7 @@ _.extend(Class.prototype, /** @lends Class# */{
     },
 
     /**
-     * @protected
+     * @internal
      */
     set: function (data) {
         data = data || {};

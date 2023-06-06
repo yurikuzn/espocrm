@@ -26,6 +26,8 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
+/** @module collection-factory */
+
 /**
  * A collection factory.
  *
@@ -90,5 +92,4 @@ _.extend(Class.prototype, /** @lends Class# */ {
     },
 });
 
-/** @module collection-factory */
 export default Class;

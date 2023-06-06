@@ -41,19 +41,22 @@ define('field-manager', [], function () {
      */
     let FieldManager = function (defs, metadata, acl) {
         /**
-         * @private
+         * @public
+         * @internal
          * @type {Object}
          */
         this.defs = defs || {};
 
         /**
-         * @private
+         * @public
+         * @internal
          * @type {module:metadata.Class}
          */
         this.metadata = metadata;
 
         /**
-         * @private
+         * @public
+         * @internal
          * @type {module:acl-manager.Class}
          */
         this.acl = acl;

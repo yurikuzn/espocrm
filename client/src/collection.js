@@ -29,6 +29,7 @@
 /** @module collection */
 
 import Model from 'model';
+import Backbone from 'lib!backbone';
 
 const Dep = Backbone.Collection;
 
