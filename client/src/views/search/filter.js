@@ -75,7 +75,7 @@ define('views/search/filter', ['view'], function (Dep) {
         },
 
         /**
-         * @return {module:views/fields/base.Class}
+         * @return {module:views/fields/base}
          */
         getFieldView: function () {
             return this.getView('field');

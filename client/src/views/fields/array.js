@@ -34,7 +34,7 @@ function (Dep, RegExpPattern, /** module:ui/multi-select*/MultiSelect) {
      *
      * @class
      * @name Class
-     * @extends module:views/fields/base.Class
+     * @extends module:views/fields/base
      * @memberOf module:views/fields/array
      */
     return Dep.extend(/** @lends module:views/fields/array.Class# */{

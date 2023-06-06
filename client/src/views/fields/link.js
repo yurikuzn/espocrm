@@ -174,7 +174,7 @@ export default Dep.extend(/** @lends Class# */{
     events: {
         /**
          * @param {JQueryMouseEventObject} e
-         * @this module:views/fields/link.Class
+         * @this module:views/fields/link
          */
         'auxclick a[href]:not([role="button"])': function (e) {
             if (!this.isReadMode()) {

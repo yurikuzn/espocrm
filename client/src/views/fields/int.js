@@ -33,7 +33,7 @@ define('views/fields/int', ['views/fields/base', 'lib!autonumeric'], function (D
      *
      * @class
      * @name Class
-     * @extends module:views/fields/base.Class
+     * @extends module:views/fields/base
      * @memberOf module:views/fields/int
      */
     return Dep.extend(/** module:views/fields/int.Class# */{

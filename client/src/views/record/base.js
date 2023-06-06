@@ -485,7 +485,7 @@ export default Dep.extend(/** @lends Class# */{
      * Get field views.
      *
      * @param {boolean} [withHidden] With hidden.
-     * @return {Object.<string, module:views/fields/base.Class>}
+     * @return {Object.<string, module:views/fields/base>}
      */
     getFieldViews: function (withHidden) {
         let fields = {};
@@ -503,7 +503,7 @@ export default Dep.extend(/** @lends Class# */{
 
     /**
      * @deprecated Use `getFieldViews`.
-     * @return {Object<string, module:views/fields/base.Class>}
+     * @return {Object<string, module:views/fields/base>}
      */
     getFields: function () {
         return this.getFieldViews();
@@ -513,10 +513,10 @@ export default Dep.extend(/** @lends Class# */{
      * Get a field view.
      *
      * @param {string} name A field name.
-     * @return {module:views/fields/base.Class|null}
+     * @return {module:views/fields/base|null}
      */
     getFieldView: function (name) {
-        /** @type {module:views/fields/base.Class|null} */
+        /** @type {module:views/fields/base|null} */
         let view =  this.getView(name + 'Field') || null;
 
         // @todo Remove.
@@ -529,7 +529,7 @@ export default Dep.extend(/** @lends Class# */{
 
     /**
      * @deprecated Use `getFieldView`.
-     * @return {module:views/fields/base.Class|null}
+     * @return {module:views/fields/base|null}
      */
     getField: function (name) {
         return this.getFieldView(name);
@@ -547,7 +547,7 @@ export default Dep.extend(/** @lends Class# */{
     /**
      * Get a field view list.
      *
-     * @return {module:views/fields/base.Class[]}
+     * @return {module:views/fields/base[]}
      */
     getFieldViewList: function () {
         return this.getFieldList()
@@ -1547,7 +1547,7 @@ export default Dep.extend(/** @lends Class# */{
     /**
      * Get a currently focused field view.
      *
-     * @return {?module:views/fields/base.Class}
+     * @return {?module:views/fields/base}
      */
     getFocusedFieldView: function () {
         let $active = $(window.document.activeElement);

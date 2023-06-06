@@ -33,7 +33,7 @@ define('views/fields/bool', ['views/fields/base', 'ui/select'], function (Dep, /
      *
      * @class
      * @name Class
-     * @extends module:views/fields/base.Class
+     * @extends module:views/fields/base
      * @memberOf module:views/fields/bool
      */
     return Dep.extend(/** @lends module:views/fields/bool.Class# */{

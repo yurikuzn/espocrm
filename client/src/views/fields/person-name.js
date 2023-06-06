@@ -32,7 +32,7 @@ function (Dep, /** module:ui/select*/Select) {
     /**
      * @class
      * @name Class
-     * @extends module:views/fields/varchar.Class
+     * @extends module:views/fields/varchar
      * @memberOf module:views/fields/person-name
      */
     return Dep.extend(/** @lends module:views/fields/person-name.Class# */{

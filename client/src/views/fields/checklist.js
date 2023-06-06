@@ -31,7 +31,7 @@ define('views/fields/checklist', ['views/fields/array'], function (Dep) {
     /**
      * @class
      * @name Class
-     * @extends module:views/fields/base.Class
+     * @extends module:views/fields/base
      * @memberOf module:views/fields/checklist
      */
     return Dep.extend(/** @lends module:views/fields/checklist.Class# */{

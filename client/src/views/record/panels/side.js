@@ -335,7 +335,7 @@ export default Dep.extend(/** @lends Class# */{
     /**
      * Get field views.
      *
-     * @return {Object.<string,module:views/fields/base.Class>}
+     * @return {Object.<string, module:views/fields/base>}
      */
     getFieldViews: function () {
         var fields = {};

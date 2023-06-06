@@ -38,7 +38,7 @@ import SearchManager from 'search-manager';
  * @name Class
  * @extends module:views/modal
  */
-export default Dep.extend(/** @lends .Class# */{
+export default Dep.extend(/** @lends Class# */{
 
     template: 'modals/related-list',
 

@@ -33,7 +33,7 @@ define('views/fields/date', ['views/fields/base'], function (Dep) {
      *
      * @class
      * @name Class
-     * @extends module:views/fields/base.Class
+     * @extends module:views/fields/base
      * @memberOf module:views/fields/date
      */
     return Dep.extend(/** @lends module:views/fields/date.Class# */{

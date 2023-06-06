@@ -33,7 +33,7 @@ define('views/fields/wysiwyg', ['views/fields/text', 'lib!Summernote'], function
      *
      * @class
      * @name Class
-     * @extends module:views/fields/base.Class
+     * @extends module:views/fields/base
      * @memberOf module:views/fields/wysiwyg
      */
     return Dep.extend(/** @lends module:views/fields/wysiwyg.Class# */{

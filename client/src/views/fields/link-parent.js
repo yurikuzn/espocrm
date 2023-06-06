@@ -34,7 +34,7 @@ function (Dep, RecordModal, /** module:ui/select*/Select) {
      *
      * @class
      * @name Class
-     * @extends module:views/fields/base.Class
+     * @extends module:views/fields/base
      * @memberOf module:views/fields/link-parent
      */
     return Dep.extend(/** @lends module:views/fields/link-parent.Class# */{

@@ -31,7 +31,7 @@ define('controllers/user', ['controllers/record'], function (Dep) {
     /**
      * @class
      * @name Class
-     * @extends module:controllers/record.Class
+     * @extends module:controllers/record
      * @memberOf module:controllers/user
      */
     return Dep.extend(/** @lends module:controllers/user.Class */{

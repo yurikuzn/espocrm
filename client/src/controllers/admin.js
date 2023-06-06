@@ -294,7 +294,7 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager, _) {
         },
 
         /**
-         * @returns {module:models/settings.Class}
+         * @returns {module:models/settings}
          */
         getSettingsModel: function () {
             let model = this.getConfig().clone();

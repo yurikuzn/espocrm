@@ -33,7 +33,7 @@ define('views/fields/address', ['views/fields/base', 'views/fields/varchar'], fu
      *
      * @class
      * @name Class
-     * @extends module:views/fields/base.Class
+     * @extends module:views/fields/base
      * @memberOf module:views/fields/address
      */
     return Dep.extend(/** @lends module:views/fields/address.Class# */{

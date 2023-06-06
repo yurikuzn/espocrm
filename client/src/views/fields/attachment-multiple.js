@@ -32,7 +32,7 @@ function (Dep, FileUpload) {
     /**
      * @class
      * @name Class
-     * @extends module:views/fields/base.Class
+     * @extends module:views/fields/base
      * @memberOf module:views/fields/attachment-multiple
      */
     return Dep.extend(/** @lends module:views/fields/attachment-multiple.Class# */{
@@ -513,7 +513,7 @@ function (Dep, FileUpload) {
                     totalCount++;
                 }
 
-                /** @type module:helpers/file-upload.Class */
+                /** @type module:helpers/file-upload */
                 let uploadHelper = new FileUpload(this.getConfig());
 
                 fileList.forEach(file => {
