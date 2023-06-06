@@ -33,7 +33,7 @@ function (Dep, /** typeof module:search-manager.Class */SearchManager, _) {
      * @class
      * @name Class
      * @memberOf module:controllers/admin
-     * @extends module:controller.Class
+     * @extends module:controller
      */
     return Dep.extend(/** @lends module:controllers/admin.Class# */{
 

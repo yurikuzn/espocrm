@@ -399,7 +399,7 @@ function (Dep, RecordModal, /** module:ui/select*/Select) {
         /**
          * Select.
          *
-         * @param {module:model.Class} model A model.
+         * @param {module:model} model A model.
          * @protected
          */
         select: function (model) {

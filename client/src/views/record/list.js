@@ -484,7 +484,7 @@ export default Dep.extend(/** @lends Class# */{
     events: {
         /**
          * @param {JQueryKeyEventObject} e
-         * @this module:views/record/list.Class
+         * @this module:views/record/list
          */
         'click a.link': function (e) {
             if (e.ctrlKey || e.metaKey || e.shiftKey) {
@@ -517,7 +517,7 @@ export default Dep.extend(/** @lends Class# */{
         },
         /**
          * @param {JQueryMouseEventObject} e
-         * @this module:views/record/list.Class
+         * @this module:views/record/list
          */
         'auxclick a.link': function (e) {
             let isCombination = e.button === 1 && (e.ctrlKey || e.metaKey);
@@ -553,7 +553,7 @@ export default Dep.extend(/** @lends Class# */{
             this.actionQuickView({id: id});
         },
         /**
-         * @this module:views/record/list.Class
+         * @this module:views/record/list
          */
         'click [data-action="showMore"]': function () {
             this.showMoreRecords();
@@ -563,7 +563,7 @@ export default Dep.extend(/** @lends Class# */{
         },
         /**
          * @param {JQueryKeyEventObject} e
-         * @this module:views/record/list.Class
+         * @this module:views/record/list
          */
         'click a.sort': function (e) {
             let field = $(e.currentTarget).data('name');
@@ -572,7 +572,7 @@ export default Dep.extend(/** @lends Class# */{
         },
         /**
          * @param {JQueryKeyEventObject} e
-         * @this module:views/record/list.Class
+         * @this module:views/record/list
          */
         'click .pagination a': function (e) {
             let page = $(e.currentTarget).data('page');
@@ -598,7 +598,7 @@ export default Dep.extend(/** @lends Class# */{
             this.deactivate();
         },
         /**
-         * @this module:views/record/list.Class
+         * @this module:views/record/list
          */
         'mousedown input.record-checkbox': function () {
             let $focused = $(document.activeElement);
@@ -615,7 +615,7 @@ export default Dep.extend(/** @lends Class# */{
         },
         /**
          * @param {JQueryKeyEventObject} e
-         * @this module:views/record/list.Class
+         * @this module:views/record/list
          */
         'click input.record-checkbox': function (e) {
             let $target = $(e.currentTarget);
@@ -642,27 +642,27 @@ export default Dep.extend(/** @lends Class# */{
         },
         /**
          * @param {JQueryKeyEventObject} e
-         * @this module:views/record/list.Class
+         * @this module:views/record/list
          */
         'click .select-all': function (e) {
             this.selectAllHandler(e.currentTarget.checked);
         },
         /**
          * @param {JQueryKeyEventObject} e
-         * @this module:views/record/list.Class
+         * @this module:views/record/list
          */
         'click .action': function (e) {
             Espo.Utils.handleAction(this, e);
         },
         /**
-         * @this module:views/record/list.Class
+         * @this module:views/record/list
          */
         'click .checkbox-dropdown [data-action="selectAllResult"]': function () {
             this.selectAllResult();
         },
         /**
          * @param {JQueryKeyEventObject} e
-         * @this module:views/record/list.Class
+         * @this module:views/record/list
          */
         'click .actions-menu a.mass-action': function (e) {
             let $el = $(e.currentTarget);
@@ -688,7 +688,7 @@ export default Dep.extend(/** @lends Class# */{
             this.massAction(action);
         },
         /**
-         * @this module:views/record/list.Class
+         * @this module:views/record/list
          */
         'click a.reset-custom-order': function () {
             this.resetCustomOrder();
@@ -2817,7 +2817,7 @@ export default Dep.extend(/** @lends Class# */{
      * Show more records.
      *
      * @param {{skipNotify?: boolean}} [options]
-     * @param {module:collection.Class} [collection]
+     * @param {module:collection} [collection]
      * @param {JQuery} [$list]
      * @param {JQuery} [$showMore]
      * @param {function(): void} [callback] A callback.

@@ -31,10 +31,9 @@ define('collections/note', ['collection'], function (Dep) {
     /**
      * @class
      * @name Class
-     * @extends module:collection.Class
-     * @memberOf module:collections/note
+     * @extends module:collection
      */
-    return Dep.extend(/** @lends module:collections/note.Class# */{
+    return Dep.extend({
 
         /**
          * @inheritDoc

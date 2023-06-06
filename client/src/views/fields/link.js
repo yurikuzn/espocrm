@@ -339,7 +339,7 @@ export default Dep.extend(/** @lends Class# */{
     /**
      * Select.
      *
-     * @param {module:model.Class} model A model.
+     * @param {module:model} model A model.
      * @protected
      */
     select: function (model) {
