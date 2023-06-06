@@ -30,7 +30,7 @@
 
 import Backbone from "lib!backbone";
 
-let Dep = Backbone.Model;
+const Dep = Backbone.Model;
 
 /**
  * Save values to the backend.
@@ -87,7 +87,7 @@ let Dep = Backbone.Model;
  * @extends Backbone.Model
  * @mixes Backbone.Events
  */
-let Class = Dep.extend(/** @lends Class# */{
+const Class = Dep.extend(/** @lends Class# */{
 
     /**
      * A record ID.

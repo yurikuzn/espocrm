@@ -33,7 +33,7 @@
  *
  * @class
  */
-let Class = function (modelFactory, config) {
+const Class = function (modelFactory, config) {
     this.modelFactory = modelFactory;
     this.config = config;
 };

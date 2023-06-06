@@ -67,7 +67,7 @@ import BroadcastChannel from 'broadcast-channel';
  * @param {module:app~Options} options Options.
  * @param {module:app~callback} callback A callback.
  */
-let App = function (options, callback) {
+const App = function (options, callback) {
     options = options || {};
 
     /**

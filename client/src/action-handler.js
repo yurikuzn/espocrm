@@ -35,7 +35,7 @@
  * @param {module:view} view A view.
  * @memberOf module:action-handler
  */
-let ActionHandler = function (view) {
+const ActionHandler = function (view) {
     /**
      * @memberof ActionHandler#
      * @protected

@@ -35,7 +35,7 @@ import moment from 'lib!moment';
  *
  * @class
  */
-let DateTime = function () {};
+const DateTime = function () {};
 
 _.extend(DateTime.prototype, /** @lends DateTime# */{
 

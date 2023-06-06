@@ -94,7 +94,7 @@ const Dep = Backbone.Collection;
  * @extends Backbone.Collection.prototype
  * @mixes Backbone.Events
  */
-let Class = Dep.extend(/** @lends Class# */ {
+const Class = Dep.extend(/** @lends Class# */ {
 
     /**
      * A number of records.

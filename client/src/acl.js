@@ -37,7 +37,7 @@
  * @param {string} scope A scope.
  * @param {Object} params Parameters.
  */
-let Class = function (user, scope, params) {
+const Class = function (user, scope, params) {
     this.user = user || null;
     this.scope = scope;
 

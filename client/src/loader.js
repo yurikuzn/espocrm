@@ -51,7 +51,7 @@
      * @param {module:cache|null} [cache=null]
      * @param {int|null} [_cacheTimestamp=null]
      */
-    let Loader = function (cache, _cacheTimestamp) {
+    const Loader = function (cache, _cacheTimestamp) {
         this._cacheTimestamp = _cacheTimestamp || null;
         this._cache = cache || null;
         this._libsConfig = {};

@@ -35,7 +35,7 @@
  * @param {module:metadata} metadata A metadata.
  * @param {module:language} language A language.
  */
-let FieldLanguage = function (metadata, language) {
+const FieldLanguage = function (metadata, language) {
     /**
      * @private
      * @type {module:metadata}

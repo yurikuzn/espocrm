@@ -31,7 +31,7 @@
 /**
  * Ajax request functions.
  */
-let Ajax = Espo.Ajax = {
+const Ajax = Espo.Ajax = {
 
     /**
      * Options.
