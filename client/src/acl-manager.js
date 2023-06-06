@@ -26,6 +26,8 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
+/** @module acl-manager */
+
 import Acl from 'acl';
 import Utils from 'utils';
 
@@ -482,5 +484,4 @@ _.extend(Class.prototype, /** @lends Class# */{
 
 Class.extend = Bull.View.extend;
 
-/** @module acl-manager */
 export default Class;

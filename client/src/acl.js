@@ -26,6 +26,8 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
+/** @module acl */
+
 /**
  * Internal class for access checking. Can be extended to customize access checking
  * for a specific scope.
@@ -316,5 +318,4 @@ _.extend(Class.prototype, /** @lends Class# */ {
 
 Class.extend = Bull.View.extend;
 
-/** @module acl */
 export default Class;

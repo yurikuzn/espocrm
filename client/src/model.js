@@ -26,6 +26,8 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
+/** @module model */
+
 let Dep = Backbone.Model;
 
 /**
@@ -480,7 +482,7 @@ let Class = Dep.extend(/** @lends Class# */{
     /**
      * Get IDs of a link-multiple field.
      *
-     * @param {type} field A link-multiple field name.
+     * @param {string} field A link-multiple field name.
      * @returns {string[]}
      */
     getLinkMultipleIdList: function (field) {
@@ -582,5 +584,4 @@ let Class = Dep.extend(/** @lends Class# */{
 
 Class.extend = Bull.View.extend;
 
-/** @module model */
 export default Class;

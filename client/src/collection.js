@@ -26,6 +26,8 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
+/** @module collection */
+
 import Model from 'model';
 
 const Dep = Backbone.Collection;
@@ -497,5 +499,4 @@ let Class = Dep.extend(/** @lends Class# */ {
 
 Class.extend = Bull.View.extend;
 
-/** @module collection */
 export default Class;

@@ -98,7 +98,7 @@ define('email-helper', [], function () {
         /**
          * Get reply email attributes.
          *
-         * @param {module:model.Class} model An email model.
+         * @param {module:model} model An email model.
          * @param {Object|null} [data=null] Action data. Unused.
          * @param {boolean} [cc=false] To include CC (reply-all).
          * @returns {Object.<string, *>}
@@ -198,7 +198,7 @@ define('email-helper', [], function () {
                     }
                 });
 
-                attributes.cc = attributes.cc.replace(/^(\; )/,"");
+                attributes.cc = attributes.cc.replace(/^(; )/,"");
             }
 
             if (attributes.to) {
@@ -436,7 +436,7 @@ define('email-helper', [], function () {
          */
         parseAddressFromStringAddress: function (value) {
             let r = value.match(/<(.*)>/);
-            let address = null;
+            let address;
 
             if (r && r.length > 1) {
                 address = r[1];
