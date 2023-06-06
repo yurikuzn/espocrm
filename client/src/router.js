@@ -55,7 +55,7 @@ import Backbone from 'lib!backbone';
  * @function on
  * @memberof module:router#
  * @param {string} event An event.
- * @param {function(): void} callback A callback.
+ * @param {function(*): void} callback A callback.
  */
 
 /**
