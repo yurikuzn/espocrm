@@ -28,6 +28,8 @@
 
 /** @module model */
 
+import Backbone from "lib!backbone";
+
 let Dep = Backbone.Model;
 
 /**
@@ -81,6 +83,7 @@ let Dep = Backbone.Model;
  * A model.
  *
  * @class
+ * @name Class
  * @extends Backbone.Model
  * @mixes Backbone.Events
  */
@@ -501,7 +504,7 @@ let Class = Dep.extend(/** @lends Class# */{
 
     /**
      * @protected
-     * @returns {Espo.DateTime}
+     * @returns {module:date-time}
      */
     getDateTime: function () {
         return this.dateTime;
@@ -509,14 +512,14 @@ let Class = Dep.extend(/** @lends Class# */{
 
     /**
      * @protected
-     * @returns {Espo.Classs.User}
+     * @returns {module:models/user}
      */
     getUser: function () {
         return this._user;
     },
 
     /**
-     * Whether has a field.
+     * Whether it has a field.
      *
      * @param {string} field A field.
      * @returns {boolean}

@@ -444,6 +444,19 @@
                 return this._convertCamelCaseToHyphen(name).split('.').join('/');
             }
 
+            if (name.startsWith('modules/')) {
+                name = name.slice(8);
+
+                let index = name.indexOf('/');
+
+                if (index > 0) {
+                    let mod = name.slice(0, index);
+                    name = name.slice(index + 1);
+
+                    return mod + ':' + name;
+                }
+            }
+
             return name;
         },
 

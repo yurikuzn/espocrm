@@ -26,76 +26,75 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('models/user', ['model'], function (Dep) {
+/** @module models/user */
+
+import Dep from "model";
+
+/**
+ * A user.
+ *
+ * @class
+ * @name Class
+ * @extends module:model
+ */
+export default Dep.extend(/** @lends Class# */{
 
     /**
-     * A user.
-     *
-     * @class
-     * @name Class
-     * @extends module:model.Class
-     *
-     * @memberOf module:models/user
+     * @inheritDoc
      */
-    return Dep.extend(/** @lends module:models/user.Class# */{
+    name: 'User',
 
-        /**
-         * @inheritDoc
-         */
-        name: 'User',
+    /**
+     * Is admin.
+     *
+     * @returns {boolean}
+     */
+    isAdmin: function () {
+        return this.get('type') === 'admin' || this.isSuperAdmin();
+    },
 
-        /**
-         * Is admin.
-         *
-         * @returns {boolean}
-         */
-        isAdmin: function () {
-            return this.get('type') === 'admin' || this.isSuperAdmin();
-        },
+    /**
+     * Is portal.
+     *
+     * @returns {boolean}
+     */
+    isPortal: function () {
+        return this.get('type') === 'portal';
+    },
 
-        /**
-         * Is portal.
-         *
-         * @returns {boolean}
-         */
-        isPortal: function () {
-            return this.get('type') === 'portal';
-        },
+    /**
+     * Is API.
+     *
+     * @returns {boolean}
+     */
+    isApi: function () {
+        return this.get('type') === 'api';
+    },
 
-        /**
-         * Is API.
-         *
-         * @returns {boolean}
-         */
-        isApi: function () {
-            return this.get('type') === 'api';
-        },
+    /**
+     * Is regular.
+     *
+     * @returns {boolean}
+     */
+    isRegular: function () {
+        return this.get('type') === 'regular';
+    },
 
-        /**
-         * Is regular.
-         *
-         * @returns {boolean}
-         */
-        isRegular: function () {
-            return this.get('type') === 'regular';
-        },
+    /**
+     * Is system.
+     *
+     * @returns {boolean}
+     */
+    isSystem: function () {
+        return this.get('type') === 'system';
+    },
 
-        /**
-         * Is system.
-         *
-         * @returns {boolean}
-         */
-        isSystem: function () {
-            return this.get('type') === 'system';
-        },
-
-        /**
-         * Is super-admin.
-         *
-         * @returns {boolean}
-         */
-        isSuperAdmin: function () {
-            return this.get('type') === 'super-admin';
-        },
-    });
+    /**
+     * Is super-admin.
+     *
+     * @returns {boolean}
+     */
+    isSuperAdmin: function () {
+        return this.get('type') === 'super-admin';
+    },
 });

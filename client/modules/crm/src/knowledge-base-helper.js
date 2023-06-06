@@ -26,8 +26,6 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-/** @module modules/crm/knowledge-base-helper */
-
 import Ajax from 'ajax';
 
 export default class {
