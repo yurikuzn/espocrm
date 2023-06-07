@@ -3,7 +3,6 @@
         "main",
         "admin",
         "crm",
-        "wysiwyg",
         "chart",
         "calendar",
         "timeline",
@@ -64,21 +63,6 @@
         "crm": {
             "patterns": [
                 "modules/crm/src/**/*.js"
-            ],
-            "lookupPatterns": [
-                "modules/crm/src/**/*.js"
-            ]
-        },
-        "wysiwyg": {
-            "patterns": [
-                "src/**/*.js",
-                "modules/crm/src/**/*.js"
-            ],
-            "dependentOn": [
-                "lib!Summernote"
-            ],
-            "requires": [
-                "lib!Summernote"
             ],
             "lookupPatterns": [
                 "modules/crm/src/**/*.js"

@@ -29,7 +29,6 @@
 /** @module views/fields/wysiwyg */
 
 import Dep from 'views/fields/text';
-import Summernote from 'lib!Summernote';
 
 /**
  * A wysiwyg field.
@@ -52,13 +51,21 @@ export default Dep.extend(/** @lends Class# */{
     seeMoreDisabled: true,
     fetchEmptyValueAsNull: false,
     validationElementSelector: '.note-editor',
+    htmlPurificationDisabled: false,
 
     setup: function () {
         Dep.prototype.setup.call(this);
 
-        if ($.summernote.options && !('espoImage' in $.summernote.options)) {
-            this.initEspoPlugin();
-        }
+        this.wait(
+            Espo.loader.requirePromise('lib!Summernote')
+                .then(() => {
+                    if (!$.summernote.options || 'espoImage' in $.summernote.options) {
+                        return;
+                    }
+
+                    this.initEspoPlugin();
+                })
+        );
 
         this.hasBodyPlainField = !!~this.getFieldManager()
             .getEntityTypeFieldList(this.model.entityType)
@@ -172,31 +179,35 @@ export default Dep.extend(/** @lends Class# */{
             ['misc', ['codeview', 'fullscreen']],
         ];
 
-        if (!this.params.toolbar) {
-            if (this.params.attachmentField) {
-                this.toolbar.push(['attachment', ['attachment']]);
+        if (this.params.toolbar) {
+            return;
+        }
 
-                this.buttons['attachment'] = () => {
-                    let ui = $.summernote.ui;
+        if (!this.params.attachmentField) {
+            return;
+        }
 
-                    let button = ui.button({
-                        contents: '<i class="fas fa-paperclip"></i>',
-                        tooltip: this.translate('Attach File'),
-                        click: () => {
-                            this.attachFile();
+        this.toolbar.push(['attachment', ['attachment']]);
 
-                            this.listenToOnce(this.model, 'attachment-uploaded:attachments', () => {
-                                if (this.isEditMode()) {
-                                    Espo.Ui.success(this.translate('Attached'));
-                                }
-                            });
+        this.buttons['attachment'] = () => {
+            let ui = $.summernote.ui;
+
+            let button = ui.button({
+                contents: '<i class="fas fa-paperclip"></i>',
+                tooltip: this.translate('Attach File'),
+                click: () => {
+                    this.attachFile();
+
+                    this.listenToOnce(this.model, 'attachment-uploaded:attachments', () => {
+                        if (this.isEditMode()) {
+                            Espo.Ui.success(this.translate('Attached'));
                         }
                     });
+                }
+            });
 
-                    return button.render();
-                };
-            }
-        }
+            return button.render();
+        };
     },
 
     isPlain: function () {

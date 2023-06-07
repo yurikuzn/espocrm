@@ -34,8 +34,7 @@ import moment from 'lib!moment';
 /**
  * A date-time or date.
  *
- * @class
- * @name Class
+ * @class Class
  * @extends module:views/fields/datetime
  */
 export default Dep.extend(/** @lends Class# */{
