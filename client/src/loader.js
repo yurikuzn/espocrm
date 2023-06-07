@@ -1082,6 +1082,8 @@
      * @param {Espo.Loader~requireCallback} callback A callback with resolved dependencies.
      * @param {Object} [context] A context.
      * @param {Function|null} [errorCallback] An error callback.
+     *
+     * @deprecated Use `Espo.loader.require` instead.
      */
     root.require = Espo.require = function (subject, callback, context, errorCallback) {
         if (context) {

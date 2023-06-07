@@ -1169,7 +1169,7 @@ export default Dep.extend(/** @lends Class# */{
                 .get(['clientDefs', 'Global', 'saveErrorHandlers', reason]);
 
         if (handlerName) {
-            require(handlerName, Handler => {
+            Espo.loader.require(handlerName, Handler => {
                 let handler = new Handler(this);
 
                 handler.process(handlerData.data, options);

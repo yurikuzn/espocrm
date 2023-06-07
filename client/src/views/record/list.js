@@ -1225,7 +1225,7 @@ export default Dep.extend(/** @lends Class# */{
                 params: this.getMassActionSelectionPostData(),
             };
 
-            require(handler, Handler => {
+            Espo.loader.require(handler, Handler => {
                 let handler = new Handler(this);
 
                 handler[method].call(handler, data);
@@ -2133,7 +2133,7 @@ export default Dep.extend(/** @lends Class# */{
 
                 this.wait(
                     new Promise((resolve) => {
-                        require(defs.handler, (Handler) => {
+                        Espo.loader.require(defs.handler, Handler => {
                             let handler = new Handler(viewObject);
 
                             handler[defs.initFunction].call(handler);

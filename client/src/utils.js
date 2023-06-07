@@ -81,7 +81,7 @@ Espo.Utils = {
 
             fired = true;
 
-            require(handler, function (Handler) {
+            Espo.loader.require(handler, Handler => {
                 let handler = new Handler(viewObject);
 
                 handler[method].call(handler, data, e);

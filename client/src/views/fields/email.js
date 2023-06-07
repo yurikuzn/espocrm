@@ -479,7 +479,7 @@ define('views/fields/email', ['views/fields/varchar'], function (Dep) {
                 this.getPreferences().get('emailUseExternalClient') ||
                 !this.getAcl().checkScope('Email', 'create')
             ) {
-                require('email-helper', EmailHelper => {
+                Espo.loader.require('email-helper', EmailHelper => {
                     let emailHelper = new EmailHelper();
 
                     document.location.href = emailHelper

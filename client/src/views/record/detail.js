@@ -2123,7 +2123,7 @@ export default Dep.extend(/** @lends Class# */{
         if (dynamicHandlerClassName) {
             this.wait(
                 new Promise(resolve => {
-                    require(dynamicHandlerClassName, (DynamicHandler) => {
+                    Espo.loader.require(dynamicHandlerClassName, DynamicHandler => {
                         let dynamicHandler = this.dynamicHandler = new DynamicHandler(this);
 
                         init(dynamicHandler);
@@ -2144,7 +2144,7 @@ export default Dep.extend(/** @lends Class# */{
             handlerList.forEach((className) => {
                 promiseList.push(
                     new Promise(resolve => {
-                        require(className, (DynamicHandler) => {
+                        Espo.loader.require(className, DynamicHandler => {
                             resolve(new DynamicHandler(self));
                         });
                     })

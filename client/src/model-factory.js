@@ -89,7 +89,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
     getSeed: function (name, callback) {
         let className = this.metadata.get(['clientDefs', name, 'model']) || 'model';
 
-        require(className, modelClass => {
+        Espo.loader.require(className, modelClass => {
             let seed = modelClass.extend({
                 name: name,
                 entityType: name,

@@ -108,7 +108,7 @@ export default class {
             }
 
             waitFunc(new Promise(resolve => {
-                require(handlerName, Handler => {
+                Espo.loader.require(handlerName, Handler => {
                     let handler = new Handler(view);
 
                     if (item.initFunction) {

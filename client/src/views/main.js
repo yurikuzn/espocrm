@@ -157,7 +157,7 @@ let Class = Dep.extend(/** @lends Class# */{
 
                 if (item.initFunction && item.data.handler) {
                     this.wait(new Promise(resolve => {
-                        require(item.data.handler, Handler => {
+                        Espo.loader.require(item.data.handler, Handler => {
                             let handler = new Handler(viewObject);
 
                             handler[item.initFunction].call(handler);

@@ -374,9 +374,9 @@ define('views/fields/text', ['views/fields/base'], function (Dep) {
         },
 
         mailTo: function (emailAddress) {
-            var attributes = {
+            let attributes = {
                 status: 'Draft',
-                to: emailAddress
+                to: emailAddress,
             };
 
             if (
@@ -384,13 +384,11 @@ define('views/fields/text', ['views/fields/base'], function (Dep) {
                 this.getPreferences().get('emailUseExternalClient') ||
                 !this.getAcl().checkScope('Email', 'create')
             ) {
-                require('email-helper', (EmailHelper) => {
-                    var emailHelper = new EmailHelper();
+                Espo.loader.require('email-helper', EmailHelper => {
+                    let emailHelper = new EmailHelper();
 
-                    var link = emailHelper
+                    document.location.href = emailHelper
                         .composeMailToLink(attributes, this.getConfig().get('outboundEmailBccAddress'));
-
-                    document.location.href = link;
                 });
 
                 return;

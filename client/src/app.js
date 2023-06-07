@@ -703,7 +703,7 @@ _.extend(App.prototype, /** @lends App# */{
      * @return {module:controller}
      */
     createController: function (className, name, callback) {
-        require(
+        Espo.loader.require(
             className,
             controllerClass => {
                 let injections = this.getControllerInjection();
@@ -717,7 +717,6 @@ _.extend(App.prototype, /** @lends App# */{
 
                 callback(controller);
             },
-            this,
             () => this.baseController.error404()
         );
     },
