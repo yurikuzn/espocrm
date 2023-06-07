@@ -33,7 +33,7 @@ const fs = require('fs');
 const cp = require('child_process');
 const path = require('path');
 const buildUtils = require('./js/build-utils');
-const BundlerGeneral = require("./js/bundler-general");
+const BundlerGeneral = require("./js/bundler/bundler-general");
 const LayoutTypeBundler = require('./js/layout-template-bundler');
 const Transpiler = require('./js/transpiler');
 const bundleConfig = require('./frontend/bundle-config.json');
@@ -302,7 +302,7 @@ module.exports = grunt => {
     });
 
     grunt.registerTask('transpile', () => {
-        //(new Transpiler({})).process();
+        (new Transpiler({})).process();
 
         (new Transpiler({
             mod: 'crm',
