@@ -32,16 +32,12 @@ import Dep from "model";
 
 /**
  * User preferences.
- *
- * @class
- * @name Class
- * @extends module:model
  */
-export default Dep.extend(/** @lends Class# */{
+export default class extends Dep {
 
-    /** @inheritDoc */
-    name: 'Preferences',
-    entityType: 'Preferences',
+    name = 'Preferences'
+    entityType = 'Preferences'
+    urlRoot = 'Preferences'
 
     /**
      * Get dashlet options.
@@ -49,18 +45,18 @@ export default Dep.extend(/** @lends Class# */{
      * @param {string} id A dashlet ID.
      * @returns {Object|null}
      */
-    getDashletOptions: function (id) {
+    getDashletOptions(id) {
         let value = this.get('dashletsOptions') || {};
 
         return value[id] || null;
-    },
+    }
 
     /**
      * Whether a user is portal.
      *
      * @returns {boolean}
      */
-    isPortal: function () {
+    isPortal() {
         return this.get('isPortalUser');
-    },
-});
+    }
+}

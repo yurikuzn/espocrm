@@ -32,44 +32,40 @@ import Dep from "model";
 
 /**
  * A config.
- *
- * @class
- * @name Class
- * @extends module:model
  */
-export default Dep.extend(/** @lends Class# */{
+export default class extends Dep {
 
-    /** @inheritDoc */
-    name: 'Settings',
-    entityType: 'Settings',
+    name = 'Settings'
+    entityType = 'Settings'
+    urlRoot = 'Settings'
 
     /**
      * Load.
      *
      * @returns {Promise}
      */
-    load: function () {
+    load() {
         return new Promise(resolve => {
             this.fetch()
                 .then(() => resolve());
         });
-    },
+    }
 
     /**
      * Get a value by a path.
      *
-     * @param {string[]} arr A path.
+     * @param {string[]} path A path.
      * @returns {*} Null if not set.
      */
-    getByPath: function (arr) {
-        if (!arr.length) {
+    getByPath(path) {
+        if (!path.length) {
             return null;
         }
 
         let p;
 
-        for (let i = 0; i < arr.length; i++) {
-            var item = arr[i];
+        for (let i = 0; i < path.length; i++) {
+            var item = path[i];
 
             if (i === 0) {
                 p = this.get(item);
@@ -83,7 +79,7 @@ export default Dep.extend(/** @lends Class# */{
                 }
             }
 
-            if (i === arr.length - 1) {
+            if (i === path.length - 1) {
                 return p;
             }
 
@@ -91,5 +87,5 @@ export default Dep.extend(/** @lends Class# */{
                 return null;
             }
         }
-    },
-});
+    }
+}

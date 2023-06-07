@@ -38,10 +38,10 @@ let Class = function (metadata, user) {
 
 _.extend(Class.prototype, /** @lends Class# */ {
 
-    /**
-     * @private
-     */
+    /** @private */
     metadata: null,
+    /** @private */
+    user: null,
 
     /**
      * @public
@@ -51,24 +51,24 @@ _.extend(Class.prototype, /** @lends Class# */ {
     dateTime: null,
 
     /**
-     * @private
-     */
-    user: null,
-
-    /**
      * Create a model.
      *
-     * @param {string} name An entity type.
+     * @param {string} entityType An entity type.
      * @param {Function} [callback] Deprecated.
      * @param {Object} [context] Deprecated.
      * @returns {Promise<module:model>}
      */
-    create: function (name, callback, context) {
+    create: function (entityType, callback, context) {
         return new Promise(resolve => {
             context = context || this;
 
-            this.getSeed(name, seed => {
-                let model = new seed();
+            this.getSeed(entityType, Seed => {
+                let model = new Seed({}, {
+                    entityType: entityType,
+                    defs: this.metadata.get(['entityDefs', entityType]) || {},
+                    user: this.user,
+                    dateTime: this.dateTime,
+                });
 
                 if (callback) {
                     callback.call(context, model);
@@ -82,23 +82,15 @@ _.extend(Class.prototype, /** @lends Class# */ {
     /**
      * Get a class.
      *
-     * @param {string} name An entity type.
+     * @param {string} entityType An entity type.
      * @param {function(module:model): void} callback A callback.
      * @public
      */
-    getSeed: function (name, callback) {
-        let className = this.metadata.get(['clientDefs', name, 'model']) || 'model';
+    getSeed: function (entityType, callback) {
+        let className = this.metadata.get(['clientDefs', entityType, 'model']) || 'model';
 
         Espo.loader.require(className, modelClass => {
-            let seed = modelClass.extend({
-                name: name,
-                entityType: name,
-                defs: this.metadata.get(['entityDefs', name]) || {},
-                dateTime: this.dateTime,
-                _user: this.user,
-            });
-
-            callback(seed);
+            callback(modelClass);
         });
     },
 });

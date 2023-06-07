@@ -28,73 +28,68 @@
 
 /** @module models/user */
 
-import Dep from "model";
+import Model from 'model';
 
 /**
  * A user.
- *
- * @class
- * @name Class
- * @extends module:model
  */
-export default Dep.extend(/** @lends Class# */{
+export default class extends Model {
 
-    /**
-     * @inheritDoc
-     */
-    name: 'User',
+    name = 'User'
+    entityType = 'User'
+    urlRoot = 'User'
 
     /**
      * Is admin.
      *
      * @returns {boolean}
      */
-    isAdmin: function () {
+    isAdmin() {
         return this.get('type') === 'admin' || this.isSuperAdmin();
-    },
+    }
 
     /**
      * Is portal.
      *
      * @returns {boolean}
      */
-    isPortal: function () {
+    isPortal() {
         return this.get('type') === 'portal';
-    },
+    }
 
     /**
      * Is API.
      *
      * @returns {boolean}
      */
-    isApi: function () {
+    isApi() {
         return this.get('type') === 'api';
-    },
+    }
 
     /**
      * Is regular.
      *
      * @returns {boolean}
      */
-    isRegular: function () {
+    isRegular() {
         return this.get('type') === 'regular';
-    },
+    }
 
     /**
      * Is system.
      *
      * @returns {boolean}
      */
-    isSystem: function () {
+    isSystem() {
         return this.get('type') === 'system';
-    },
+    }
 
     /**
      * Is super-admin.
      *
      * @returns {boolean}
      */
-    isSuperAdmin: function () {
+    isSuperAdmin() {
         return this.get('type') === 'super-admin';
-    },
-});
+    }
+}
