@@ -101,7 +101,7 @@ class Bundler {
         let contents = '';
 
         this.#mapToTraspiledFiles(sortedFiles)
-            .forEach(file => contents += this.#normalizeSourceFile(file));
+            .forEach(file => contents += this.#normalizeSourceFile(file) + '\n');
 
         let modules = sortedFiles.map(file => this.#obtainModuleName(file));
 
@@ -487,6 +487,8 @@ class Bundler {
         let sourceCode = fs.readFileSync(path, 'utf-8');
         let srcPath = this.#getSrcPath();
 
+        sourceCode = this.#stripSourceMappingUrl(sourceCode);
+
         if (!this.#isClientJsFile(path)) {
             return sourceCode;
         }
@@ -533,7 +535,20 @@ class Bundler {
     }
 
     /**
-     * @private
+     * @param {string} contents
+     * @return {string}
+     */
+    #stripSourceMappingUrl(contents) {
+        let re = /^\/\/# sourceMappingURL.*/gm;
+
+        if (!contents.match(re)) {
+            return contents;
+        }
+
+        return contents.replaceAll(re, '');
+    }
+
+    /**
      * @return {string}
      */
     #getSrcPath() {
