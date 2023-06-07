@@ -33,6 +33,8 @@ class BundlerGeneral {
 
     /**
      * @param {{
+     *   basePath?: string,
+     *   transpiledPath?: string,
      *   chunks: Object.<string, {
      *     files?: string[],
      *     patterns?: string[],
@@ -159,7 +161,11 @@ class BundlerGeneral {
         let notBundledModules = [];
 
         if (params.patterns) {
-            let bundler = (new Bundler(this.config.modulePaths));
+            let bundler = new Bundler(
+                this.config.modulePaths,
+                this.config.basePath,
+                this.config.transpiledPath
+            );
 
             // The main bundle is always loaded, duplicates are not needed.
             let ignoreFiles = [].concat(this.mainBundleFiles);

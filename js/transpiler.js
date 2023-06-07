@@ -35,14 +35,12 @@ class Transpiler {
     /**
      * @param {{
      *     path?: string,
-     *     modulePaths?: modulePaths,
      *     destDir?: string,
      *     mod?: string,
      * }} config
      */
     constructor(config) {
         this.path = (config.path ?? 'client') + '/src';
-        this.modulePaths = config.modulePaths || {};
         this.destDir = config.destDir || 'client/lib/transpiled';
         this.mod = config.mod;
 
@@ -56,22 +54,17 @@ class Transpiler {
         let files = allFiles.filter(file => this.#isToBeTranspiled(file));
         let otherFiles = allFiles.filter(file => !files.includes(file));
 
-        files.forEach(file => {
-            this.#processFile(file);
-        });
-
-        otherFiles.forEach(file => {
-            this.#copyFile(file);
-        });
+        files.forEach(file => this.#processFile(file));
+        otherFiles.forEach(file => this.#copyFile(file));
     }
 
     /**
      * @param {string} file
      */
     #processFile(file) {
-        let module = this.#obtainModuleName(file);
+        const module = this.#obtainModuleName(file);
 
-        let result = babelCore.transformSync(this.#getContents(file), {
+        const result = babelCore.transformSync(this.#getContents(file), {
             plugins: ['@babel/plugin-transform-modules-amd'],
             moduleId: module,
             sourceMaps: true,
@@ -81,7 +74,13 @@ class Transpiler {
 
         fs.mkdirSync(dir, {recursive: true});
 
-        let filePart = module.split('/').slice(-1)[0] + '.js';
+        let part = module;
+
+        if (part.includes(':')) {
+            part = part.split(':')[1];
+        }
+
+        let filePart = part.split('/').slice(-1)[0] + '.js';
         let destFile = dir + filePart;
 
         let resultContent = result.code + `\n//# sourceMappingURL=${filePart}.map ;`;

@@ -45,7 +45,7 @@ class TemplatePrecompiler {
     precompile(params) {
         let files = [];
 
-        params.patterns.forEach(pattern => {
+        this.#normalizePaths(params.patterns).forEach(pattern => {
             let itemFiles = globSync(pattern)
                 .map(file => file.replaceAll('\\', '/'));
 
@@ -107,6 +107,14 @@ class TemplatePrecompiler {
             files: compiledFiles,
             contents: contents,
         };
+    }
+
+    /**
+     * @param {string[]} patterns
+     * @return {string[]}
+     */
+    #normalizePaths(patterns) {
+        return patterns.map(item => this.defaultPath + '/' + item);
     }
 }
 

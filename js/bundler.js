@@ -40,16 +40,16 @@ class Bundler {
 
     /**
      * @param {Object.<string, string>} modulePaths
+     * @param {string} [basePath]
+     * @param {string} [transpiledPath]
      */
-    constructor(modulePaths) {
+    constructor(modulePaths, basePath, transpiledPath) {
         this.modulePaths = modulePaths;
-    }
+        this.basePath = basePath ?? 'client';
+        this.transpiledPath = transpiledPath ?? 'client/lib/transpiled';
 
-    /**
-     * @private
-     * @type {string}
-     */
-    basePath = 'client/src'
+        this.srcPath = this.basePath + '/src';
+    }
 
     /**
      * Bundles Espo js files into chunks.
@@ -75,8 +75,9 @@ class Bundler {
      */
     bundle(params) {
         let files = []
-            .concat(params.files || [])
+            .concat(this.#normalizePaths(params.files || []))
             .concat(this.#obtainFiles(params.patterns, params.files))
+            // @todo Check if working.
             .filter(file => !params.ignoreFiles.includes(file));
 
         let allFiles = this.#obtainFiles(params.lookupPatterns || params.patterns);
@@ -99,7 +100,8 @@ class Bundler {
 
         let contents = '';
 
-        sortedFiles.forEach(file => contents += this.#normalizeSourceFile(file));
+        this.#mapToTraspiledFiles(sortedFiles)
+            .forEach(file => contents += this.#normalizeSourceFile(file));
 
         let modules = sortedFiles.map(file => this.#obtainModuleName(file));
 
@@ -112,6 +114,16 @@ class Bundler {
     }
 
     /**
+     * @param {string[]} files
+     * @return {string[]}
+     */
+    #mapToTraspiledFiles(files) {
+        return files.map(file => {
+            return this.transpiledPath + '/' + file.slice(this.basePath.length + 1);
+        });
+    }
+
+    /**
      * @param {string[]} patterns
      * @param {string[]} [ignoreFiles]
      * @return {string[]}
@@ -120,7 +132,7 @@ class Bundler {
         let files = [];
         ignoreFiles = ignoreFiles || [];
 
-        patterns.forEach(pattern => {
+        this.#normalizePaths(patterns).forEach(pattern => {
             let itemFiles = globSync(pattern, {})
                 .map(file => file.replaceAll('\\', '/'))
                 .filter(file => !ignoreFiles.includes(file));
@@ -129,6 +141,14 @@ class Bundler {
         });
 
         return files;
+    }
+
+    /**
+     * @param {string[]} patterns
+     * @return {string[]}
+     */
+    #normalizePaths(patterns) {
+        return patterns.map(item => this.basePath + '/' + item);
     }
 
     /**
@@ -353,7 +373,7 @@ class Bundler {
             }
         }
 
-        return file.slice(this.#getBathPath().length, -3);
+        return file.slice(this.#getSrcPath().length, -3);
     }
 
     /**
@@ -365,9 +385,13 @@ class Bundler {
             return null;
         }
 
+        let moduleName = this.#obtainModuleName(path);
+
+        const sourceCode = fs.readFileSync(path, 'utf-8');
+
         let tsSourceFile = typescript.createSourceFile(
             path,
-            fs.readFileSync(path, 'utf-8'),
+            sourceCode,
             typescript.ScriptTarget.Latest
         );
 
@@ -378,10 +402,22 @@ class Bundler {
             !rootStatement.expression.expression ||
             rootStatement.expression.expression.escapedText !== 'define'
         ) {
-            return null;
-        }
+            if (!sourceCode.includes('export ')) {
+                return null;
+            }
 
-        let moduleName = this.#obtainModuleName(path);
+            if (!sourceCode.includes('import ')) {
+                return {
+                    name: moduleName,
+                    deps: [],
+                };
+            }
+
+            return {
+                name: moduleName,
+                deps: this.#obtainModuleDeps(tsSourceFile),
+            };
+        }
 
         let deps = [];
 
@@ -406,6 +442,17 @@ class Bundler {
     }
 
     /**
+     * @param sourceFile
+     * @return {string[]}
+     */
+    #obtainModuleDeps(sourceFile) {
+        return sourceFile.statements
+            .filter(item => item.importClause)
+            .filter(item => item.importClause && item.moduleSpecifier)
+            .map(item => item.moduleSpecifier.text);
+    }
+
+    /**
      * @param {string} path
      * @return {boolean}
      */
@@ -414,7 +461,7 @@ class Bundler {
             return false;
         }
 
-        let startParts = [this.#getBathPath()];
+        let startParts = [this.#getSrcPath()];
 
         for (let mod in this.modulePaths) {
             let modPath = this.modulePaths[mod];
@@ -438,13 +485,17 @@ class Bundler {
      */
     #normalizeSourceFile(path) {
         let sourceCode = fs.readFileSync(path, 'utf-8');
-        let basePath = this.#getBathPath();
+        let srcPath = this.#getSrcPath();
 
         if (!this.#isClientJsFile(path)) {
             return sourceCode;
         }
 
-        let moduleName = path.slice(basePath.length, -3);
+        if (!sourceCode.includes('define')) {
+            return sourceCode;
+        }
+
+        let moduleName = path.slice(srcPath.length, -3);
 
         let tsSourceFile = typescript.createSourceFile(
             path,
@@ -485,8 +536,8 @@ class Bundler {
      * @private
      * @return {string}
      */
-    #getBathPath() {
-        let path = this.basePath;
+    #getSrcPath() {
+        let path = this.srcPath;
 
         if (path.slice(-1) !== '/') {
             path += '/';

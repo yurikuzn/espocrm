@@ -302,7 +302,7 @@ module.exports = grunt => {
     });
 
     grunt.registerTask('transpile', () => {
-        (new Transpiler({})).process();
+        //(new Transpiler({})).process();
 
         (new Transpiler({
             mod: 'crm',
@@ -484,6 +484,7 @@ module.exports = grunt => {
         'less',
         'cssmin',
         'prepare-lib-original',
+        'transpile',
         'bundle',
         'uglify:bundle',
         'copy:frontendLib',
