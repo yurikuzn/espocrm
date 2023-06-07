@@ -33,23 +33,17 @@ import AclPortalManager from 'acl-portal-manager';
 
 /**
  * A portal application class.
- *
- * @class
- * @name Class
- * @extends Dep
  */
-export default Dep.extend(/** @lends Class# */{
+export default class extends Dep {
 
-    /** @inheritDoc */
-    aclName: 'aclPortal',
+    aclName = 'aclPortal'
+    masterView = 'views/site-portal/master'
 
-    /** @inheritDoc */
-    masterView: 'views/site-portal/master',
-
-    /**
-     * @inheritDoc
-     */
-    createAclManager: function () {
-        return new AclPortalManager(this.user, null, this.settings.get('aclAllowDeleteCreated'));
-    },
-});
+    createAclManager() {
+        return new AclPortalManager(
+            this.user,
+            null,
+            this.settings.get('aclAllowDeleteCreated')
+        );
+    }
+}

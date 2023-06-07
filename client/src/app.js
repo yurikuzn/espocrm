@@ -63,148 +63,129 @@ import BroadcastChannel from 'broadcast-channel';
 /**
  * A main application class.
  *
- * @class
- * @param {module:app~Options} options Options.
- * @param {module:app~callback} callback A callback.
+ * @mixes Backbone.Events
  */
-const App = function (options, callback) {
-    options = options || {};
+class App  {
 
     /**
-     * An application ID.
-     *
-     * @private
-     * @type {string}
+     * @param {module:app~Options} options Options.
+     * @param {module:app~callback} callback A callback.
      */
-    this.id = options.id || 'espocrm-application-id';
+    constructor(options, callback) {
+        options = options || {};
 
-    /**
-     * Use cache.
-     *
-     * @private
-     * @type {boolean}
-     */
-    this.useCache = options.useCache || this.useCache;
+        /**
+         * An application ID.
+         *
+         * @private
+         * @type {string}
+         */
+        this.id = options.id || 'espocrm-application-id';
 
-    this.apiUrl = options.apiUrl || this.apiUrl;
+        /**
+         * Use cache.
+         *
+         * @private
+         * @type {boolean}
+         */
+        this.useCache = options.useCache || this.useCache;
 
-    /**
-     * A base path.
-     *
-     * @type {string}
-     */
-    this.basePath = options.basePath || '';
+        this.apiUrl = options.apiUrl || this.apiUrl;
 
-    /**
-     * A default ajax request timeout.
-     *
-     * @private
-     * @type {Number}
-     */
-    this.ajaxTimeout = options.ajaxTimeout || 0;
+        /**
+         * A base path.
+         *
+         * @type {string}
+         */
+        this.basePath = options.basePath || '';
 
-    /**
-     * A list of internal modules.
-     *
-     * @private
-     * @type {string[]}
-     */
-    this.internalModuleList = options.internalModuleList || [];
+        /**
+         * A default ajax request timeout.
+         *
+         * @private
+         * @type {Number}
+         */
+        this.ajaxTimeout = options.ajaxTimeout || 0;
 
-    this.initCache(options)
-        .then(() => this.init(options, callback));
+        /**
+         * A list of internal modules.
+         *
+         * @private
+         * @type {string[]}
+         */
+        this.internalModuleList = options.internalModuleList || [];
 
-    this.initDomEventListeners();
-};
+        this.initCache(options)
+            .then(() => this.init(options, callback));
 
-/**
- * @callback module:app~callback
- *
- * @param {App} app A created application instance.
- */
-
-/**
- * Application options.
- *
- * @typedef {Object} module:app~Options
- *
- * @property {string} [id] An application ID.
- * @property {string} [basePath] A base path.
- * @property {boolean} [useCache] Use cache.
- * @property {string} [apiUrl] An API URL.
- * @property {Number} [ajaxTimeout] A default ajax request timeout.
- * @property {string} [internalModuleList] A list of internal modules.
- *   Internal modules located in the `client/modules` directory.
- * @property {Number|null} [cacheTimestamp] A cache timestamp.
- */
-
-_.extend(App.prototype, /** @lends App# */{
+        this.initDomEventListeners();
+    }
 
     /**
      * @private
      * @type {boolean}
      */
-    useCache: false,
+    useCache = false
 
     /**
-     * @private
+     * @protected
      * @type {module:models/user}
      */
-    user: null,
+    user = null
 
     /**
      * @private
      * @type {module:models/preferences}
      */
-    preferences: null,
+    preferences = null
 
     /**
-     * @private
+     * @protected
      * @type {module:models/settings}
      */
-    settings: null,
+    settings = null
 
     /**
      * @private
      * @type {module:metadata}
      */
-    metadata: null,
+    metadata = null
 
     /**
      * @private
      * @type {module:language}
      */
-    language: null,
+    language = null
 
     /**
      * @private
      * @type {module:field-manager}
      */
-    fieldManager: null,
+    fieldManager = null
 
     /**
      * @private
      * @type {module:cache|null}
      */
-    cache: null,
+    cache = null
 
     /**
      * @private
      * @type {module:storage|null}
      */
-    storage: null,
+    storage = null
 
     /**
      * @private
      */
-    loader: null,
+    loader = null
 
     /**
      * An API URL.
      *
      * @private
      */
-    apiUrl: 'api/v1',
+    apiUrl = 'api/v1'
 
     /**
      * An auth credentials string.
@@ -212,7 +193,7 @@ _.extend(App.prototype, /** @lends App# */{
      * @private
      * @type {?string}
      */
-    auth: null,
+    auth = null
 
     /**
      * Another user to login as.
@@ -220,7 +201,7 @@ _.extend(App.prototype, /** @lends App# */{
      * @private
      * @type {?string}
      */
-    anotherUser: null,
+    anotherUser = null
 
     /**
      * A base controller.
@@ -228,30 +209,30 @@ _.extend(App.prototype, /** @lends App# */{
      * @private
      * @type {module:controllers/base}
      */
-    baseController: null,
+    baseController = null
 
     /**
      * @private
      */
-    controllers: null,
+    controllers = null
 
     /**
      * @private
      * @type {module:router}
      */
-    router: null,
+    router = null
 
     /**
      * @private
      * @type {module:model-factory}
      */
-    modelFactory: null,
+    modelFactory = null
 
     /**
      * @private
      * @type {module:collection-factory}
      */
-    collectionFactory: null,
+    collectionFactory = null
 
     /**
      * A view factory.
@@ -259,19 +240,19 @@ _.extend(App.prototype, /** @lends App# */{
      * @private
      * @type {Bull.Factory}
      */
-    viewFactory: null,
+    viewFactory = null
 
     /**
      * @type {Function}
      * @private
      */
-    viewLoader: null,
+    viewLoader = null
 
     /**
      * @private
      * @type {module:view-helper}
      */
-    viewHelper: null,
+    viewHelper = null
 
     /**
      * A body view.
@@ -279,53 +260,54 @@ _.extend(App.prototype, /** @lends App# */{
      * @protected
      * @type {string}
      */
-    masterView: 'views/site/master',
+    masterView = 'views/site/master'
 
     /**
      * @private
      * @type {Cache|null}
      */
-    responseCache: null,
+    responseCache = null
 
     /**
      * @private
      * @type {module:broadcast-channel|null}
      */
-    broadcastChannel: null,
+    broadcastChannel = null
 
     /**
      * @private
      * @type {module:date-time|null}
      */
-    dateTime: null,
+    dateTime = null
 
     /**
      * @private
      * @type {NumberUtil|null}
      */
-    numberUtil: null,
+    numberUtil = null
 
     /**
      * @private
      * @type {module:web-socket-manager|null}
      */
-    webSocketManager: null,
+    webSocketManager = null
 
     /**
      * @private
      * @type {?int}
      */
-    appTimestamp: null,
+    appTimestamp = null
+
+    /** @private */
+    started = false
+
+    /** @private */
+    aclName = 'acl'
 
     /**
      * @private
      */
-    started: false,
-
-    /**
-     * @private
-     */
-    initCache: function (options) {
+    initCache(options) {
         let cacheTimestamp = options.cacheTimestamp || null;
         let storedCacheTimestamp = null;
 
@@ -375,12 +357,12 @@ _.extend(App.prototype, /** @lends App# */{
                     resolve();
                 });
         });
-    },
+    }
 
     /**
      * @private
      */
-    init: function (options, callback) {
+    init(options, callback) {
         /** @type {Object.<string, *>} */
         this.appParams = {};
         this.controllers = {};
@@ -411,45 +393,45 @@ _.extend(App.prototype, /** @lends App# */{
         this.initBroadcastChannel();
 
         Promise
-        .all([
-            this.settings.load(),
-            this.language.loadDefault()
-        ])
-        .then(() => {
-            this.loader.setIsDeveloperMode(this.settings.get('isDeveloperMode'));
+            .all([
+                this.settings.load(),
+                this.language.loadDefault()
+            ])
+            .then(() => {
+                this.loader.setIsDeveloperMode(this.settings.get('isDeveloperMode'));
 
-            this.user = new User();
-            this.preferences = new Preferences();
+                this.user = new User();
+                this.preferences = new Preferences();
 
-            this.preferences.settings = this.settings;
+                this.preferences.settings = this.settings;
 
-            /** @type {module:acl-manager} */
-            this.acl = this.createAclManager();
+                /** @type {module:acl-manager} */
+                this.acl = this.createAclManager();
 
-            this.fieldManager.acl = this.acl;
+                this.fieldManager.acl = this.acl;
 
-            this.themeManager = new ThemeManager(this.settings, this.preferences, this.metadata);
-            this.modelFactory = new ModelFactory(this.metadata, this.user);
-            this.collectionFactory = new CollectionFactory(this.modelFactory, this.settings);
+                this.themeManager = new ThemeManager(this.settings, this.preferences, this.metadata);
+                this.modelFactory = new ModelFactory(this.metadata, this.user);
+                this.collectionFactory = new CollectionFactory(this.modelFactory, this.settings);
 
-            this.appTimestamp = this.settings.get('appTimestamp') || null;
+                this.appTimestamp = this.settings.get('appTimestamp') || null;
 
-            if (this.settings.get('useWebSocket')) {
-                this.webSocketManager = new WebSocketManager(this.settings);
-            }
+                if (this.settings.get('useWebSocket')) {
+                    this.webSocketManager = new WebSocketManager(this.settings);
+                }
 
-            this.initUtils();
-            this.initView();
-            this.initBaseController();
+                this.initUtils();
+                this.initView();
+                this.initBaseController();
 
-            callback.call(this, this);
-        });
-    },
+                callback.call(this, this);
+            });
+    }
 
     /**
      * Start the application.
      */
-    start: function () {
+    start() {
         this.initAuth();
 
         this.started = true;
@@ -461,13 +443,13 @@ _.extend(App.prototype, /** @lends App# */{
         }
 
         this.initUserData(null, () => this.onAuth.call(this));
-    },
+    }
 
     /**
      * @private
      * @param {boolean} [afterLogin]
      */
-    onAuth: function (afterLogin) {
+    onAuth(afterLogin) {
         this.metadata.load().then(() => {
             this.fieldManager.defs = this.metadata.get('fields');
             this.fieldManager.metadata = this.metadata;
@@ -498,7 +480,7 @@ _.extend(App.prototype, /** @lends App# */{
             Object.keys(clientDefs).forEach(scope => {
                 let o = clientDefs[scope];
 
-                let implClassName = (o || {})[this.aclName || 'acl'];
+                let implClassName = (o || {})[this.aclName];
 
                 if (!implClassName) {
                     return;
@@ -552,12 +534,12 @@ _.extend(App.prototype, /** @lends App# */{
                 this.broadcastChannel.postMessage('logged-in');
             }
         });
-    },
+    }
 
     /**
      * @private
      */
-    initRouter: function () {
+    initRouter() {
         let routes = this.metadata.get(['app', 'clientRoutes']) || {};
 
         this.router = new Router({routes: routes});
@@ -580,7 +562,7 @@ _.extend(App.prototype, /** @lends App# */{
         catch (e) {
             Backbone.history.loadUrl();
         }
-    },
+    }
 
     /**
      * Do an action.
@@ -593,7 +575,7 @@ _.extend(App.prototype, /** @lends App# */{
      *   controllerClassName?: string,
      * }} params
      */
-    doAction: function (params) {
+    doAction(params) {
         this.trigger('action', params);
 
         this.baseController.trigger('action');
@@ -631,21 +613,21 @@ _.extend(App.prototype, /** @lends App# */{
         }
 
         this.getController(params.controller, callback);
-    },
+    }
 
     /**
      * @private
      */
-    initBaseController: function () {
+    initBaseController() {
         this.baseController = new BaseController({}, this.getControllerInjection());
 
         this.viewHelper.baseController = this.baseController;
-    },
+    }
 
     /**
      * @private
      */
-    getControllerInjection: function () {
+    getControllerInjection() {
         return {
             viewFactory: this.viewFactory,
             modelFactory: this.modelFactory,
@@ -662,14 +644,14 @@ _.extend(App.prototype, /** @lends App# */{
             broadcastChannel: this.broadcastChannel,
             baseController: this.baseController,
         };
-    },
+    }
 
     /**
      * @param {string} name
      * @param {function(module:controller): void} callback
      * @private
      */
-    getController: function (name, callback) {
+    getController(name, callback) {
         if (!name) {
             callback(this.baseController);
 
@@ -696,13 +678,13 @@ _.extend(App.prototype, /** @lends App# */{
         catch (e) {
             this.baseController.error404();
         }
-    },
+    }
 
     /**
      * @private
      * @return {module:controller}
      */
-    createController: function (className, name, callback) {
+    createController(className, name, callback) {
         Espo.loader.require(
             className,
             controllerClass => {
@@ -719,17 +701,17 @@ _.extend(App.prototype, /** @lends App# */{
             },
             () => this.baseController.error404()
         );
-    },
+    }
 
     /**
      * @private
      */
-    initUtils: function () {
+    initUtils() {
         this.dateTime = new DateTime();
         this.modelFactory.dateTime = this.dateTime;
         this.dateTime.setSettingsAndPreferences(this.settings, this.preferences);
         this.numberUtil = new NumberUtil(this.settings, this.preferences);
-    },
+    }
 
     /**
      * Create an acl-manager.
@@ -737,14 +719,14 @@ _.extend(App.prototype, /** @lends App# */{
      * @protected
      * @return {module:acl-manager}
      */
-    createAclManager: function () {
+    createAclManager() {
         return new AclManager(this.user, null, this.settings.get('aclAllowDeleteCreated'));
-    },
+    }
 
     /**
      * @private
      */
-    initView: function () {
+    initView() {
         let helper = this.viewHelper = new ViewHelper();
 
         helper.layoutManager = new LayoutManager(this.cache, this.id);
@@ -858,12 +840,12 @@ _.extend(App.prototype, /** @lends App# */{
             },
             preCompiledTemplates: Espo.preCompiledTemplates || {},
         });
-    },
+    }
 
     /**
      * @public
      */
-    initAuth: function () {
+    initAuth() {
         this.auth = this.storage.get('user', 'auth') || null;
         this.anotherUser = this.storage.get('user', 'anotherUser') || null;
 
@@ -893,12 +875,12 @@ _.extend(App.prototype, /** @lends App# */{
         });
 
         this.baseController.on('logout', () => this.logout());
-    },
+    }
 
     /**
      * @private
      */
-    logout: function (afterFail, silent) {
+    logout(afterFail, silent) {
         let logoutWait = false;
 
         if (this.auth && !afterFail) {
@@ -963,24 +945,24 @@ _.extend(App.prototype, /** @lends App# */{
         }
 
         this.loadStylesheet();
-    },
+    }
 
     /**
      * @private
      */
-    sendLogoutRequest: function () {
+    sendLogoutRequest() {
         let xhr = new XMLHttpRequest;
 
         xhr.open('GET', this.basePath + this.apiUrl + '/');
         xhr.setRequestHeader('Authorization', 'Basic ' + Base64.encode('**logout:logout'));
         xhr.send('');
         xhr.abort();
-    },
+    }
 
     /**
      * @private
      */
-    loadStylesheet: function () {
+    loadStylesheet() {
         if (!this.metadata.get(['themes'])) {
             return;
         }
@@ -988,30 +970,30 @@ _.extend(App.prototype, /** @lends App# */{
         let stylesheetPath = this.basePath + this.themeManager.getStylesheet();
 
         $('#main-stylesheet').attr('href', stylesheetPath);
-    },
+    }
 
     /**
      * @private
      */
-    setCookieAuth: function (username, token) {
+    setCookieAuth(username, token) {
         let date = new Date();
 
         date.setTime(date.getTime() + (1000 * 24*60*60*1000));
 
         document.cookie = 'auth-token='+token+'; SameSite=Lax; expires='+date.toGMTString()+'; path=/';
-    },
+    }
 
     /**
      * @private
      */
-    unsetCookieAuth: function () {
+    unsetCookieAuth() {
         document.cookie = 'auth-token' + '=; SameSite=Lax; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/';
-    },
+    }
 
     /**
      * @private
      */
-    initUserData: function (options, callback) {
+    initUserData(options, callback) {
         options = options || {};
 
         if (this.auth === null) {
@@ -1031,69 +1013,69 @@ _.extend(App.prototype, /** @lends App# */{
                 resolve(options);
             });
         })
-        .then(options => {
-            this.language.name = options.language;
+            .then(options => {
+                this.language.name = options.language;
 
-            return this.language.load();
-        })
-        .then(() => {
-            this.dateTime.setLanguage(this.language);
+                return this.language.load();
+            })
+            .then(() => {
+                this.dateTime.setLanguage(this.language);
 
-            let userData = options.user || null;
-            let preferencesData = options.preferences || null;
-            let aclData = options.acl || null;
+                let userData = options.user || null;
+                let preferencesData = options.preferences || null;
+                let aclData = options.acl || null;
 
-            let settingData = options.settings || {};
+                let settingData = options.settings || {};
 
-            this.user.set(userData);
-            this.preferences.set(preferencesData);
+                this.user.set(userData);
+                this.preferences.set(preferencesData);
 
-            this.settings.set(settingData);
-            this.acl.set(aclData);
+                this.settings.set(settingData);
+                this.acl.set(aclData);
 
-            for (let param in options.appParams) {
-                this.appParams[param] = options.appParams[param];
-            }
-
-            if (!this.auth) {
-                return;
-            }
-
-            let xhr = new XMLHttpRequest();
-
-            xhr.open('GET', this.basePath + this.apiUrl + '/');
-            xhr.setRequestHeader('Authorization', 'Basic ' + this.auth);
-
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-                    let arr = Base64.decode(this.auth).split(':');
-
-                    this.setCookieAuth(arr[0], arr[1]);
-
-                    callback();
+                for (let param in options.appParams) {
+                    this.appParams[param] = options.appParams[param];
                 }
 
-                if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 401) {
-                    Ui.error('Auth error');
+                if (!this.auth) {
+                    return;
                 }
-            };
 
-            xhr.send('');
-        });
-    },
+                let xhr = new XMLHttpRequest();
+
+                xhr.open('GET', this.basePath + this.apiUrl + '/');
+                xhr.setRequestHeader('Authorization', 'Basic ' + this.auth);
+
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                        let arr = Base64.decode(this.auth).split(':');
+
+                        this.setCookieAuth(arr[0], arr[1]);
+
+                        callback();
+                    }
+
+                    if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 401) {
+                        Ui.error('Auth error');
+                    }
+                };
+
+                xhr.send('');
+            });
+    }
 
     /**
      * @private
      */
-    requestUserData: function (callback) {
+    requestUserData(callback) {
         Ajax.getRequest('App/user', {}, {appStart: true})
             .then(callback);
-    },
+    }
 
     /**
      * @private
      */
-    setupAjax: function () {
+    setupAjax() {
         $.ajaxSetup({
             beforeSend: (xhr, options) => {
                 if (!options.local && this.apiUrl) {
@@ -1244,12 +1226,12 @@ _.extend(App.prototype, /** @lends App# */{
                 }
             }, 0);
         });
-    },
+    }
 
     /**
      * @private
      */
-    _processErrorAlert: function (xhr, label, noDetail) {
+    _processErrorAlert(xhr, label, noDetail) {
         let msg = this.language.translate('Error') + ' ' + xhr.status;
 
         if (label) {
@@ -1307,12 +1289,12 @@ _.extend(App.prototype, /** @lends App# */{
         }
 
         Ui.error(obj.msg, obj.closeButton);
-    },
+    }
 
     /**
      * @private
      */
-    initBroadcastChannel: function () {
+    initBroadcastChannel() {
         this.broadcastChannel = new BroadcastChannel();
 
         this.broadcastChannel.subscribe(event => {
@@ -1375,9 +1357,9 @@ _.extend(App.prototype, /** @lends App# */{
                 this.logout(true);
             }
         });
-    },
+    }
 
-    initDomEventListeners: function () {
+    initDomEventListeners() {
         $(document).on('keydown.espo.button', e => {
             if (
                 e.code !== 'Enter' ||
@@ -1395,9 +1377,32 @@ _.extend(App.prototype, /** @lends App# */{
 
             e.preventDefault();
         });
-    },
+    }
+}
 
-}, Backbone.Events);
+
+/**
+ * @callback module:app~callback
+ *
+ * @param {App} app A created application instance.
+ */
+
+/**
+ * Application options.
+ *
+ * @typedef {Object} module:app~Options
+ *
+ * @property {string} [id] An application ID.
+ * @property {string} [basePath] A base path.
+ * @property {boolean} [useCache] Use cache.
+ * @property {string} [apiUrl] An API URL.
+ * @property {Number} [ajaxTimeout] A default ajax request timeout.
+ * @property {string} [internalModuleList] A list of internal modules.
+ *   Internal modules located in the `client/modules` directory.
+ * @property {Number|null} [cacheTimestamp] A cache timestamp.
+ */
+
+_.extend(App.prototype, Backbone.Events);
 
 App.extend = Bull.View.extend;
 
