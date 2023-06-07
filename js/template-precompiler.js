@@ -43,6 +43,8 @@ class TemplatePrecompiler {
      * @return {{contents: string, files: string[]}}
      */
     precompile(params) {
+        const baseBase = 'client';
+
         let files = [];
 
         this.#normalizePaths(params.patterns).forEach(pattern => {
@@ -63,7 +65,7 @@ class TemplatePrecompiler {
             }
 
             for (let itemModule in params.modulePaths) {
-                let path = params.modulePaths[itemModule];
+                let path = baseBase + '/' + params.modulePaths[itemModule];
 
                 if (file.indexOf(path) === 0) {
                     module = itemModule;
@@ -73,7 +75,7 @@ class TemplatePrecompiler {
             }
 
             let path = module ?
-                params.modulePaths[module] :
+                baseBase + '/' + params.modulePaths[module] :
                 this.defaultPath;
 
             path += '/res/templates/';

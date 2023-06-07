@@ -95,6 +95,7 @@ class BundlerGeneral {
                 return;
             }
 
+
             data.modules.forEach(item => mapping[item] = name);
 
             let bundleFile = this.filePattern.replace('{*}', name);
@@ -175,6 +176,7 @@ class BundlerGeneral {
             }
 
             let data = bundler.bundle({
+                name: name,
                 files: params.files,
                 patterns: patterns,
                 lookupPatterns: lookupPatterns,

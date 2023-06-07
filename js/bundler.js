@@ -55,6 +55,7 @@ class Bundler {
      * Bundles Espo js files into chunks.
      *
      * @param {{
+     *   name: string,
      *   files?: string[],
      *   patterns: string[],
      *   lookupPatterns?: string[],
@@ -90,6 +91,7 @@ class Bundler {
         let notBundledModules = [];
 
         let sortedFiles = this.#sortFiles(
+            params.name,
             files,
             allFiles,
             ignoreLibs,
@@ -152,6 +154,7 @@ class Bundler {
     }
 
     /**
+     * @param {string} name
      * @param {string[]} files
      * @param {string[]} allFiles
      * @param {string[]} ignoreLibs
@@ -161,6 +164,7 @@ class Bundler {
      * @return {string[]}
      */
     #sortFiles(
+        name,
         files,
         allFiles,
         ignoreLibs,
@@ -223,9 +227,9 @@ class Bundler {
         /** @var {string[]} */
         let pickedModules = [];
 
-        for (let name of modules) {
+        for (let module of modules) {
             this.#buildTreeItem(
-                name,
+                module,
                 map,
                 depthMap,
                 ignoreLibs,
@@ -286,7 +290,7 @@ class Bundler {
     }
 
     /**
-     * @param {string} name
+     * @param {string} module
      * @param {Object.<string, string[]>} map
      * @param {Object.<string, number>} depthMap
      * @param {string[]} ignoreLibs
@@ -297,7 +301,7 @@ class Bundler {
      * @param {string[]} [path]
      */
     #buildTreeItem(
-        name,
+        module,
         map,
         depthMap,
         ignoreLibs,
@@ -308,17 +312,17 @@ class Bundler {
         path
     ) {
         /** @var {string[]} */
-        let deps = map[name] || [];
+        let deps = map[module] || [];
         depth = depth || 0;
         path = [].concat(path || []);
 
-        path.push(name);
+        path.push(module);
 
-        if (!(name in depthMap)) {
-            depthMap[name] = depth;
+        if (!(module in depthMap)) {
+            depthMap[module] = depth;
         }
-        else if (depth > depthMap[name]) {
-            depthMap[name] = depth;
+        else if (depth > depthMap[module]) {
+            depthMap[module] = depth;
         }
 
         if (deps.length === 0) {
@@ -366,7 +370,7 @@ class Bundler {
      */
     #obtainModuleName(file) {
         for (let mod in this.modulePaths) {
-            let part = this.modulePaths[mod] + '/src/';
+            let part = this.basePath + '/' + this.modulePaths[mod] + '/src/';
 
             if (file.indexOf(part) === 0) {
                 return mod + ':' + file.substring(part.length, file.length - 3);
@@ -449,7 +453,17 @@ class Bundler {
         return sourceFile.statements
             .filter(item => item.importClause)
             .filter(item => item.importClause && item.moduleSpecifier)
-            .map(item => item.moduleSpecifier.text);
+            .map(item => item.moduleSpecifier.text)
+            .map(item => {
+                if (!item.startsWith('modules/')) {
+                    return item;
+                }
+
+                let mod = item.split('/')[1];
+                let part = item.split('/').slice(2).join('/');
+
+                return mod + ':' + part;
+            });
     }
 
     /**
@@ -464,7 +478,7 @@ class Bundler {
         let startParts = [this.#getSrcPath()];
 
         for (let mod in this.modulePaths) {
-            let modPath = this.modulePaths[mod];
+            let modPath = this.basePath + '/' + this.modulePaths[mod] + '/src/';
 
             startParts.push(modPath);
         }
