@@ -44,13 +44,11 @@ export default Collection.extend(/** @lends Class# */{
      * A model seed map.
      *
      * @public
-     * @type {Object.<string, module:model#>}
+     * @type {Object.<string, module:model>}
      */
     seeds: null,
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     initialize: function (models, options) {
         options = options || {};
 
@@ -59,13 +57,15 @@ export default Collection.extend(/** @lends Class# */{
         Backbone.Collection.prototype.initialize.call(this, options);
     },
 
-    /**
-     * @inheritDoc
-     */
-    parse: function (resp, options) {
-        this.total = resp.total;
+    /** @inheritDoc */
+    parse: function (response) {
+        this.total = response.total;
 
-        return resp.list.map(attributes => {
+        if (!('list' in response)) {
+            throw new Error("No 'list' in response.");
+        }
+
+        return response.list.map(attributes => {
             let entityType = attributes._scope;
 
             if (!entityType) {
@@ -83,9 +83,7 @@ export default Collection.extend(/** @lends Class# */{
         });
     },
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     clone: function () {
         let collection = Collection.prototype.clone.call(this);
 
