@@ -146,6 +146,14 @@ export default Dep.extend(/** @lends Class# */{
      */
     prepareModelView: function (model, options) {},
 
+    /**
+     * @param {{
+     *     model?: module:model,
+     *     id?: string,
+     *     isReturn?: boolean,
+     *     isAfterCreate?: boolean,
+     * }} options
+     */
     actionView: function (options) {
         let id = options.id;
 
@@ -168,7 +176,7 @@ export default Dep.extend(/** @lends Class# */{
 
         this.lastViewActionOptions = options;
 
-        let createView = (model) => {
+        const createView = model => {
             this.prepareModelView(model, options);
 
             this.createViewView.call(this, options, model);
@@ -181,8 +189,7 @@ export default Dep.extend(/** @lends Class# */{
 
             this.showLoadingNotification();
 
-            model
-                .fetch()
+            model.fetch()
                 .then(() => this.hideLoadingNotification())
                 .catch(xhr => {
                     if (
@@ -209,8 +216,7 @@ export default Dep.extend(/** @lends Class# */{
 
             this.showLoadingNotification();
 
-            model
-                .fetch({main: true})
+            model.fetch({main: true})
                 .then(() => {
                     this.hideLoadingNotification();
 

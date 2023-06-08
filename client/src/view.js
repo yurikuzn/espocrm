@@ -68,6 +68,9 @@ const Class = class extends Bull.View {
      * @private
      */
 
+    /** @todo Remove. */
+    template = null
+
     /**
      * Add a DOM button-action event handler.
      *

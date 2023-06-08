@@ -292,6 +292,15 @@ class Class {
     }
 
     /**
+     * Get previous attributes. To be called only within a 'change' event handler.
+     *
+     * @return {Object.<string, *>}
+     */
+    previousAttributes() {
+        return _.clone(this._previousAttributes);
+    }
+
+    /**
      * Get a previous attribute value. To be called only within a 'change' event handler.
      *
      * @param attribute
@@ -403,7 +412,15 @@ class Class {
      * @return {Class}
      */
     clone() {
-        return new this.constructor(Espo.Utils.cloneDeep(this.attributes));
+        return new this.constructor(
+            Espo.Utils.cloneDeep(this.attributes),
+            {
+                entityType: this.entityType,
+                user: this._user,
+                dateTime: this.dateTime,
+                defs: this.defs,
+            }
+        );
     }
 
     /**
@@ -676,6 +693,8 @@ class Class {
     }
 
     /**
+     * @todo Revise usage.
+     *
      * @protected
      * @returns {module:date-time}
      */

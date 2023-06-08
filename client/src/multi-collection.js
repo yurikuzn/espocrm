@@ -29,6 +29,7 @@
 /** @module multi-collection */
 
 import Collection from 'collection';
+import Backbone from 'lib!backbone';
 
 /**
  * A collection that can contain entities of different entity types.
@@ -65,11 +66,20 @@ export default Collection.extend(/** @lends Class# */{
         this.total = resp.total;
 
         return resp.list.map(attributes => {
-            let a = _.clone(attributes);
+            let entityType = attributes._scope;
 
-            delete a['_scope'];
+            if (!entityType) {
+                throw new Error("No '_scope' attribute.");
+            }
 
-            return new this.seeds[attributes._scope](a, options);
+            attributes = _.clone(attributes);
+            delete attributes['_scope'];
+
+            let model = this.seeds[entityType].clone();
+
+            model.set(attributes);
+
+            return model;
         });
     },
 

@@ -412,7 +412,12 @@ class App  {
 
                 this.themeManager = new ThemeManager(this.settings, this.preferences, this.metadata);
                 this.modelFactory = new ModelFactory(this.metadata, this.user);
-                this.collectionFactory = new CollectionFactory(this.modelFactory, this.settings);
+                this.collectionFactory = new CollectionFactory(
+                    this.modelFactory,
+                    this.settings,
+                    this.metadata,
+                    this.user
+                );
 
                 this.appTimestamp = this.settings.get('appTimestamp') || null;
 

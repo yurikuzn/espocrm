@@ -109,8 +109,8 @@ define('crm:views/dashlets/activities',
             this.wait(true);
             var i = 0;
 
-            this.scopeList.forEach((scope) => {
-                this.getModelFactory().getSeed(scope, (seed) => {
+            this.scopeList.forEach(scope => {
+                this.getModelFactory().create(scope, seed => {
                     this.seeds[scope] = seed;
 
                     i++;
@@ -154,7 +154,7 @@ define('crm:views/dashlets/activities',
                     checkboxes: false,
                     collection: this.collection,
                     listLayout: this.listLayout,
-                }, (view) => {
+                }, view => {
                     view.render();
                 });
             });

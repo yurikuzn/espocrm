@@ -217,8 +217,15 @@ const Class = Dep.extend(/** @lends Class# */ {
         this.defaultOrder = this.order;
         this.defaultOrderBy = this.orderBy;
 
+        /** @type {module:model~defs} */
+        this.defs = options.defs || {};
+
         this.data = {};
 
+        /**
+         * @private
+         * @type Model#
+         */
         this.model = options.model || Model;
     },
 
@@ -495,6 +502,33 @@ const Class = Dep.extend(/** @lends Class# */ {
         collection.maxMaxSize = this.maxMaxSize;
 
         return collection;
+    },
+
+    /** @private */
+    _isModel: function(object) {
+        return object instanceof Model;
+    },
+
+    /** @private*/
+    _prepareModel: function(attributes, options) {
+        if (this._isModel(attributes)) {
+            if (!attributes.collection) {
+                attributes.collection = this;
+            }
+
+            return attributes;
+        }
+
+        const Model = this.model;
+
+        return new Model(attributes, {
+            collection: this,
+            dateTime: this.dateTime,
+            user: this._user,
+            entityType: this.entityType || this.name,
+            defs: this.defs,
+            ...options,
+        });
     },
 });
 

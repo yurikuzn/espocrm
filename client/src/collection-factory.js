@@ -32,10 +32,16 @@
  * A collection factory.
  *
  * @class
+ * @param {module:model-factory} modelFactory
+ * @param {module:models/settings} config
+ * @param {module:metadata} metadata
+ * @param {module:models/user} user
  */
-const Class = function (modelFactory, config) {
+const Class = function (modelFactory, config, metadata, user) {
     this.modelFactory = modelFactory;
     this.config = config;
+    this.metadata = metadata;
+    this.user = user;
 };
 
 _.extend(Class.prototype, /** @lends Class# */ {
@@ -48,35 +54,38 @@ _.extend(Class.prototype, /** @lends Class# */ {
     /**
      * Create a collection.
      *
-     * @param {string} name An entity type.
+     * @param {string} entityType An entity type.
      * @param {Function} [callback] Deprecated.
      * @param {Object} [context] Deprecated.
      * @returns {Promise<module:collection>}
      */
-    create: function (name, callback, context) {
+    create: function (entityType, callback, context) {
         return new Promise(resolve => {
             context = context || this;
 
-            this.modelFactory.getSeed(name, seed => {
+            this.modelFactory.getSeed(entityType, Model => {
                 let orderBy = this.modelFactory.metadata
-                    .get(['entityDefs', name, 'collection', 'orderBy']);
+                    .get(['entityDefs', entityType, 'collection', 'orderBy']);
 
                 let order = this.modelFactory.metadata
-                    .get(['entityDefs', name, 'collection', 'order']);
+                    .get(['entityDefs', entityType, 'collection', 'order']);
 
                 let className = this.modelFactory.metadata
-                    .get(['clientDefs', name, 'collection']) || 'collection';
+                    .get(['clientDefs', entityType, 'collection']) || 'collection';
 
-                Espo.loader.require(className, collectionClass => {
-                    let collection = new collectionClass(null, {
-                        name: name,
+                let defs = this.metadata.get(['entityDefs', entityType]) || {};
+
+                Espo.loader.require(className, Collection => {
+                    let collection = new Collection(null, {
+                        name: entityType,
                         orderBy: orderBy,
                         order: order,
+                        defs: defs,
                     });
 
-                    collection.model = seed;
-                    collection._user = this.modelFactory.user;
-                    collection.entityType = name;
+                    collection.model = Model;
+                    collection._user = this.user;
+                    collection.entityType = entityType;
 
                     collection.maxMaxSize = this.config.get('recordListMaxSizeLimit') ||
                         this.recordListMaxSizeLimit;

@@ -31,7 +31,7 @@
  *
  * @class
  */
-let Class = function (metadata, user) {
+const Class = function (metadata, user) {
     this.metadata = metadata;
     this.user = user;
 };
@@ -44,6 +44,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
     user: null,
 
     /**
+     * @todo Revise.
      * @public
      * @type {module:date-time|null}
      * @internal
