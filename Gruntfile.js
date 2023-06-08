@@ -35,7 +35,6 @@ const path = require('path');
 const buildUtils = require('./js/build-utils');
 const BundlerGeneral = require("./js/bundler/bundler-general");
 const LayoutTypeBundler = require('./js/layout-template-bundler');
-const Transpiler = require('./js/transpiler');
 const bundleConfig = require('./frontend/bundle-config.json');
 const libs = require('./frontend/libs.json');
 
@@ -302,12 +301,7 @@ module.exports = grunt => {
     });
 
     grunt.registerTask('transpile', () => {
-        (new Transpiler({})).process();
-
-        (new Transpiler({
-            mod: 'crm',
-            path: 'client/modules/crm',
-        })).process();
+        cp.execSync("node js/scripts/transpile");
     });
 
     grunt.registerTask('chmod-folders', () => {
