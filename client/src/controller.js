@@ -30,6 +30,7 @@
 
 import Exceptions from 'exceptions';
 import Backbone from 'lib!backbone';
+import _ from 'lib!underscore';
 
 /**
  * @callback module:controller~viewCallback
@@ -39,55 +40,58 @@ import Backbone from 'lib!backbone';
 /**
  * A controller. To be extended.
  *
- * @class
  * @mixes Backbone.Events
- * @param {Object} params
- * @param {Object} injections
  */
-const Controller = function (params, injections) {
-    this.params = params || {};
+class Controller {
 
-    this.baseController = injections.baseController;
-    this.viewFactory = injections.viewFactory;
-    this.modelFactory = injections.modelFactory;
-    this.collectionFactory = injections.collectionFactory;
+    /**
+     * @internal
+     * @param {Object.<string, *>} params
+     * @param {Object} injections
+     */
+    constructor(params, injections) {
+        this.params = params || {};
 
-    this.initialize();
+        /** @type {module:controllers/base} */
+        this.baseController = injections.baseController;
+        /** @type {Bull.Factory} */
+        this.viewFactory = injections.viewFactory;
+        /** @type {module:model} */
+        this.modelFactory = injections.modelFactory;
+        /** @type {module:collection-factory} */
+        this.collectionFactory = injections.collectionFactory;
 
-    this._settings = injections.settings || null;
-    this._user = injections.user || null;
-    this._preferences = injections.preferences || null;
-    this._acl = injections.acl || null;
-    this._cache = injections.cache || null;
-    this._router = injections.router || null;
-    this._storage = injections.storage || null;
-    this._metadata = injections.metadata || null;
-    this._dateTime = injections.dateTime || null;
-    this._broadcastChannel = injections.broadcastChannel || null;
+        this._settings = injections.settings || null;
+        this._user = injections.user || null;
+        this._preferences = injections.preferences || null;
+        this._acl = injections.acl || null;
+        this._cache = injections.cache || null;
+        this._router = injections.router || null;
+        this._storage = injections.storage || null;
+        this._metadata = injections.metadata || null;
+        this._dateTime = injections.dateTime || null;
+        this._broadcastChannel = injections.broadcastChannel || null;
 
-    if (!this.baseController) {
-        this.on('logout', () => this.clearAllStoredMainViews());
+        if (!this.baseController) {
+            this.on('logout', () => this.clearAllStoredMainViews());
+        }
+
+        this.set('masterRendered', false);
     }
-
-    this.set('masterRendered', false);
-};
-
-_.extend(Controller.prototype, /** @lends Controller# */ {
 
     /**
      * A default action.
      *
      * @type {string}
      */
-    defaultAction: 'index',
+    defaultAction = 'index'
 
     /**
      * A name.
      *
      * @type {string|null}
-     * @public
      */
-    name: null,
+    name = null
 
     /**
      * Params.
@@ -95,7 +99,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * @type {Object}
      * @private
      */
-    params: null,
+    params = null
 
     /**
      * A view factory.
@@ -103,7 +107,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * @type {Bull.Factory}
      * @protected
      */
-    viewFactory: null,
+    viewFactory = null
 
     /**
      * A model factory.
@@ -111,7 +115,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * @type {module:model-factory}
      * @protected
      */
-    modelFactory: null,
+    modelFactory = null
 
     /**
      * A body view.
@@ -119,14 +123,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * @public
      * @type {string|null}
      */
-    masterView: null,
-
-    /**
-     * Initialize.
-     *
-     * @protected
-     */
-    initialize: function () {},
+    masterView = null
 
     /**
      * Set the router.
@@ -134,83 +131,83 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * @internal
      * @param {module:router} router
      */
-    setRouter: function (router) {
+    setRouter(router) {
         this._router = router;
 
         this.trigger('router-set', router);
-    },
+    }
 
     /**
      * @protected
      * @returns {module:models/settings}
      */
-    getConfig: function () {
+    getConfig() {
         return this._settings;
-    },
+    }
 
     /**
      * @protected
      * @returns {module:models/user}
      */
-    getUser: function () {
+    getUser() {
         return this._user;
-    },
+    }
 
     /**
      * @protected
      * @returns {module:models/preferences}
      */
-    getPreferences: function () {
+    getPreferences() {
         return this._preferences;
-    },
+    }
 
     /**
      * @protected
      * @returns {module:acl-manager}
      */
-    getAcl: function () {
+    getAcl() {
         return this._acl;
-    },
+    }
 
     /**
      * @protected
      * @returns {module:cache}
      */
-    getCache: function () {
+    getCache() {
         return this._cache;
-    },
+    }
 
     /**
      * @protected
      * @returns {module:router}
      */
-    getRouter: function () {
+    getRouter() {
         return this._router;
-    },
+    }
 
     /**
      * @protected
      * @returns {module:storage}
      */
-    getStorage: function () {
+    getStorage() {
         return this._storage;
-    },
+    }
 
     /**
      * @protected
      * @returns {module:metadata}
      */
-    getMetadata: function () {
+    getMetadata() {
         return this._metadata;
-    },
+    }
 
     /**
      * @protected
      * @returns {module:date-time}
      */
-    getDateTime: function () {
+    getDateTime() {
         return this._dateTime;
-    },
+    }
 
     /**
      * Get a parameter of all controllers.
@@ -218,13 +215,13 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * @param {string} key A key.
      * @return {*} Null if a key doesn't exist.
      */
-    get: function (key) {
+    get(key) {
         if (key in this.params) {
             return this.params[key];
         }
 
         return null;
-    },
+    }
 
     /**
      * Set a parameter for all controllers.
@@ -232,18 +229,18 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * @param {string} key A name of a view.
      * @param {*} value
      */
-    set: function (key, value) {
+    set(key, value) {
         this.params[key] = value;
-    },
+    }
 
     /**
      * Unset a parameter.
      *
      * @param {string} key A key.
      */
-    unset: function (key) {
+    unset(key) {
         delete this.params[key];
-    },
+    }
 
     /**
      * Has a parameter.
@@ -251,9 +248,9 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * @param {string} key A key.
      * @returns {boolean}
      */
-    has: function (key) {
+    has(key) {
         return key in this.params;
-    },
+    }
 
     /**
      * Get a stored main view.
@@ -261,24 +258,24 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * @param {string} key A key.
      * @returns {module:view|null}
      */
-    getStoredMainView: function (key) {
+    getStoredMainView(key) {
         return this.get('storedMainView-' + key);
-    },
+    }
 
     /**
      * Has a stored main view.
      * @param {string} key
      * @returns {boolean}
      */
-    hasStoredMainView: function (key) {
+    hasStoredMainView(key) {
         return this.has('storedMainView-' + key);
-    },
+    }
 
     /**
      * Clear a stored main view.
      * @param {string} key
      */
-    clearStoredMainView: function (key) {
+    clearStoredMainView(key) {
         let view = this.getStoredMainView(key);
 
         if (view) {
@@ -286,7 +283,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
         }
 
         this.unset('storedMainView-' + key);
-    },
+    }
 
     /**
      * Store a main view.
@@ -294,7 +291,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * @param {string} key A key.
      * @param {module:view} view A view.
      */
-    storeMainView: function (key, view) {
+    storeMainView(key, view) {
         this.set('storedMainView-' + key, view);
 
         this.listenTo(view, 'remove', (o) => {
@@ -308,12 +305,12 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
 
             this.clearStoredMainView(key);
         });
-    },
+    }
 
     /**
      * Clear all stored main views.
      */
-    clearAllStoredMainViews: function () {
+    clearAllStoredMainViews() {
         for (let k in this.params) {
             if (k.indexOf('storedMainView-') !== 0) {
                 continue;
@@ -323,7 +320,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
 
             this.clearStoredMainView(key);
         }
-    },
+    }
 
     /**
      * Check access to an action.
@@ -331,47 +328,44 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * @param {string} action An action.
      * @returns {boolean}
      */
-    checkAccess: function (action) {
+    checkAccess(action) {
         return true;
-    },
+    }
 
     /**
      * Process access check to the controller.
      */
-    handleAccessGlobal: function () {
+    handleAccessGlobal() {
         if (!this.checkAccessGlobal()) {
             throw new Exceptions.AccessDenied("Denied access to '" + this.name + "'");
         }
-    },
+    }
 
     /**
      * Check access to the controller.
      *
      * @returns {boolean}
      */
-    checkAccessGlobal: function () {
+    checkAccessGlobal() {
         return true;
-    },
+    }
 
     /**
      * Check access to an action. Throwing an exception.
      *
      * @param {string} action An action.
      */
-    handleCheckAccess: function (action) {
-        if (!this.checkAccess(action)) {
-            let msg;
-
-            if (action) {
-                msg = "Denied access to action '" + this.name + "#" + action + "'";
-            }
-            else {
-                msg = "Denied access to scope '" + this.name + "'";
-            }
-
-            throw new Exceptions.AccessDenied(msg);
+    handleCheckAccess(action) {
+        if (this.checkAccess(action)) {
+            return;
         }
-    },
+
+        let msg = action ?
+            "Denied access to action '" + this.name + "#" + action + "'" :
+            "Denied access to scope '" + this.name + "'";
+
+        throw new Exceptions.AccessDenied(msg);
+    }
 
     /**
      * Process an action.
@@ -379,7 +373,7 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
      * @param {string} action
      * @param {Object} options
      */
-    doAction: function (action, options) {
+    doAction(action, options) {
         this.handleAccessGlobal();
 
         action = action || this.defaultAction;
@@ -402,14 +396,14 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
         if (postMethod in this) {
             this[postMethod].call(this, options || {});
         }
-    },
+    }
 
     /**
      * Create a master view, render if not already rendered.
      *
      * @param {module:controller~viewCallback} callback A callback with a created master view.
      */
-    master: function (callback) {
+    master(callback) {
         let entire = this.get('entire');
 
         if (entire) {
@@ -443,17 +437,18 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
 
             callback.call(this, master);
         });
-    },
+    }
 
     /**
      * Create a main view in the master.
+     *
      * @param {String} view A view name.
-     * @param {Object} options Options for view.
+     * @param {Object} [options] Options for view.
      * @param {module:controller~viewCallback} [callback] A callback with a created view.
      * @param {boolean} [useStored] Use a stored view if available.
      * @param {string} [storedKey] A stored view key.
      */
-    main: function (view, options, callback, useStored, storedKey) {
+    main(view, options, callback, useStored, storedKey) {
         let isCanceled = false;
         let isRendered = false;
 
@@ -560,38 +555,42 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
 
             this.viewFactory.create(view, options, process);
         });
-    },
+    }
 
     /**
      * Show a loading notify-message.
      */
-    showLoadingNotification: function () {
+    showLoadingNotification() {
         let master = this.get('master');
 
-        if (master) {
-            master.showLoadingNotification();
+        if (!master) {
+            return;
         }
-    },
+
+        master.showLoadingNotification();
+    }
 
     /**
      * Hide a loading notify-message.
      */
-    hideLoadingNotification: function () {
+    hideLoadingNotification() {
         let master = this.get('master');
 
-        if (master) {
-            master.hideLoadingNotification();
+        if (!master) {
+            return;
         }
-    },
+
+        master.hideLoadingNotification();
+    }
 
     /**
      * Create a view in the <body> element.
      *
      * @param {String} view A view name.
-     * @param {Object} options Options for a view.
+     * @param {Bull.View~Options} options Options for a view.
      * @param {module:controller~viewCallback} [callback] A callback with a created view.
      */
-    entire: function (view, options, callback) {
+    entire(view, options, callback) {
         let master = this.get('master');
 
         if (master) {
@@ -610,9 +609,10 @@ _.extend(Controller.prototype, /** @lends Controller# */ {
             callback(view);
         });
     }
-
-}, Backbone.Events);
+}
 
 Controller.extend = Bull.View.extend;
+
+_.extend(Controller.prototype, Backbone.Events);
 
 export default Controller;

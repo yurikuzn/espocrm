@@ -28,71 +28,52 @@
 
 /** @module controllers/record */
 
-import Dep from 'controller';
+import Controller from 'controller';
 
 /**
  * A record controller.
- *
- * @class
- * @name Class
- * @extends module:controller
  */
-export default Dep.extend(/** @lends Class# */{
-
-    /**
-     * A type => view-name map.
-     * @protected
-     * @type {Object.<string, string>}
-     */
-    viewMap: null,
+class RecordController extends Controller {
 
     /** @inheritDoc */
-    defaultAction: 'list',
+    defaultAction = 'list'
 
-    /** @inheritDoc */
-    checkAccess: function (action) {
-        if (this.getAcl().check(this.name, action)) {
-            return true;
-        }
-
-        return false;
-    },
-
-    /** @inheritDoc */
-    initialize: function () {
-        /**
-         * A type => view-name map.
-         * @protected
-         * @type {Object.<string, string>}
-         */
-        this.viewMap = this.viewMap || {};
-        this.viewsMap = this.viewsMap || {};
+    constructor(params, injections) {
+        super(params, injections);
 
         /**
          * @private
          * @type {Object}
          */
         this.collectionMap = {};
-    },
+    }
+
+    /** @inheritDoc */
+    checkAccess(action) {
+        if (this.getAcl().check(this.name, action)) {
+            return true;
+        }
+
+        return false;
+    }
 
     /**
      * Get a view name/path.
      *
      * @protected
-     * @param {'list'|'detail'|'edit'|'create'} type A type.
+     * @param {'list'|'detail'|'edit'|'create'|'listRelated'} type A type.
      * @returns {string}
      */
-    getViewName: function (type) {
-        return this.viewMap[type] ||
-            this.getMetadata().get(['clientDefs', this.name, 'views', type]) ||
+    getViewName(type) {
+        return this.getMetadata().get(['clientDefs', this.name, 'views', type]) ||
             'views/' + Espo.Utils.camelCaseToHyphen(type);
-    },
+    }
 
-    beforeList: function () {
+    beforeList() {
         this.handleCheckAccess('read');
-    },
+    }
 
-    actionList: function (options) {
+    actionList(options) {
         let isReturn = options.isReturn || this.getRouter().backProcessed;
 
         let key = this.name + 'List';
@@ -107,6 +88,7 @@ export default Dep.extend(/** @lends Class# */{
             let abort = () => {
                 collection.abortLastFetch();
                 mediator.abort = true;
+
                 Espo.Ui.notify(false);
             };
 
@@ -121,13 +103,19 @@ export default Dep.extend(/** @lends Class# */{
                 mediator: mediator,
             }, null, isReturn, key);
         }, this, false);
-    },
+    }
 
-    beforeView: function () {
+    beforeView() {
         this.handleCheckAccess('read');
-    },
+    }
 
-    createViewView: function (options, model, view) {
+    /**
+     * @protected
+     * @param {Object} options
+     * @param {module:model} model
+     * @param {string|null} [view]
+     */
+    createViewView(options, model, view) {
         view = view || this.getViewName('detail');
 
         this.main(view, {
@@ -137,14 +125,14 @@ export default Dep.extend(/** @lends Class# */{
             returnDispatchParams: options.returnDispatchParams,
             params: options,
         });
-    },
+    }
 
     /**
      * @protected
      * @param {module:model} model
      * @param {Object} options
      */
-    prepareModelView: function (model, options) {},
+    prepareModelView(model, options) {}
 
     /**
      * @param {{
@@ -154,7 +142,7 @@ export default Dep.extend(/** @lends Class# */{
      *     isAfterCreate?: boolean,
      * }} options
      */
-    actionView: function (options) {
+    actionView(options) {
         let id = options.id;
 
         let isReturn = this.getRouter().backProcessed;
@@ -238,18 +226,18 @@ export default Dep.extend(/** @lends Class# */{
                 model.abortLastFetch();
             });
         });
-    },
+    }
 
-    beforeCreate: function () {
+    beforeCreate() {
         this.handleCheckAccess('create');
-    },
+    }
 
     /**
      * @protected
      * @param {module:model} model
      * @param {Object} options
      */
-    prepareModelCreate: function (model, options) {
+    prepareModelCreate(model, options) {
         this.listenToOnce(model, 'before:save', () => {
             let key = this.name + 'List';
 
@@ -271,14 +259,14 @@ export default Dep.extend(/** @lends Class# */{
                 });
             }
         });
-    },
+    }
 
-    create: function (options) {
+    create(options) {
         options = options || {};
 
         let optionsOptions = options.options || {};
 
-        this.getModel().then((model) => {
+        this.getModel().then(model => {
             if (options.relate) {
                 model.setRelate(options.relate);
             }
@@ -303,22 +291,22 @@ export default Dep.extend(/** @lends Class# */{
 
             this.main(this.getViewName('edit'), o);
         });
-    },
+    }
 
-    actionCreate: function (options) {
+    actionCreate(options) {
         this.create(options);
-    },
+    }
 
-    beforeEdit: function () {
+    beforeEdit() {
         this.handleCheckAccess('edit');
-    },
+    }
 
     /**
      * @protected
      * @param {module:model} model
      * @param {Object} options
      */
-    prepareModelEdit: function (model, options) {
+    prepareModelEdit(model, options) {
         this.listenToOnce(model, 'before:save', () => {
             let key = this.name + 'List';
 
@@ -328,9 +316,9 @@ export default Dep.extend(/** @lends Class# */{
                 this.clearStoredMainView(key);
             }
         });
-    },
+    }
 
-    actionEdit: function (options) {
+    actionEdit(options) {
         let id = options.id;
 
         let optionsOptions = options.options || {};
@@ -374,13 +362,13 @@ export default Dep.extend(/** @lends Class# */{
                 model.abortLastFetch();
             });
         });
-    },
+    }
 
-    beforeMerge: function () {
+    beforeMerge() {
         this.handleCheckAccess('edit');
-    },
+    }
 
-    actionMerge: function (options) {
+    actionMerge(options) {
         let ids = options.ids.split(',');
 
         this.getModel().then((model) => {
@@ -413,9 +401,9 @@ export default Dep.extend(/** @lends Class# */{
                 current.fetch();
             });
         });
-    },
+    }
 
-    actionRelated: function (options) {
+    actionRelated(options) {
         let id = options.id;
         let link = options.link;
 
@@ -451,7 +439,7 @@ export default Dep.extend(/** @lends Class# */{
                     link: link,
                 });
             })
-    },
+    }
 
     /**
      * Get a collection for the current controller.
@@ -462,7 +450,7 @@ export default Dep.extend(/** @lends Class# */{
      * @param {boolean} [usePreviouslyFetched=false] Use a previously fetched.
      * @return {Promise<module:collection>}
      */
-    getCollection: function (callback, context, usePreviouslyFetched) {
+    getCollection(callback, context, usePreviouslyFetched) {
         context = context || this;
 
         if (!this.name) {
@@ -492,7 +480,7 @@ export default Dep.extend(/** @lends Class# */{
                 callback.call(context, collection);
             }
         });
-    },
+    }
 
     /**
      * Get a model for the current controller.
@@ -502,7 +490,7 @@ export default Dep.extend(/** @lends Class# */{
      * @param {Object} [context]
      * @return {Promise<module:model>}
      */
-    getModel: function (callback, context) {
+    getModel(callback, context) {
         context = context || this;
 
         if (!this.name) {
@@ -516,5 +504,7 @@ export default Dep.extend(/** @lends Class# */{
                 callback.call(context, model);
             }
         });
-    },
-});
+    }
+}
+
+export default RecordController;

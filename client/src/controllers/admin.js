@@ -26,25 +26,21 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-import Dep from 'controller';
+import Controller from 'controller';
 import SearchManager from 'search-manager';
 import _ from 'lib!underscore';
 
-/**
- * @class Class
- * @extends module:controller
- */
-export default Dep.extend(/** @lends Class# */{
+class AdminController extends Controller {
 
-    checkAccessGlobal: function () {
+    checkAccessGlobal() {
         if (this.getUser().isAdmin()) {
             return true;
         }
 
         return false;
-    },
+    }
 
-    actionPage: function (options) {
+    actionPage(options) {
         let page = options.page;
 
         if (options.options) {
@@ -80,34 +76,32 @@ export default Dep.extend(/** @lends Class# */{
             return;
         }
 
-        if (defs.recordView) {
-            let model = this.getSettingsModel();
-
-            model.fetch().then(() => {
-                model.id = '1';
-
-                this.main('views/settings/edit', {
-                    model: model,
-                    headerTemplate: 'admin/settings/headers/page',
-                    recordView: defs.recordView,
-                    page: page,
-                    label: defs.label,
-                    optionsToPass: [
-                        'page',
-                        'label',
-                    ],
-                });
-            });
-
-            return;
+        if (!defs.recordView) {
+            throw new Espo.Exceptions.NotFound();
         }
 
-        throw new Espo.Exceptions.NotFound();
-    },
+        let model = this.getSettingsModel();
 
-    actionIndex: function (options) {
-        var isReturn = options.isReturn;
-        var key = this.name + 'Index';
+        model.fetch().then(() => {
+            model.id = '1';
+
+            this.main('views/settings/edit', {
+                model: model,
+                headerTemplate: 'admin/settings/headers/page',
+                recordView: defs.recordView,
+                page: page,
+                label: defs.label,
+                optionsToPass: [
+                    'page',
+                    'label',
+                ],
+            });
+        });
+    }
+
+    actionIndex(options) {
+        let isReturn = options.isReturn;
+        let key = this.name + 'Index';
 
         if (this.getRouter().backProcessed) {
             isReturn = true;
@@ -123,133 +117,133 @@ export default Dep.extend(/** @lends Class# */{
             this.listenTo(view, 'clear-cache', this.clearCache);
             this.listenTo(view, 'rebuild', this.rebuild);
         }, isReturn, key);
-    },
+    }
 
-    actionUsers: function () {
+    actionUsers() {
         this.getRouter().dispatch('User', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionPortalUsers: function () {
+    actionPortalUsers() {
         this.getRouter().dispatch('PortalUser', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionApiUsers: function () {
+    actionApiUsers() {
         this.getRouter().dispatch('ApiUser', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionTeams: function () {
+    actionTeams() {
         this.getRouter().dispatch('Team', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionRoles: function () {
+    actionRoles() {
         this.getRouter().dispatch('Role', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionPortalRoles: function () {
+    actionPortalRoles() {
         this.getRouter().dispatch('PortalRole', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionPortals: function () {
+    actionPortals() {
         this.getRouter().dispatch('Portal', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionLeadCapture: function () {
+    actionLeadCapture() {
         this.getRouter().dispatch('LeadCapture', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionEmailFilters: function () {
+    actionEmailFilters() {
         this.getRouter().dispatch('EmailFilter', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionGroupEmailFolders: function () {
+    actionGroupEmailFolders() {
         this.getRouter().dispatch('GroupEmailFolder', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionEmailTemplates: function () {
+    actionEmailTemplates() {
         this.getRouter().dispatch('EmailTemplate', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionPdfTemplates: function () {
+    actionPdfTemplates() {
         this.getRouter().dispatch('Template', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionDashboardTemplates: function () {
+    actionDashboardTemplates() {
         this.getRouter().dispatch('DashboardTemplate', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionWebhooks: function () {
+    actionWebhooks() {
         this.getRouter().dispatch('Webhook', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionLayoutSets: function () {
+    actionLayoutSets() {
         this.getRouter().dispatch('LayoutSet', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionWorkingTimeCalendar: function () {
+    actionWorkingTimeCalendar() {
         this.getRouter().dispatch('WorkingTimeCalendar', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionAttachments: function () {
+    actionAttachments() {
         this.getRouter().dispatch('Attachment', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionAuthenticationProviders: function () {
+    actionAuthenticationProviders() {
         this.getRouter().dispatch('AuthenticationProvider', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionEmailAddresses: function () {
+    actionEmailAddresses() {
         this.getRouter().dispatch('EmailAddress', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionPhoneNumbers: function () {
+    actionPhoneNumbers() {
         this.getRouter().dispatch('PhoneNumber', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionPersonalEmailAccounts: function () {
+    actionPersonalEmailAccounts() {
         this.getRouter().dispatch('EmailAccount', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionGroupEmailAccounts: function () {
+    actionGroupEmailAccounts() {
         this.getRouter().dispatch('InboundEmail', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionActionHistory: function () {
+    actionActionHistory() {
         this.getRouter().dispatch('ActionHistoryRecord', 'list', {fromAdmin: true});
-    },
+    }
 
-    actionImport: function () {
+    actionImport() {
         this.getRouter().dispatch('Import', 'index', {fromAdmin: true});
-    },
+    }
 
-    actionLayouts: function (options) {
+    actionLayouts(options) {
         var scope = options.scope || null;
         var type = options.type || null;
         var em = options.em || false;
 
         this.main('views/admin/layouts/index', {scope: scope, type: type, em: em});
-    },
+    }
 
-    actionLabelManager: function (options) {
+    actionLabelManager(options) {
         var scope = options.scope || null;
         var language = options.language || null;
 
         this.main('views/admin/label-manager/index', {scope: scope, language: language});
-    },
+    }
 
-    actionTemplateManager: function (options) {
+    actionTemplateManager(options) {
         var name = options.name || null;
 
         this.main('views/admin/template-manager/index', {name: name});
-    },
+    }
 
-    actionFieldManager: function (options) {
+    actionFieldManager(options) {
         var scope = options.scope || null;
         var field = options.field || null;
 
         this.main('views/admin/field-manager/index', {scope: scope, field: field});
-    },
+    }
 
-    actionEntityManager: function (options) {
+    actionEntityManager(options) {
         var scope = options.scope || null;
 
         if (scope && options.edit) {
@@ -277,22 +271,22 @@ export default Dep.extend(/** @lends Class# */{
         }
 
         this.main('views/admin/entity-manager/index');
-    },
+    }
 
-    actionLinkManager: function (options) {
+    actionLinkManager(options) {
         var scope = options.scope || null;
 
         this.main('views/admin/link-manager/index', {scope: scope});
-    },
+    }
 
-    actionSystemRequirements: function () {
+    actionSystemRequirements() {
         this.main('views/admin/system-requirements/index');
-    },
+    }
 
     /**
      * @returns {module:models/settings}
      */
-    getSettingsModel: function () {
+    getSettingsModel() {
         let model = this.getConfig().clone();
         model.defs = this.getConfig().defs;
 
@@ -303,12 +297,11 @@ export default Dep.extend(/** @lends Class# */{
         });
 
         return model;
-    },
+    }
 
-    actionAuthTokens: function () {
+    actionAuthTokens() {
         this.collectionFactory.create('AuthToken', collection => {
-
-            var searchManager = new SearchManager(
+            const searchManager = new SearchManager(
                 collection,
                 'list',
                 this.getStorage(),
@@ -325,11 +318,11 @@ export default Dep.extend(/** @lends Class# */{
                 searchManager: searchManager
             });
         });
-    },
+    }
 
-    actionAuthLog: function () {
+    actionAuthLog() {
         this.collectionFactory.create('AuthLogRecord', collection => {
-            var searchManager = new SearchManager(
+            const searchManager = new SearchManager(
                 collection,
                 'list',
                 this.getStorage(),
@@ -347,11 +340,11 @@ export default Dep.extend(/** @lends Class# */{
                 searchManager: searchManager
             });
         });
-    },
+    }
 
-    actionJobs: function () {
+    actionJobs() {
         this.collectionFactory.create('Job', collection => {
-            var searchManager = new SearchManager(
+            const searchManager = new SearchManager(
                 collection,
                 'list',
                 this.getStorage(),
@@ -369,19 +362,19 @@ export default Dep.extend(/** @lends Class# */{
                 searchManager: searchManager,
             });
         });
-    },
+    }
 
-    actionIntegrations: function (options) {
+    actionIntegrations(options) {
         var integration = options.name || null;
 
         this.main('views/admin/integrations/index', {integration: integration});
-    },
+    }
 
-    actionExtensions: function () {
+    actionExtensions() {
         this.main('views/admin/extensions/index');
-    },
+    }
 
-    rebuild: function () {
+    rebuild() {
         if (this.rebuildRunning) {
             return;
         }
@@ -404,16 +397,17 @@ export default Dep.extend(/** @lends Class# */{
             .catch(() => {
                 this.rebuildRunning = false;
             });
-    },
+    }
 
-    clearCache: function () {
+    clearCache() {
         if (this.clearCacheRunning) {
             return;
         }
 
         this.clearCacheRunning = true;
 
-        var master = this.get('master');
+        const master = this.get('master');
+
         Espo.Ui.notify(master.translate('pleaseWait', 'messages'));
 
         Espo.Ajax.postRequest('Admin/clearCache')
@@ -427,12 +421,12 @@ export default Dep.extend(/** @lends Class# */{
             .catch(() => {
                 this.clearCacheRunning = false;
             });
-    },
+    }
 
     /**
      * @returns {Object|null}
      */
-    getPageDefs: function (page) {
+    getPageDefs(page) {
         let panelsDefs = this.getMetadata().get(['app', 'adminPanel']) || {};
 
         let resultDefs = null;
@@ -454,5 +448,7 @@ export default Dep.extend(/** @lends Class# */{
         }
 
         return resultDefs;
-    },
-});
+    }
+}
+
+export default AdminController;

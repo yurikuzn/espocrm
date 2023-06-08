@@ -28,7 +28,7 @@
 
 /** @module models/settings */
 
-import Dep from "model";
+import Dep from 'model';
 
 /**
  * A config.

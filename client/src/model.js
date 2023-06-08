@@ -96,6 +96,12 @@ class Class {
         options = options || {};
 
         /**
+         * A record ID.
+         * @type {string|null}
+         */
+        this.id = null;
+
+        /**
          * An instance ID.
          * @type {string}
          */

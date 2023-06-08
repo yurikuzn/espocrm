@@ -28,21 +28,22 @@
 
 /** @module controllers/base */
 
-import Dep from 'controller';
+import Controller from 'controller';
 
 /**
  * A base controller.
- *
- * @class
- * @name Class
- * @extends module:controller
  */
-export default Dep.extend(/** @lends Class# */{
+class BaseController extends Controller {
 
     /**
      * Log in.
+     *
+     * @param {{
+     *     anotherUser?: string,
+     *     username?: string,
+     * }} [options]
      */
-    login: function (options) {
+    login(options) {
         let viewName = this.getConfig().get('loginView') || 'views/login';
 
         let anotherUser = (options || {}).anotherUser;
@@ -84,12 +85,10 @@ export default Dep.extend(/** @lends Class# */{
                 });
             });
         });
-    },
+    }
 
-    /**
-     * @private
-     */
-    normalizeLoginData: function (userName, data) {
+    /** @private */
+    normalizeLoginData(userName, data) {
         return {
             auth: {
                 userName: userName,
@@ -103,64 +102,66 @@ export default Dep.extend(/** @lends Class# */{
             appParams: data.appParams,
             language: data.language,
         };
-    },
+    }
 
     /**
      * Log out.
      */
-    logout: function () {
+    logout() {
         let title = this.getConfig().get('applicationName') || 'EspoCRM';
 
         $('head title').text(title);
 
         this.trigger('logout');
-    },
+    }
 
     /**
      * Clear cache.
      */
-    clearCache: function () {
+    clearCache() {
         this.entire('views/clear-cache', {
-            cache: this.getCache()
+            cache: this.getCache(),
         }, view => {
             view.render();
         });
-    },
+    }
 
-    actionLogin: function () {
+    actionLogin() {
         this.login();
-    },
+    }
 
-    actionLogout: function () {
+    actionLogout() {
         this.logout();
-    },
+    }
 
-    actionLogoutWait: function () {
+    actionLogoutWait() {
         this.entire('views/base', {template: 'logout-wait'}, view => {
             view.render()
                 .then(() => Espo.Ui.notify(' ... '))
         });
-    },
+    }
 
-    actionClearCache: function () {
+    actionClearCache() {
         this.clearCache();
-    },
+    }
 
     /**
      * Error Not Found.
      */
-    error404: function () {
+    error404() {
         this.entire('views/base', {template: 'errors/404'}, view => {
             view.render();
         });
-    },
+    }
 
     /**
      * Error Forbidden.
      */
-    error403: function () {
+    error403() {
         this.entire('views/base', {template: 'errors/403'}, view => {
             view.render();
         });
-    },
-});
+    }
+}
+
+export default BaseController;
