@@ -29,7 +29,7 @@
 /**
  * A pre-loader.
  *
- * Not used. Maybe utilize for post-loading additional resources in idle, after the page is fully rendered.
+ * Not used.
  *
  * @class
  * @param {module:cache} cache A cache.

@@ -30,26 +30,24 @@
 
 /**
  * A collection factory.
- *
- * @class
- * @param {module:model-factory} modelFactory
- * @param {module:models/settings} config
- * @param {module:metadata} metadata
- * @param {module:models/user} user
  */
-const Class = function (modelFactory, config, metadata, user) {
-    this.modelFactory = modelFactory;
-    this.config = config;
-    this.metadata = metadata;
-    this.user = user;
-};
-
-_.extend(Class.prototype, /** @lends Class# */ {
-
-    /** @private */
-    modelFactory: null,
-    /** @private */
-    recordListMaxSizeLimit: 200,
+class Class {
+    /**
+     * @param {module:model-factory} modelFactory
+     * @param {module:models/settings} config
+     * @param {module:metadata} metadata
+     * @param {module:models/user} user
+     */
+    constructor(modelFactory, config, metadata, user) {
+        /** @private */
+        this.modelFactory = modelFactory;
+        /** @private */
+        this.metadata = metadata;
+        /** @private */
+        this.user = user;
+        /** @private */
+        this.recordListMaxSizeLimit = config.get('recordListMaxSizeLimit') || 200;
+    }
 
     /**
      * Create a collection.
@@ -57,9 +55,9 @@ _.extend(Class.prototype, /** @lends Class# */ {
      * @param {string} entityType An entity type.
      * @param {Function} [callback] Deprecated.
      * @param {Object} [context] Deprecated.
-     * @returns {Promise<module:collection>}
+     * @returns {Promise<Class>}
      */
-    create: function (entityType, callback, context) {
+    create(entityType, callback, context) {
         return new Promise(resolve => {
             context = context || this;
 
@@ -86,9 +84,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
                     collection.model = Model;
                     collection._user = this.user;
                     collection.entityType = entityType;
-
-                    collection.maxMaxSize = this.config.get('recordListMaxSizeLimit') ||
-                        this.recordListMaxSizeLimit;
+                    collection.maxMaxSize = this.recordListMaxSizeLimit;
 
                     if (callback) {
                         callback.call(context, collection);
@@ -98,7 +94,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
                 });
             });
         });
-    },
-});
+    }
+}
 
 export default Class;

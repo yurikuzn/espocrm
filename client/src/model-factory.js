@@ -26,30 +26,28 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
+/** @module model-factory */
+
 /**
  * A model factory.
- *
- * @class
  */
-const Class = function (metadata, user) {
-    this.metadata = metadata;
-    this.user = user;
-};
-
-_.extend(Class.prototype, /** @lends Class# */ {
-
-    /** @private */
-    metadata: null,
-    /** @private */
-    user: null,
+class Class {
+    /**
+     * @param {module:metadata} metadata
+     * @param {module:models/user} user
+     */
+    constructor (metadata, user) {
+        this.metadata = metadata;
+        this.user = user;
+    }
 
     /**
-     * @todo Revise.
+     * Used by default value expressions.
      * @public
      * @type {module:date-time|null}
      * @internal
      */
-    dateTime: null,
+    dateTime = null
 
     /**
      * Create a model.
@@ -59,7 +57,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
      * @param {Object} [context] Deprecated.
      * @returns {Promise<module:model>}
      */
-    create: function (entityType, callback, context) {
+    create(entityType, callback, context) {
         return new Promise(resolve => {
             context = context || this;
 
@@ -78,7 +76,7 @@ _.extend(Class.prototype, /** @lends Class# */ {
                 resolve(model);
             });
         });
-    },
+    }
 
     /**
      * Get a class.
@@ -87,14 +85,11 @@ _.extend(Class.prototype, /** @lends Class# */ {
      * @param {function(module:model): void} callback A callback.
      * @public
      */
-    getSeed: function (entityType, callback) {
+    getSeed(entityType, callback) {
         let className = this.metadata.get(['clientDefs', entityType, 'model']) || 'model';
 
-        Espo.loader.require(className, modelClass => {
-            callback(modelClass);
-        });
-    },
-});
+        Espo.loader.require(className, modelClass => callback(modelClass));
+    }
+}
 
-/** @module model-factory */
 export default Class;
