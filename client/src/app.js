@@ -411,13 +411,8 @@ class App  {
                 this.fieldManager.acl = this.acl;
 
                 this.themeManager = new ThemeManager(this.settings, this.preferences, this.metadata);
-                this.modelFactory = new ModelFactory(this.metadata, this.user);
-                this.collectionFactory = new CollectionFactory(
-                    this.modelFactory,
-                    this.settings,
-                    this.metadata,
-                    this.user
-                );
+                this.modelFactory = new ModelFactory(this.metadata);
+                this.collectionFactory = new CollectionFactory(this.modelFactory, this.settings, this.metadata);
 
                 this.appTimestamp = this.settings.get('appTimestamp') || null;
 

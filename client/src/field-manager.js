@@ -33,8 +33,8 @@
  *
  * @class
  *
- * @param {Object} defs Field type definitions (metadata > fields).
- * @param {module:metadata} metadata Metadata.
+ * @param {Object} [defs] Field type definitions (metadata > fields).
+ * @param {module:metadata} [metadata] Metadata.
  * @param {modules:acl-manager} [acl] An ACL.
  */
 const FieldManager = function (defs, metadata, acl) {

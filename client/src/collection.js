@@ -193,11 +193,6 @@ const Class = Dep.extend(/** @lends Class# */ {
     maxMaxSize: 0,
 
     /**
-     * @private
-     */
-    _user: null,
-
-    /**
      * Initialize.
      *
      * @protected
@@ -439,13 +434,6 @@ const Class = Dep.extend(/** @lends Class# */ {
     },
 
     /**
-     * @protected
-     */
-    getUser: function () {
-        return this._user;
-    },
-
-    /**
      * @returns {string}
      */
     getEntityType: function () {
@@ -524,7 +512,6 @@ const Class = Dep.extend(/** @lends Class# */ {
         return new Model(attributes, {
             collection: this,
             dateTime: this.dateTime,
-            user: this._user,
             entityType: this.entityType || this.name,
             defs: this.defs,
             ...options,

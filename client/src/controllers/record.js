@@ -63,7 +63,7 @@ export default Dep.extend(/** @lends Class# */{
         /**
          * A type => view-name map.
          * @protected
-         * @type {Object.<string,string>}
+         * @type {Object.<string, string>}
          */
         this.viewMap = this.viewMap || {};
         this.viewsMap = this.viewsMap || {};

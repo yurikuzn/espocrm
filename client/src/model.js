@@ -115,7 +115,6 @@ class Class {
 
         /**
          * Definitions.
-         * @type {module:model~defs}
          */
         this.defs = options.defs || {};
 
@@ -130,14 +129,12 @@ class Class {
         }
 
         /** @private */
+        this.dateTime = options.dateTime || null;
+
+        /** @private */
         this.changed = {};
         /** @private */
         this._previousAttributes = null;
-
-        /** @private */
-        this._user = options.user || null;
-        /** @private */
-        this.dateTime = options.dateTime || null;
     }
 
     /**
@@ -152,7 +149,6 @@ class Class {
 
     /**
      * @protected
-     *
      * @param {string} [method] HTTP method.
      * @param {Class} [model]
      * @param {Object} [options]
@@ -175,7 +171,6 @@ class Class {
      *     silent?: boolean,
      * }} [options] Options. `silent` won't trigger a `change` event.
      * @returns {this}
-     *
      * @fires Class#change Unless `{silent: true}`.
      */
     set(attribute, value, options) {
@@ -416,7 +411,6 @@ class Class {
             Espo.Utils.cloneDeep(this.attributes),
             {
                 entityType: this.entityType,
-                user: this._user,
                 dateTime: this.dateTime,
                 defs: this.defs,
             }
@@ -690,24 +684,6 @@ class Class {
      */
     getTeamIdList() {
         return this.get('teamsIds') || [];
-    }
-
-    /**
-     * @todo Revise usage.
-     *
-     * @protected
-     * @returns {module:date-time}
-     */
-    getDateTime() {
-        return this.dateTime;
-    }
-
-    /**
-     * @protected
-     * @returns {module:models/user}
-     */
-    getUser() {
-        return this._user;
     }
 
     /**

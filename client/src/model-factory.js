@@ -34,11 +34,9 @@
 class Class {
     /**
      * @param {module:metadata} metadata
-     * @param {module:models/user} user
      */
-    constructor (metadata, user) {
+    constructor (metadata) {
         this.metadata = metadata;
-        this.user = user;
     }
 
     /**
@@ -65,7 +63,6 @@ class Class {
                 let model = new Seed({}, {
                     entityType: entityType,
                     defs: this.metadata.get(['entityDefs', entityType]) || {},
-                    user: this.user,
                     dateTime: this.dateTime,
                 });
 

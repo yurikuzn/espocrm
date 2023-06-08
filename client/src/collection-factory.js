@@ -36,15 +36,12 @@ class Class {
      * @param {module:model-factory} modelFactory
      * @param {module:models/settings} config
      * @param {module:metadata} metadata
-     * @param {module:models/user} user
      */
-    constructor(modelFactory, config, metadata, user) {
+    constructor(modelFactory, config, metadata) {
         /** @private */
         this.modelFactory = modelFactory;
         /** @private */
         this.metadata = metadata;
-        /** @private */
-        this.user = user;
         /** @private */
         this.recordListMaxSizeLimit = config.get('recordListMaxSizeLimit') || 200;
     }
@@ -55,7 +52,7 @@ class Class {
      * @param {string} entityType An entity type.
      * @param {Function} [callback] Deprecated.
      * @param {Object} [context] Deprecated.
-     * @returns {Promise<Class>}
+     * @returns {Promise<module:collection>}
      */
     create(entityType, callback, context) {
         return new Promise(resolve => {
@@ -82,7 +79,6 @@ class Class {
                     });
 
                     collection.model = Model;
-                    collection._user = this.user;
                     collection.entityType = entityType;
                     collection.maxMaxSize = this.recordListMaxSizeLimit;
 
