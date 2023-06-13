@@ -24,14 +24,10 @@
             },
             "exportsTo": {
                 "anyOf": [
-                    {
-                        "type": "string"
-                    },
-                    {
-                        "enum": ["window", "$.fn"]
-                    }
+                    {"type": "string"},
+                    {"enum": ["window", "$.fn"]}
                 ],
-                "description": "To where the lib is exported. Use dots to define a path."
+                "description": "If the lib exposes itself w/o a module, to where the lib is exported. Use dots to define a path."
             },
             "exportsAs": {
                 "type": "string",

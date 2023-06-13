@@ -44,6 +44,18 @@
      */
 
     /**
+     * @typedef Loader~libData
+     * @type {Object}
+     * @property {string} [exportsTo] Exports to.
+     * @property {string} [exportsAs] Exports as.
+     * @property {boolean} [sourceMap] Has a source map.
+     * @property {boolean} [expose] To expose to global.
+     * @property {string} [exposeAs] To expose to global as.
+     * @property {string} [path] A path.
+     * @property {string} [devPath] A path in developer mode.
+     */
+
+    /**
      * A loader. Used for loading and defining AMD modules, resource loading.
      * Handles caching.
      */
@@ -56,11 +68,13 @@
         constructor(cache, _cacheTimestamp) {
             this._cacheTimestamp = _cacheTimestamp || null;
             this._cache = cache || null;
+            /** @type {Object.<string, Loader~libData>} */
             this._libsConfig = {};
             this._loadCallbacks = {};
             this._pathsBeingLoaded = {};
             this._dataLoaded = {};
             this._definedMap = {};
+            this._aliasMap = {};
             this._contextId = null;
             this._responseCache = null;
             this._basePath = '';
@@ -187,9 +201,9 @@
         _set(id, o) {
             this._definedMap[id] = o;
 
-            const libsData = this._libsConfig[id] || {};
+            const libsData = this._libsConfig[id];
 
-            if (libsData.expose) {
+            if (libsData && libsData.expose) {
                 let key = libsData.exposeAs || id;
 
                 //console.log(name, o);
@@ -492,6 +506,10 @@
          * @private
          */
         _normalizeClassName(name) {
+            if (name in this._aliasMap) {
+                name = this._aliasMap[name];
+            }
+
             if (~name.indexOf('.') && !~name.indexOf('!') && !name.slice(-3) === '.js') {
                 console.warn(
                     name + ': ' +
@@ -556,10 +574,6 @@
             let realName = name;
             let noAppCache = false;
 
-            if (name in this._libsConfig) {
-                name = 'lib!' + name;
-            }
-
             if (name.indexOf('lib!') === 0) {
                 dataType = 'script';
                 type = 'lib';
@@ -568,19 +582,18 @@
                 path = realName;
 
                 exportsTo = 'window';
-                exportsAs = null;//realName;
+                exportsAs = null;
 
                 if (realName in this._libsConfig) {
-                    let libData = this._libsConfig[realName] || {};
+                    const libData = this._libsConfig[realName] || {};
 
-                    path = libData.path || path;
+                    path = (this._isDeveloperMode ? libData.devPath : libData.path) || path;
+                    exportsTo = libData.exportsTo || null;
+                    exportsAs = libData.exportsAs || null;
+                }
 
-                    if (this._isDeveloperMode) {
-                        path = libData.devPath || path;
-                    }
-
-                    exportsTo = libData.exportsTo || exportsTo;
-                    exportsAs = libData.exportsAs || exportsAs;
+                if (!exportsTo) {
+                    type = 'amd';
                 }
 
                 if (path.indexOf(':') !== -1) {
@@ -590,7 +603,16 @@
 
                 noAppCache = true;
 
-                let obj = this._fetchObject(exportsTo, exportsAs);
+                let obj = void 0;
+
+                if (exportsTo && exportsAs) {
+                    obj = this._fetchObject(exportsTo, exportsAs);
+                }
+
+                if (typeof obj === 'undefined' && name in this._definedMap) {
+                    // @todo Test.
+                    obj = this._definedMap[name];
+                }
 
                 if (typeof obj !== 'undefined') {
                     callback(obj);
@@ -612,7 +634,7 @@
             }
             else {
                 dataType = 'script';
-                type = 'class';
+                type = 'amd';
 
                 if (!name || name === '') {
                     throw new Error("Can not load empty class name");
@@ -829,7 +851,7 @@
             let exportsAs = dto.exportsAs;
             let exportsTo = dto.exportsTo;
 
-            if (type === 'class') {
+            if (type === 'amd') {
                 this._contextId = name;
             }
 
@@ -837,7 +859,7 @@
                 this._execute(cached, name, dto.path);
             }
 
-            if (type === 'class') {
+            if (type === 'amd') {
                 let classObj = this._get(name);
 
                 if (classObj) {
@@ -916,7 +938,7 @@
 
             this._addLoadCallback(name, callback);
 
-            if (type === 'class') {
+            if (type === 'amd') {
                 this._contextId = name;
             }
 
@@ -946,7 +968,7 @@
 
             let result;
 
-            if (type === 'class') {
+            if (type === 'amd') {
                 result = this._get(name);
 
                 if (result && typeof result === 'function') {
@@ -968,7 +990,7 @@
         }
 
         /**
-         * @param {Object} data
+         * @param {Object.<string, Loader~libData>} data
          * @internal
          */
         addLibsConfig(data) {
@@ -979,6 +1001,13 @@
             this._addLibsConfigCallCount++;
 
             this._libsConfig = {...this._libsConfig, ...data};
+        }
+
+        /**
+         * @param {Object.<string, string>} map
+         */
+        setAliasMap(map) {
+            this._aliasMap = map;
         }
 
         /**
@@ -1095,20 +1124,6 @@
         },
 
         /**
-         * @param {string[]} internalModuleList
-         */
-        setInternalModuleList: function (internalModuleList) {
-            loader.setInternalModuleList(internalModuleList);
-        },
-
-        /**
-         * @param {string[]} transpiledModuleList
-         */
-        setTranspiledModuleList: function (transpiledModuleList) {
-            loader.setTranspiledModuleList(transpiledModuleList);
-        },
-
-        /**
          * Define a module.
          *
          * @param {string} id A module name to be defined.
@@ -1142,7 +1157,7 @@
         },
 
         /**
-         * @param {Object} data
+         * @param {Object.<string, Loader~libData>} data
          * @internal
          */
         addLibsConfig: function (data) {
@@ -1246,22 +1261,20 @@
     root.define.amd = true;
 
     (() => {
-        let loaderParamsTag = document.querySelector('script[data-name="loader-params"]');
+        const loaderParamsTag = document.querySelector('script[data-name="loader-params"]');
 
-        if (loaderParamsTag) {
-            let params = JSON.parse(loaderParamsTag.textContent);
-
-            Espo.loader.setCacheTimestamp(params.cacheTimestamp);
-            Espo.loader.setBasePath(params.basePath);
-            Espo.loader.setInternalModuleList(params.internalModuleList);
-            Espo.loader.setTranspiledModuleList(params.transpiledModuleList);
+        if (!loaderParamsTag) {
+            return;
         }
 
-        let jsLibsTag = document.querySelector('script[data-name="js-libs"]');
+        const params = JSON.parse(loaderParamsTag.textContent);
 
-        if (jsLibsTag) {
-            Espo.loader.addLibsConfig(JSON.parse(jsLibsTag.textContent));
-        }
+        loader.setCacheTimestamp(params.cacheTimestamp);
+        loader.setBasePath(params.basePath);
+        loader.setInternalModuleList(params.internalModuleList);
+        loader.setTranspiledModuleList(params.transpiledModuleList);
+        loader.addLibsConfig(params.libsConfig);
+        loader.setAliasMap(params.aliasMap);
     })();
 
 }).call(window);

@@ -15,7 +15,6 @@
             "files": [
                 "src/namespace.js",
                 "src/loader.js",
-                "src/loader-init-libs.js",
                 "src/exceptions.js",
                 "src/utils.js"
             ],

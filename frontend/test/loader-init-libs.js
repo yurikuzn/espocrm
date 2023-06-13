@@ -26,46 +26,44 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-Espo.loader.addLibsConfig(
-    {
-        "espo": {
-            "exportsTo": "window",
-            "exportsAs": "Espo"
-        },
-        "jquery": {
-            "expose": true,
-            "exposeAs": "$",
-            "amdId": "jquery"
-        },
-        "backbone": {
-            "exportsTo": "window",
-            "exportsAs": "Backbone"
-        },
-        "bullbone": {
-            "expose": true,
-            "exposeAs": "Bull",
-            "amdId": "bullbone"
-        },
-        "handlebars": {
-            "expose": true,
-            "exposeAs": "Handlebars"
-        },
-        "underscore": {
-            "expose": true,
-            "exposeAs": "_",
-            "amdId": "underscore"
-        },
-        "marked": {},
-        "dompurify": {
-            "expose": true,
-            "exposeAs": "DOMPurify"
-        },
-        "base64": {
-            "exportsTo": "window",
-            "exportsAs": "Base64"
-        },
-        "moment": {
-            "expose": true
-        }
+Espo.loader.addLibsConfig({
+    "espo": {
+        "exportsTo": "window",
+        "exportsAs": "Espo"
+    },
+    "jquery": {
+        "expose": true,
+        "exposeAs": "$",
+        "amdId": "jquery"
+    },
+    "backbone": {
+        "exportsTo": "window",
+        "exportsAs": "Backbone"
+    },
+    "bullbone": {
+        "expose": true,
+        "exposeAs": "Bull",
+        "amdId": "bullbone"
+    },
+    "handlebars": {
+        "expose": true,
+        "exposeAs": "Handlebars"
+    },
+    "underscore": {
+        "expose": true,
+        "exposeAs": "_",
+        "amdId": "underscore"
+    },
+    "marked": {},
+    "dompurify": {
+        "expose": true,
+        "exposeAs": "DOMPurify"
+    },
+    "base64": {
+        "exportsTo": "window",
+        "exportsAs": "Base64"
+    },
+    "moment": {
+        "expose": true
     }
-);
+});
