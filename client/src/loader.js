@@ -186,6 +186,7 @@
 
         /**
          * @private
+         * @param {string} id
          */
         _get(id) {
             if (id in this._definedMap) {
@@ -197,29 +198,36 @@
 
         /**
          * @private
+         * @param {string} id
+         * @param {*} value
          */
-        _set(id, o) {
-            this._definedMap[id] = o;
+        _set(id, value) {
+            this._definedMap[id] = value;
 
-            const libsData = this._libsConfig[id];
+            if (id.slice(0, 4) === 'lib!') {
+                let libName = id.slice(4);
 
-            if (libsData && libsData.expose) {
-                let key = libsData.exposeAs || id;
+                const libsData = this._libsConfig[libName];
 
-                //console.log(name, o);
-                window[key] = o;
+                if (libsData && libsData.expose) {
+                    let key = libsData.exposeAs || libName;
+
+                    window[key] = value;
+                }
             }
         }
 
         /**
          * @private
+         * @param {string} id
+         * @return {string}
          */
-        _nameToPath(name) {
-            if (name.indexOf(':') === -1) {
-                return 'client/lib/transpiled/src/' + name + '.js';
+        _idToPath(id) {
+            if (id.indexOf(':') === -1) {
+                return 'client/lib/transpiled/src/' + id + '.js';
             }
 
-            let arr = name.split(':');
+            let arr = id.split(':');
             let namePart = arr[1];
             let mod = arr[0];
 
@@ -295,16 +303,17 @@
 
         /**
          * @private
+         * @param {string} id
+         * @param {*} value
          */
-        _executeLoadCallback(id, o) {
+        _executeLoadCallback(id, value) {
             if (!(id in this._loadCallbacks)) {
                 return;
             }
 
-            this._loadCallbacks[id].forEach(callback => callback(o));
+            this._loadCallbacks[id].forEach(callback => callback(value));
 
             delete this._loadCallbacks[id];
-
         }
 
         /**
@@ -357,9 +366,9 @@
          * @param {number} indexOfExports
          */
         _defineProceed(callback, id, args, indexOfExports) {
-            let o = callback.apply(root, args);
+            let value = callback.apply(root, args);
 
-            if (typeof o === 'undefined' && indexOfExports === -1 && id) {
+            if (typeof value === 'undefined' && indexOfExports === -1 && id) {
                 if (this._cache) {
                     this._cache.clear('a', id);
                 }
@@ -370,16 +379,18 @@
             if (indexOfExports !== -1) {
                 let exports = args[indexOfExports];
 
-                o = ('default' in exports) ? exports.default : exports;
+                value = ('default' in exports) ? exports.default : exports;
             }
 
             if (!id) {
+                console.error(value);
                 // Libs can define w/o id and set to the root.
+                // Not supposed to happen as should be suppressed by require.amd = false;
                 return;
             }
 
-            this._set(id, o);
-            this._executeLoadCallback(id, o);
+            this._set(id, value);
+            this._executeLoadCallback(id, value);
         }
 
         /**
@@ -584,20 +595,30 @@
                 exportsTo = 'window';
                 exportsAs = null;
 
-                if (realName in this._libsConfig) {
+
+                let isDefinedLib = realName in this._libsConfig;
+
+                if (isDefinedLib) {
                     const libData = this._libsConfig[realName] || {};
+
+                    path = libData.path || path;
+
+                    if (this._isDeveloperMode && libData.devPath) {
+                        path = libData.devPath;
+                    }
 
                     path = (this._isDeveloperMode ? libData.devPath : libData.path) || path;
                     exportsTo = libData.exportsTo || null;
                     exportsAs = libData.exportsAs || null;
                 }
 
-                if (!exportsTo) {
+                if (isDefinedLib && !exportsTo) {
                     type = 'amd';
                 }
 
                 if (path.indexOf(':') !== -1) {
                     console.error(`Not allowed path '${path}'.`);
+
                     throw new Error();
                 }
 
@@ -609,8 +630,8 @@
                     obj = this._fetchObject(exportsTo, exportsAs);
                 }
 
+
                 if (typeof obj === 'undefined' && name in this._definedMap) {
-                    // @todo Test.
                     obj = this._definedMap[name];
                 }
 
@@ -629,6 +650,7 @@
 
                 if (path.indexOf(':') !== -1) {
                     console.error(`Not allowed path '${path}'.`);
+
                     throw new Error();
                 }
             }
@@ -667,7 +689,7 @@
                     return;
                 }
 
-                path = this._nameToPath(name);
+                path = this._idToPath(name);
             }
 
             if (name in this._dataLoaded) {
@@ -944,26 +966,16 @@
 
             let isLib = name.slice(0, 4) === 'lib!';
 
-            if (isLib) {
-                if (exportsAs) {
-                    define.amd = false;
-                }
-                else {
-                    this._contextId = name;
-                }
+            if (isLib && exportsAs) {
+                define.amd = false;
             }
 
             if (dataType === 'script') {
                 this._execute(response, name, dto.path);
             }
 
-            if (isLib) {
-                if (exportsAs) {
-                    define.amd = true;
-                }
-                else {
-                    this._contextId = null;
-                }
+            if (isLib && exportsAs) {
+                define.amd = false;
             }
 
             let result;

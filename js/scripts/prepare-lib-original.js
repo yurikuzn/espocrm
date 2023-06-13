@@ -111,7 +111,7 @@ libs.forEach(item => {
         return;
     }
 
-    keyMap[item.src] = item.key;
+    keyMap[item.src] = 'lib!' + item.key;
 });
 
 libSrcList.forEach(src => {

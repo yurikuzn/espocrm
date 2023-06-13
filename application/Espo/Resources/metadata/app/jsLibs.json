@@ -36,14 +36,14 @@
         "exportsAs": "Base64"
     },
     "moment": {
-        "expose": true
+        "exportsTo": "window",
+        "exportsAs": "moment"
     },
-
     "Flotr": {
         "path": "client/lib/flotr2.js",
         "devPath": "client/lib/original/flotr2.js",
-        "expose": true,
-        "exposeAs": "Flotr",
+        "exportsTo": "window",
+        "exportsAs": "Flotr",
         "sourceMap": true
     },
     "Base64": {
@@ -65,6 +65,18 @@
     "Textcomplete": {
         "exportsTo": "$.fn",
         "exportsAs": "textcomplete"
+    },
+    "autocomplete": {
+        "exportsTo": "$.fn",
+        "exportsAs": "autocomplete"
+    },
+    "timepicker": {
+        "exportsTo": "$.fn",
+        "exportsAs": "timepicker"
+    },
+    "bootstrap-datepicker": {
+        "exportsTo": "$.fn",
+        "exportsAs": "datepicker"
     },
     "Selectize": {
         "path": "client/lib/selectize.js",
