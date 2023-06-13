@@ -2,8 +2,8 @@
     "Flotr": {
         "path": "client/lib/flotr2.js",
         "devPath": "client/lib/original/flotr2.js",
-        "exportsTo": "window",
-        "exportsAs": "Flotr",
+        "expose": true,
+        "exposeAs": "Flotr",
         "sourceMap": true
     },
     "Base64": {
@@ -32,16 +32,12 @@
         "exportsTo": "window",
         "exportsAs": "Selectize"
     },
-    "autonumeric": {
-        "exportsTo": "window",
-        "exportsAs": "AutoNumeric"
-    },
+    "autonumeric": {},
     "cronstrue": {
         "path": "client/lib/cronstrue-i18n.js",
         "devPath": "client/lib/original/cronstrue-i18n.js",
-        "exportsTo": "window",
-        "exportsAs": "cronstrue",
-        "sourceMap": true
+        "sourceMap": true,
+        "amdId": "cronstrue"
     },
     "Cropper": {
         "path": "client/lib/cropper.js",
@@ -61,8 +57,7 @@
     "exif": {
         "path": "client/lib/exif.js",
         "devPath": "client/lib/original/exif.js",
-        "exportsTo": "window",
-        "exportsAs": "EXIF",
+        "amdId": "exif-js",
         "sourceMap": true
     },
     "JsBarcode": {

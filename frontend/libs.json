@@ -20,7 +20,7 @@
         "key": "handlebars"
     },
     {
-        "src": "node_modules/bullbone/dist/bullbone.js",
+        "src": "node_modules/bullbone/dist/bullbone.umd.js",
         "bundle": true,
         "key": "bullbone"
     },
@@ -31,7 +31,8 @@
     },
     {
         "src": "node_modules/moment/moment.js",
-        "bundle": true
+        "bundle": true,
+        "key": "moment"
     },
     {
         "src": "node_modules/moment-timezone/moment-timezone.js",
@@ -78,26 +79,26 @@
     },
     {
         "src": "node_modules/jquery-ui-espo/dist/jquery-ui.js",
-        "bundle": true
+        "bundle": true,
+        "suppressAmd": true
     },
     {
         "src": "node_modules/jquery-ui-touch-punch/jquery.ui.touch-punch.js",
-        "bundle": true
+        "bundle": true,
+        "suppressAmd": true
     },
     {
         "name": "gridstack",
-        "files": [
-            {
-                "src": "node_modules/gridstack/dist/gridstack-jq.js"
-            }
-        ],
+        "src": "node_modules/gridstack/dist/gridstack-jq.js",
         "bundle": true,
-        "key": "gridstack"
+        "key": "gridstack",
+        "suppressAmd": true
     },
     {
         "src": "node_modules/selectize/dist/js/standalone/selectize.js",
         "bundle": true,
-        "key": "Selectize"
+        "key": "Selectize",
+        "suppressAmd": true
     },
     {
         "src": "node_modules/autonumeric/dist/autoNumeric.js",

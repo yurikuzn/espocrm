@@ -240,8 +240,8 @@ class ClientManager
     {
         if ($this->isDeveloperMode()) {
             return array_merge(
-                $this->getDeveloperModeBundleLibFileList(),
                 $this->metadata->get(['app', 'client', 'developerModeScriptList']) ?? [],
+                $this->getDeveloperModeBundleLibFileList(),
             );
         }
 

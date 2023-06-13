@@ -33,40 +33,39 @@ Espo.loader.addLibsConfig(
             "exportsAs": "Espo"
         },
         "jquery": {
-            "exportsTo": "window",
-            "exportsAs": "$"
+            "expose": true,
+            "exposeAs": "$",
+            "amdId": "jquery"
         },
         "backbone": {
             "exportsTo": "window",
             "exportsAs": "Backbone"
         },
         "bullbone": {
-            "exportsTo": "window",
-            "exportsAs": "Bull"
+            "expose": true,
+            "exposeAs": "Bull",
+            "amdId": "bullbone"
         },
         "handlebars": {
-            "exportsTo": "window",
-            "exportsAs": "Handlebars"
+            "expose": true,
+            "exposeAs": "Handlebars"
         },
         "underscore": {
-            "exportsTo": "window",
-            "exportsAs": "_"
+            "expose": true,
+            "exposeAs": "_",
+            "amdId": "underscore"
         },
-        "marked": {
-            "exportsTo": "window",
-            "exportsAs": "marked"
-        },
+        "marked": {},
         "dompurify": {
-            "exportsTo": "window",
-            "exportsAs": "DOMPurify"
+            "expose": true,
+            "exposeAs": "DOMPurify"
         },
         "base64": {
             "exportsTo": "window",
             "exportsAs": "Base64"
         },
         "moment": {
-            "exportsTo": "window",
-            "exportsAs": "moment"
+            "expose": true
         }
     }
 );
