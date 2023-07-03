@@ -7,12 +7,11 @@
     margin: 10px 0 0;
 }
 
-.fc-event.event-canceled {
-    &,
-    .fc-event-title {
-        text-decoration: line-through !important;
-    }
+.dashlet-body div.calendar-container {
+    height: 100% !important;
 }
+
+
 
 .fc th {
     font-weight: normal;
@@ -37,79 +36,49 @@
     border-bottom-right-radius: 0 !important;
 }
 
-
-
-.dashlet-body div.calendar-container {
-    height: 100% !important;
-}
-
-.fc-event {
-    min-height: 19px !important;
-}
-
 .fc-day-grid-event .fc-time {
     font-weight: normal !important;
 }
-
 
 .fc-basic-view td.fc-week-number span, .fc-basic-view td.fc-day-number {
     padding-top: 0 !important;
 }
 
-.fc-ltr .fc-basic-view .fc-day-top {
+/*.fc-ltr .fc-basic-view .fc-day-top {
     text-align: right !important;
-}
-
-@media screen and (max-width: (@screen-sm-min - 1px)) {
-    .fc-view-container {
-        font-size: 85%;
-    }
-}
-
-body .fc-content-col > .fc-now-indicator-line {
-    height: 1px;
-    border-top: 1px solid var(--brand-danger);
-    border-bottom-width: 0;
-    background-color: var(--brand-danger);
-
-    &:before {
-        content: "";
-        position: inherit;
-        left: -4px;
-        border-radius: 50%;
-        height: 8px;
-        width: 8px;
-        background-color: var(--brand-danger);
-        display: inline-block;
-        top: -4px;
-        opacity: 0.9;
-    }
-}
+}*/
 
 //-----
 
-.fc-col-header {
-    user-select: none;
-
-    .fc-event {
-        border-radius: var(--border-radius) !important;
-    }
-
-    a.fc-col-header-cell-cushion,
-    a.fc-timegrid-axis-cushion {
-        &,
-        &:hover {
-            text-decoration: none;
-            color: var(--text-color);
-        }
+@media screen and (max-width: (@screen-sm-min - 1px)) {
+    .fc {
+        font-size: 85%;
     }
 }
 
 .fc {
     overflow: hidden;
 
+    .fc-col-header {
+        user-select: none;
+
+        .fc-event {
+            border-radius: var(--border-radius) !important;
+            min-height: 19px !important; // ?
+        }
+
+        a.fc-col-header-cell-cushion,
+        a.fc-timegrid-axis-cushion {
+            &,
+            &:hover {
+                text-decoration: none;
+                color: var(--text-color);
+            }
+        }
+    }
+
     .fc-timegrid-now-indicator-container {
-        overflow: visible; // Questionable.
+        overflow: visible; // ?
     }
 
     .fc-bg-event {
@@ -122,6 +91,13 @@ body .fc-content-col > .fc-now-indicator-line {
 
         &::after {
             background: transparent;
+        }
+    }
+
+    .fc-event.event-canceled {
+        &,
+        .fc-event-title {
+            text-decoration: line-through !important;
         }
     }
 
@@ -186,6 +162,34 @@ body .fc-content-col > .fc-now-indicator-line {
             text-decoration: none;
             cursor: default;
         }
+    }
+
+    border-style: none !important;
+
+    .fc-scrollgrid {
+        border: 0;
+
+        td:last-of-type {
+            border-right-color: transparent;
+        }
+    }
+
+
+    .fc-scrollgrid-section-body td[role='presentation'] {
+        border-bottom-color: transparent;
+    }
+
+    tr[role="presentation"]:first-child:not(:last-child) > td {
+        border-bottom: 1px solid var(--calendar-border);
+    }
+
+
+    [role='row']:last-of-type td {
+        border-bottom-color: transparent !important;
+    }
+
+    th[role='presentation'] {
+        border-right-color: transparent !important;
     }
 }
 
