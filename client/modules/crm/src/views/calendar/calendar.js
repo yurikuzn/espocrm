@@ -30,6 +30,10 @@ import View from 'view';
 import moment from 'moment';
 import * as FullCalendar from 'fullcalendar';
 
+/**
+ * @typedef {import('@fullcalendar/core/internal-common.js').EventImpl} EventImpl
+ */
+
 class CalendarView extends View {
 
     template = 'crm:calendar/calendar'
@@ -165,8 +169,6 @@ class CalendarView extends View {
             .get('clientDefs.Calendar.allDayScopeList') || this.allDayScopeList;
 
         this.colors = {...this.colors, ...this.getHelper().themeManager.getParam('calendarColors')};
-
-        //this.scopeFilter = false;
 
         this.isCustomViewAvailable = this.getAcl().getPermissionLevel('userPermission') !== 'no';
 
@@ -376,6 +378,22 @@ class CalendarView extends View {
         return title;
     }
 
+    /**
+     * @param {Object.<string, *>} o
+     * @return {{
+     *     recordId,
+     *     dateStart?: string,
+     *     originalColor?: string,
+     *     scope?: string,
+     *     display: string,
+     *     id: string,
+     *     dateEnd?: string,
+     *     dateStartDate?: ?string,
+     *     title: string,
+     *     dateEndDate?: ?string,
+     *     status?: string,
+     * }}
+     */
     convertToFcEvent(o) {
         let event = {
             title: o.name || '',
@@ -534,7 +552,7 @@ class CalendarView extends View {
         let start = event.start ? moment(event.start) : null;
         let end = event.end ? moment(event.end) : null;
 
-        if (~this.allDayScopeList.indexOf(event.scope)) {
+        if (this.allDayScopeList.includes(event.scope)) {
             event.allDay = event.allDayCopy = true;
 
             if (!notInitial) {
@@ -701,7 +719,6 @@ class CalendarView extends View {
             snapDuration: this.slotDuration * 60 * 1000,
             timeZone: this.getDateTime().timeZone,
             longPressDelay: 300,
-            //eventBackgroundColor: '#333',
             eventColor: this.colors[''],
             nowIndicator: true,
             allDayText: '',
@@ -745,7 +762,7 @@ class CalendarView extends View {
                 this.calendar.unselect();
             },
             eventClick: info => {
-                const event = info.event;
+                const event = /** @type EventImpl */info.event;
 
                 let scope = event.extendedProps.scope;
                 let recordId = event.extendedProps.recordId;
@@ -787,12 +804,10 @@ class CalendarView extends View {
                 this.trigger('view', m.format('YYYY-MM-DD'), this.mode);
             },
             events: (info, callback) => {
-
                 let dateTimeFormat = this.getDateTime().internalDateTimeFormat;
 
                 let from = moment.tz(info.startStr, info.timeZone);
                 let to = moment.tz(info.endStr, info.timeZone);
-
 
                 let fromStr = from.utc().format(dateTimeFormat);
                 let toStr = to.utc().format(dateTimeFormat);
@@ -800,71 +815,87 @@ class CalendarView extends View {
                 this.fetchEvents(fromStr, toStr, callback);
             },
             eventDrop: info => {
-                let event = info.event;
+                let event = /** @type EventImpl */info.event;
                 let delta = info.delta;
 
-                if (event.start.hasTime()) {
-                    if (event.allDayCopy) {
-                        info.revert();
+                const scope = event.extendedProps.scope;
 
-                        return;
-                    }
-                } else {
-                    if (!event.allDayCopy) {
-                        info.revert();
+                if (!event.allDay && event.extendedProps.allDayCopy) {
+                    info.revert();
 
-                        return;
-                    }
+                    return;
                 }
+
+                if (event.allDay && !event.extendedProps.allDayCopy) {
+                    info.revert();
+
+                    return;
+                }
+
+                let start = event.start;
+                let end = event.end;
+
+                let dateStart = event.extendedProps.dateStart;
+                let dateEnd = event.extendedProps.dateEnd;
+                let dateStartDate = event.extendedProps.dateStartDate;
+                let dateEndDate = event.extendedProps.dateEndDate;
 
                 let attributes = {};
 
-                if (event.dateStart) {
-                    event.dateStart = this.convertDateTime(this.getDateTime().toMoment(event.dateStart).add(delta));
-                    attributes.dateStart = event.dateStart;
+                if (dateStart) {
+                    let dateString = this.getDateTime()
+                        .toMoment(dateStart)
+                        .add(delta)
+                        .format(this.getDateTime().internalDateTimeFormat);
+
+                    attributes.dateStart = this.convertDateTime(dateString);
                 }
 
-                if (event.dateEnd) {
-                    event.dateEnd = this.convertDateTime(this.getDateTime().toMoment(event.dateEnd).add(delta));
-                    attributes.dateEnd = event.dateEnd;
+                if (dateEnd) {
+                    let dateString = this.getDateTime()
+                        .toMoment(dateEnd)
+                        .add(delta)
+                        .format(this.getDateTime().internalDateTimeFormat);
+
+                    attributes.dateEnd = this.convertDateTime(dateString);
                 }
 
-                if (event.dateStartDate) {
-                    let d = this.getDateTime().toMomentDate(event.dateStartDate).add(delta);
+                if (dateStartDate) {
+                    let m = this.getDateTime().toMomentDate(dateStartDate).add(delta);
 
-                    event.dateStartDate = d.format(this.getDateTime().internalDateFormat);
-                    attributes.dateStartDate = event.dateStartDate;
+                    attributes.dateStartDate = m.format(this.getDateTime().internalDateFormat);
                 }
 
-                if (event.dateEndDate) {
-                    let d = this.getDateTime().toMomentDate(event.dateEndDate).add(delta);
+                if (dateEndDate) {
+                    let m = this.getDateTime().toMomentDate(dateEndDate).add(delta);
 
-                    event.dateEndDate = d.format(this.getDateTime().internalDateFormat);
-                    attributes.dateEndDate = event.dateEndDate;
+                    attributes.dateStartDate = m.format(this.getDateTime().internalDateFormat);
                 }
 
-                if (!event.end) {
-                    if (!~this.allDayScopeList.indexOf(event.scope)) {
-                        event.end = event.start.clone().add(event.duration, 's');
-                    }
+                let props = this.obtainPropsFromEvent(event);
+
+                if (!end && !this.allDayScopeList.includes(scope)) {
+                    props.end = moment.tz(start, null, this.getDateTime().timeZone)
+                        .clone()
+                        .add(event.extendedProps.duration, 's')
+                        .toDate();
                 }
 
-                event.allDay = false;
+                props.allDay = false;
 
-                this.handleAllDay(event, true);
-                this.fillColor(event);
+                this.handleAllDay(props, true);
+                this.fillColor(props);
 
                 Espo.Ui.notify(this.translate('saving', 'messages'));
 
-                this.getModelFactory().create(event.scope, model => {
-                    model.id = event.recordId;
+                this.getModelFactory().create(scope, model => {
+                    model.id = props.recordId;
 
-                    model
-                        .save(attributes, {patch: true})
+                    model.save(attributes, {patch: true})
                         .then(() => {
                             Espo.Ui.notify(false);
 
-                            this.$calendar.fullCalendar('updateEvent', event);
+                            this.applyPropsToEvent(event, props);
                         })
                         .catch(() => {
                             info.revert();
@@ -872,27 +903,25 @@ class CalendarView extends View {
                 });
             },
             eventResize: info => {
-                let event = info.event;
+                let event = /** @type EventImpl */info.event;
 
                 let attributes = {
-                    dateEnd: this.convertDateTime(event.end),
+                    dateEnd: this.convertDateTime(event.endStr),
                 };
 
-                event.dateEnd = attributes.dateEnd;
-                event.duration = event.end.unix() - event.start.unix();
-
-                this.fillColor(event);
+                let duration = moment().tz(event.endStr).unix() - moment().tz(event.startStr).unix();
 
                 Espo.Ui.notify(this.translate('saving', 'messages'));
 
-                this.getModelFactory().create(event.scope, model => {
-                    model.id = event.recordId;
+                this.getModelFactory().create(event.extendedProps.scope, model => {
+                    model.id = event.extendedProps.recordId;
 
                     model.save(attributes, {patch: true})
                         .then(() => {
                             Espo.Ui.notify(false);
 
-                            this.$calendar.fullCalendar('updateEvent', event);
+                            event.setExtendedProp('dateEnd', attributes.dateEnd);
+                            event.setExtendedProp('duration', duration);
                         })
                         .catch(() => {
                             info.revert();
@@ -1074,8 +1103,36 @@ class CalendarView extends View {
 
         let data = this.convertToFcEvent(attributes);
 
-        for (let key in data) {
-            let value = data[key];
+        this.applyPropsToEvent(event, data);
+    }
+    /**
+     * @param {EventImpl} event
+     * @return Object.<string, *>
+     */
+    obtainPropsFromEvent(event) {
+        let props = {};
+
+        for (let key in event.extendedProps) {
+            props[key] = event.extendedProps[key];
+        }
+
+        props.allDay = event.allDay;
+        props.start = event.start;
+        props.end = event.end;
+        props.title = event.title;
+        props.id = event.id;
+        props.color = event.color;
+
+        return props;
+    }
+
+    /**
+     * @param {EventImpl} event
+     * @param {Object.<string, *>} props
+     */
+    applyPropsToEvent(event, props) {
+        for (let key in props) {
+            let value = props[key];
 
             if (key === 'start') {
                 event.setStart(value);
