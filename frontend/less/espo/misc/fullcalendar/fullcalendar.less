@@ -37,10 +37,7 @@
     border-bottom-right-radius: 0 !important;
 }
 
-.fc-event {
-    border-radius: var(--border-radius) !important;
-    background-color: none !important;
-}
+
 
 .dashlet-body div.calendar-container {
     height: 100% !important;
@@ -94,6 +91,10 @@ body .fc-content-col > .fc-now-indicator-line {
 .fc-col-header {
     user-select: none;
 
+    .fc-event {
+        border-radius: var(--border-radius) !important;
+    }
+
     a.fc-col-header-cell-cushion,
     a.fc-timegrid-axis-cushion {
         &,
@@ -107,8 +108,21 @@ body .fc-content-col > .fc-now-indicator-line {
 .fc {
     overflow: hidden;
 
+    .fc-timegrid-now-indicator-container {
+        overflow: visible; // Questionable.
+    }
+
     .fc-bg-event {
         opacity: 0.5;
+    }
+
+    .fc-event-selected,
+    .fc-event:focus {
+        box-shadow: none;
+
+        &::after {
+            background: transparent;
+        }
     }
 
     .fc-day-today.fc-timegrid-col {
