@@ -2,8 +2,15 @@
     "fullcalendar": {
         "path": "client/modules/crm/lib/fullcalendar.js",
         "devPath": "client/modules/crm/lib/original/fullcalendar.js",
-        "exportsTo": "$.fn",
-        "exportsAs": "fullCalendar",
+        "exportsTo": "window",
+        "exportsAs": "FullCalendar",
+        "sourceMap": true
+    },
+    "fullcalendar-moment": {
+        "path": "client/modules/crm/lib/fullcalendar-moment.js",
+        "devPath": "client/modules/crm/lib/original/fullcalendar-moment.js",
+        "exportsTo": "FullCalendar",
+        "exportsAs": "Moment",
         "sourceMap": true
     },
     "vis": {
