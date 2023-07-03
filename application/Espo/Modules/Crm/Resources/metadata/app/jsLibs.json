@@ -13,6 +13,13 @@
         "exportsAs": "Moment",
         "sourceMap": true
     },
+    "fullcalendar-moment-timezone": {
+        "path": "client/modules/crm/lib/fullcalendar-moment-timezone.js",
+        "devPath": "client/modules/crm/lib/original/fullcalendar-moment-timezone.js",
+        "exportsTo": "FullCalendar",
+        "exportsAs": "MomentTimezone",
+        "sourceMap": true
+    },
     "vis": {
         "path": "client/modules/crm/lib/vis.js",
         "devPath": "client/modules/crm/lib/original/vis.js",

@@ -68,6 +68,19 @@ class CalendarView extends View {
         listWeek: 'listWeek',
     }
 
+    extendedProps = [
+        'scope',
+        'recordId',
+        'dateStart',
+        'dateEnd',
+        'dateStartDate',
+        'dateEndDate',
+        'status',
+        'originalColor',
+        'duration',
+        'allDayCopy',
+    ]
+
     /** @type {FullCalendar.Calendar} */
     calendar
 
@@ -127,6 +140,10 @@ class CalendarView extends View {
     setup() {
         this.wait(
             Espo.loader.requirePromise('lib!fullcalendar-moment')
+        );
+
+        this.wait(
+            Espo.loader.requirePromise('lib!fullcalendar-moment-timezone')
         );
 
         this.date = this.options.date || null;
@@ -397,19 +414,15 @@ class CalendarView extends View {
         let end;
 
         if (o.dateStart) {
-            if (!o.dateStartDate) {
-                start = this.getDateTime().toMoment(o.dateStart);
-            } else {
-                start = this.getDateTime().toMomentDate(o.dateStartDate);
-            }
+            start = !o.dateStartDate ?
+                this.getDateTime().toMoment(o.dateStart) :
+                this.getDateTime().toMomentDate(o.dateStartDate);
         }
 
         if (o.dateEnd) {
-            if (!o.dateEndDate) {
-                end = this.getDateTime().toMoment(o.dateEnd);
-            } else {
-                end = this.getDateTime().toMomentDate(o.dateEndDate);
-            }
+            end = !o.dateEndDate ?
+                this.getDateTime().toMoment(o.dateEnd) :
+                this.getDateTime().toMomentDate(o.dateEndDate);
         }
 
         if (end && start) {
@@ -421,11 +434,11 @@ class CalendarView extends View {
         }
 
         if (start) {
-            event.start = start.toDate();
+            event.start = start.toISOString(true);
         }
 
         if (end) {
-            event.end = end.toDate();
+            event.end = end.toISOString(true);
         }
 
         event.allDay = false;
@@ -519,7 +532,7 @@ class CalendarView extends View {
 
     handleAllDay(event, notInitial) {
         let start = event.start ? moment(event.start) : null;
-        let end = event.start ? moment(event.end) : null;
+        let end = event.end ? moment(event.end) : null;
 
         if (~this.allDayScopeList.indexOf(event.scope)) {
             event.allDay = event.allDayCopy = true;
@@ -528,10 +541,22 @@ class CalendarView extends View {
                 if (end) {
                     start = end;
 
-                    if (!event.dateEndDate && event.end.hours() === 0 && event.end.minutes() === 0) {
+                    if (
+                        !event.dateEndDate &&
+                        end.hours() === 0 &&
+                        end.minutes() === 0
+                    ) {
                         start.add(-1, 'days');
                     }
                 }
+            }
+
+            if (start) {
+                event.start = start.toDate();
+            }
+
+            if (end) {
+                event.end = end.toDate();
             }
 
             return;
@@ -543,6 +568,14 @@ class CalendarView extends View {
 
             if (!notInitial) {
                 end.add(1, 'days')
+            }
+
+            if (start) {
+                event.start = start.toDate();
+            }
+
+            if (end) {
+                event.end = end.toDate();
             }
 
             return;
@@ -599,18 +632,17 @@ class CalendarView extends View {
         return events;
     }
 
-    convertTime(d) {
+    /**
+     * @param {string} date
+     * @return {string}
+     */
+    convertDateTime(date) {
         let format = this.getDateTime().internalDateTimeFormat;
         let timeZone = this.getDateTime().timeZone;
-        let string = d.format(format);
 
-        let m;
-
-        if (timeZone) {
-            m = moment.tz(string, format, timeZone).utc();
-        } else {
-            m = moment.utc(string, format);
-        }
+        let m = timeZone ?
+            moment.tz(date, null, timeZone).utc() :
+            moment.utc(date, null);
 
         return m.format(format) + ':00';
     }
@@ -685,17 +717,21 @@ class CalendarView extends View {
             windowResize: () => {
                 this.adjustSize();
             },
-            select: (start, end) => {
-                let dateStart = this.convertTime(start);
-                let dateEnd = this.convertTime(end);
-                let allDay = !start.hasTime();
+            select: info => {
+                let start = info.startStr;
+                let end = info.endStr;
+
+                let allDay = info.allDay;
 
                 let dateEndDate = null;
                 let dateStartDate = null;
 
+                let dateStart = this.convertDateTime(start);
+                let dateEnd = this.convertDateTime(end);
+
                 if (allDay) {
-                    dateStartDate = start.format('YYYY-MM-DD');
-                    dateEndDate = end.clone().add(-1, 'days').format('YYYY-MM-DD');
+                    dateStartDate = moment(start).format('YYYY-MM-DD');
+                    dateEndDate = moment(end).clone().add(-1, 'days').format('YYYY-MM-DD');
                 }
 
                 this.createEvent({
@@ -784,12 +820,12 @@ class CalendarView extends View {
                 let attributes = {};
 
                 if (event.dateStart) {
-                    event.dateStart = this.convertTime(this.getDateTime().toMoment(event.dateStart).add(delta));
+                    event.dateStart = this.convertDateTime(this.getDateTime().toMoment(event.dateStart).add(delta));
                     attributes.dateStart = event.dateStart;
                 }
 
                 if (event.dateEnd) {
-                    event.dateEnd = this.convertTime(this.getDateTime().toMoment(event.dateEnd).add(delta));
+                    event.dateEnd = this.convertDateTime(this.getDateTime().toMoment(event.dateEnd).add(delta));
                     attributes.dateEnd = event.dateEnd;
                 }
 
@@ -839,7 +875,7 @@ class CalendarView extends View {
                 let event = info.event;
 
                 let attributes = {
-                    dateEnd: this.convertTime(event.end),
+                    dateEnd: this.convertDateTime(event.end),
                 };
 
                 event.dateEnd = attributes.dateEnd;
@@ -1054,6 +1090,12 @@ class CalendarView extends View {
             }
             if (key === 'allDay') {
                 event.setAllDay(value);
+
+                continue;
+            }
+
+            if (this.extendedProps.includes(key)) {
+                event.setExtendedProp(key, value);
 
                 continue;
             }

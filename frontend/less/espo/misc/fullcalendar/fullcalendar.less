@@ -7,8 +7,11 @@
     margin: 10px 0 0;
 }
 
-.fc-event.event-canceled .fc-content {
-    text-decoration: line-through !important;
+.fc-event.event-canceled {
+    &,
+    .fc-event-title {
+        text-decoration: line-through !important;
+    }
 }
 
 .fc th {
@@ -99,7 +102,7 @@
     background: var(--calendar-border) !important;
 }
 
-.fc-unthemed {
+.fc-theme-standard {
     .fc-event,
     .fc-event:hover {
         color: var(--text-white-color);
