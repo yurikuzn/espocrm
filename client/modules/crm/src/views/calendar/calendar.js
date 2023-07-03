@@ -931,17 +931,18 @@ class CalendarView extends View {
         };
 
         if (this.teamIdList) {
-            options.eventRender = arg => {
-                const event = arg.event;
+            options.eventContent = arg => {
+                const event = /** @type {EventImpl} */arg.event;
+
+                console.log(arg);
 
                 let $content = $('<div>');
 
-                if (!event.extendedProps.userIdList) {
-                    // @todo Check.
-                    return;
-                }
+                $content.append(
+                    $('<div>').text(event.title);
+                );
 
-                event.userIdList.forEach(userId => {
+                event.extendedProps.userIdList.forEach(userId => {
                     let userName = event.extendedProps.userNameMap[userId] || '';
                     let avatarHtml = this.getHelper().getAvatarHtml(userId, 'small', 13);
 
