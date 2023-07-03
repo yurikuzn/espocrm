@@ -939,7 +939,7 @@ class CalendarView extends View {
                 let $content = $('<div>');
 
                 $content.append(
-                    $('<div>').text(event.title);
+                    $('<div>').text(event.title)
                 );
 
                 event.extendedProps.userIdList.forEach(userId => {
