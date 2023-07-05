@@ -33,14 +33,20 @@ let isConfigured = false;
 let defaultTimeout;
 /** @type {string} */
 let apiUrl;
-/** @type {function (xhr: XMLHttpRequest, options: Object.<string, *>)} */
+/** @type {Espo.Ajax~Handler} */
 let beforeSend;
-/** @type {function (xhr: XMLHttpRequest, options: Object.<string, *>)} */
+/** @type {Espo.Ajax~Handler} */
 let onSuccess;
-/** @type {function (xhr: XMLHttpRequest, options: Espo.Ajax~CatchOptions)} */
+/** @type {Espo.Ajax~Handler} */
 let onError;
-/** @type {function (xhr: XMLHttpRequest, options: Object.<string, *>)} */
+/** @type {Espo.Ajax~Handler} */
 let onTimeout;
+
+/**
+ * @callback Espo.Ajax~Handler
+ * @param {XMLHttpRequest} [xhr]
+ * @param {Object.<string, *>} [options]
+ */
 
 const baseUrl = window.location.origin + window.location.pathname;
 
@@ -63,27 +69,32 @@ const Ajax = Espo.Ajax = {
      */
 
     /**
-     * @typedef {Object} Espo.Ajax~CatchOnlyOptions
-     * @property {boolean} errorIsHandled
-     */
-
-    /**
-     * @typedef {Espo.Ajax~Options & Espo.Ajax~CatchOnlyOptions & Object.<string, *>} Espo.Ajax~CatchOptions
-     */
-
-    /**
      * Request.
      *
      * @param {string} url An URL.
      * @param {'GET'|'POST'|'PUT'|'DELETE'|'PATCH'|'OPTIONS'} method An HTTP method.
      * @param {*} [data] Data.
      * @param {Espo.Ajax~Options & Object.<string, *>} [options] Options.
-     * @returns {AjaxPromise<any>}
+     * @returns {AjaxPromise<any, XMLHttpRequest>}
      */
     request: function (url, method, data, options) {
-        options = {...options};
+        options = options || {};
 
         let timeout = 'timeout' in options ? options.timeout : defaultTimeout;
+        let contentType = options.contentType || 'application/json';
+        let body;
+
+        if (options.data && !data) {
+            data = options.data;
+        }
+
+        if (!['GET', 'OPTIONS'].includes(method) && data) {
+            body = data;
+
+            if (contentType === 'application/json' && typeof data !== 'string') {
+                body = JSON.stringify(data);
+            }
+        }
 
         if (apiUrl) {
             url = Espo.Utils.trimSlash(apiUrl) + '/' + url;
@@ -97,23 +108,14 @@ const Ajax = Espo.Ajax = {
             }
         }
 
-        let xhr = new XMLHttpRequest();
-
+        let xhr = new Xhr();
         xhr.timeout = timeout;
-
         xhr.open(method, urlObj);
-
-        let contentType = options.contentType || 'application/json';
-
         xhr.setRequestHeader('Content-Type', contentType);
 
-        let body;
-
-        if (!['GET', 'OPTIONS'].includes(method) && data) {
-            body = data;
-
-            if (contentType === 'application/json') {
-                body = JSON.stringify(data);
+        if (options.headers) {
+            for (let key in options.headers) {
+                xhr.setRequestHeader(key, options.headers[key]);
             }
         }
 
@@ -139,9 +141,8 @@ const Ajax = Espo.Ajax = {
                     return;
                 }
 
-                // @todo Check if executed after catch.
                 if (onError) {
-                    onError(xhr, /** @type {Espo.Ajax~CatchOptions} */options);
+                    onError(xhr, options);
                 }
             };
 
@@ -203,7 +204,7 @@ const Ajax = Espo.Ajax = {
      * @param {string} url An URL.
      * @param {*} [data] Data.
      * @param {Espo.Ajax~Options & Object.<string, *>} [options] Options.
-     * @returns {Promise<any>}
+     * @returns {Promise<any, XMLHttpRequest>}
      */
     postRequest: function (url, data, options) {
         if (data) {
@@ -219,7 +220,7 @@ const Ajax = Espo.Ajax = {
      * @param {string} url An URL.
      * @param {*} [data] Data.
      * @param {Espo.Ajax~Options & Object.<string, *>} [options] Options.
-     * @returns {Promise<any>}
+     * @returns {Promise<any, XMLHttpRequest>}
      */
     patchRequest: function (url, data, options) {
         if (data) {
@@ -235,7 +236,7 @@ const Ajax = Espo.Ajax = {
      * @param {string} url An URL.
      * @param {*} [data] Data.
      * @param {Espo.Ajax~Options & Object.<string, *>} [options] Options.
-     * @returns {Promise<any>}
+     * @returns {Promise<any, XMLHttpRequest>}
      */
     putRequest: function (url, data, options) {
         if (data) {
@@ -251,7 +252,7 @@ const Ajax = Espo.Ajax = {
      * @param {string} url An URL.
      * @param {*} [data] Data.
      * @param {Espo.Ajax~Options & Object.<string, *>} [options] Options.
-     * @returns {Promise<any>}
+     * @returns {Promise<any, XMLHttpRequest>}
      */
     deleteRequest: function (url, data, options) {
         if (data) {
@@ -267,7 +268,7 @@ const Ajax = Espo.Ajax = {
      * @param {string} url An URL.
      * @param {*} [data] Data.
      * @param {Espo.Ajax~Options & Object.<string, *>} [options] Options.
-     * @returns {Promise<any>}
+     * @returns {Promise<any, XMLHttpRequest>}
      */
     getRequest: function (url, data, options) {
         return /** @type {Promise<any>} */ Ajax.request(url, 'GET', data, options);
@@ -278,10 +279,10 @@ const Ajax = Espo.Ajax = {
      * @param {{
      *     apiUrl: string,
      *     timeout: number,
-     *     beforeSend: function (xhr: XMLHttpRequest, options: Object.<string, *>),
-     *     onSuccess: function (xhr: XMLHttpRequest, options: Object.<string, *>),
-     *     onError: function (xhr: XMLHttpRequest, options: Espo.Ajax~CatchOptions),
-     *     onTimeout: function (xhr: XMLHttpRequest, options: Object.<string, *>),
+     *     beforeSend: Espo.Ajax~Handler,
+     *     onSuccess: Espo.Ajax~Handler,
+     *     onError: Espo.Ajax~Handler,
+     *     onTimeout: Espo.Ajax~Handler,
      * }} options Options.
      */
     configure: function (options) {
@@ -364,6 +365,16 @@ class AjaxPromise extends Promise {
 
         return this.xhr.status;
     }
+}
+
+/**
+ * @name module:ajax.Xhr
+ */
+class Xhr extends XMLHttpRequest {
+    /**
+     * To be set in an error handler to bypass default handling.
+     */
+    errorIsHandled = false
 }
 
 /**

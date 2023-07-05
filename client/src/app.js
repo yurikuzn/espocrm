@@ -1093,54 +1093,49 @@ class App {
         const onSuccess = (xhr, options) => {
             let appTimestampHeader = xhr.getResponseHeader('X-App-Timestamp');
 
-            if (appTimestampHeader && !appTimestampChangeProcessed) {
-                let appTimestamp = parseInt(appTimestampHeader);
+            if (!appTimestampHeader || appTimestampChangeProcessed) {
+                return;
+            }
 
-                // noinspection JSUnresolvedReference
-                let bypassAppReload = options.bypassAppReload;
+            let appTimestamp = parseInt(appTimestampHeader);
 
-                if (
-                    this.appTimestamp &&
-                    appTimestamp !== this.appTimestamp &&
-                    !bypassAppReload
-                ) {
-                    appTimestampChangeProcessed = true;
+            // noinspection JSUnresolvedReference
+            let bypassAppReload = options.bypassAppReload;
 
-                    Ui
-                        .confirm(
-                            this.language.translate('confirmAppRefresh', 'messages'),
-                            {
-                                confirmText: this.language.translate('Refresh'),
-                                cancelText: this.language.translate('Cancel'),
-                                backdrop: 'static',
-                                confirmStyle: 'success',
-                            }
-                        )
-                        .then(() => {
-                            window.location.reload();
+            if (
+                this.appTimestamp &&
+                appTimestamp !== this.appTimestamp &&
+                !bypassAppReload
+            ) {
+                appTimestampChangeProcessed = true;
 
-                            if (this.broadcastChannel) {
-                                this.broadcastChannel.postMessage('reload');
-                            }
-                        });
-                }
+                Ui
+                    .confirm(
+                        this.language.translate('confirmAppRefresh', 'messages'),
+                        {
+                            confirmText: this.language.translate('Refresh'),
+                            cancelText: this.language.translate('Cancel'),
+                            backdrop: 'static',
+                            confirmStyle: 'success',
+                        }
+                    )
+                    .then(() => {
+                        window.location.reload();
+
+                        if (this.broadcastChannel) {
+                            this.broadcastChannel.postMessage('reload');
+                        }
+                    });
             }
         };
 
         /**
-         * @param {XMLHttpRequest} xhr
-         * @param {Espo.Ajax~CatchOptions} options
+         * @param {module:ajax.Xhr} xhr
+         * @param {Object.<string, *>} options
          */
         const onError = (xhr, options) => {
             setTimeout(() => {
-                // For backward compatibility.
-                // noinspection JSUnresolvedReference
                 if (xhr.errorIsHandled) {
-                    return;
-                }
-
-                // @todo Fix all usages.
-                if (options.errorIsHandled) {
                     return;
                 }
 
