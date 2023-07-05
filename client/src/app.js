@@ -1232,9 +1232,13 @@ class App {
             onTimeout: onTimeout,
         });
 
-        // @todo Leave for bc.
-        /*$.ajaxSetup({
+        // For backward compatibility.
+        // @todo Remove in v9.0.
+        $.ajaxSetup({
             beforeSend: (xhr,  options) => {
+                console.error(`$.ajax is deprecated, support will be removed in v9.0. Use Espo.Ajax instead.`);
+
+                // noinspection JSUnresolvedReference
                 if (!options.local && this.apiUrl) {
                     options.url = Utils.trimSlash(this.apiUrl) + '/' + options.url;
                 }
@@ -1252,7 +1256,7 @@ class App {
             dataType: 'json',
             timeout: this.ajaxTimeout,
             contentType: 'application/json',
-        });*/
+        });
     }
 
     /**
