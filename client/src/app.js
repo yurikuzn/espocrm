@@ -882,8 +882,8 @@ class App {
             if (arr.length > 1) {
                 logoutWait = this.appParams.logoutWait || false;
 
-                Ajax.postRequest('App/destroyAuthToken', {token: arr[1]}, {fullResponse: true})
-                    .then(xhr => {
+                Ajax.postRequest('App/destroyAuthToken', {token: arr[1]}, {resolveWithXhr: true})
+                    .then(/** module:ajax.XhrWrapper */xhr => {
                         let redirectUrl = xhr.getResponseHeader('X-Logout-Redirect-Url');
 
                         if (redirectUrl) {
@@ -1224,7 +1224,7 @@ class App {
         };
 
         Ajax.configure({
-            apiUrl: this.apiUrl,
+            apiUrl: this.basePath + this.apiUrl,
             timeout: this.ajaxTimeout,
             beforeSend: beforeSend,
             onSuccess: onSuccess,
@@ -1241,6 +1241,11 @@ class App {
                 // noinspection JSUnresolvedReference
                 if (!options.local && this.apiUrl) {
                     options.url = Utils.trimSlash(this.apiUrl) + '/' + options.url;
+                }
+
+                // noinspection JSUnresolvedReference
+                if (!options.local && this.basePath !== '') {
+                    options.url = this.basePath + options.url;
                 }
 
                 if (this.auth !== null) {

@@ -65,7 +65,7 @@ const Ajax = Espo.Ajax = {
      * @property {Object.<string, string>} [headers] A request headers.
      * @property {'json'|'text'} [dataType] A data type.
      * @property {string} [contentType] A content type.
-     * @property {boolean} [fullResponse] To resolve with `module:ajax.XhrWrapper`.
+     * @property {boolean} [resolveWithXhr] To resolve with `module:ajax.XhrWrapper`.
      */
 
     /**
@@ -104,7 +104,13 @@ const Ajax = Espo.Ajax = {
 
         if (method === 'GET' && data) {
             for (let key in data) {
-                urlObj.searchParams.append(key, data[key]);
+                let value = data[key];
+
+                if (value == null) {
+                    continue;
+                }
+
+                urlObj.searchParams.append(key, value);
             }
         }
 
@@ -175,10 +181,12 @@ const Ajax = Espo.Ajax = {
 
                 onSuccess(xhr, options);
 
-                // @todo Revise. Pass xhr as a second parameter.
-                let obj = options.fullResponse ? new XhrWrapper(xhr) : response;
+                // @todo Revise the need to use wrapper.
+                if (options.resolveWithXhr) {
+                    response = new XhrWrapper(xhr);
+                }
 
-                resolve(obj)
+                resolve(response)
             }
 
             xhr.send(body);
