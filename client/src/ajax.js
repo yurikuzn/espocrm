@@ -166,7 +166,7 @@ const Ajax = Espo.Ajax = {
 
                 if ((options.dataType || 'json') === 'json') {
                     try {
-                        response = JSON.parse(xhr.responseText)
+                        response = JSON.parse(xhr.responseText);
                     }
                     catch (e) {
                         console.error('Could not parse API response.');
