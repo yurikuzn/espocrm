@@ -65,7 +65,7 @@ const Ajax = Espo.Ajax = {
      * @property {Object.<string, string>} [headers] A request headers.
      * @property {'json'|'text'} [dataType] A data type.
      * @property {string} [contentType] A content type.
-     * @property {boolean} [resolveWithXhr] To resolve with `module:ajax.XhrWrapper`.
+     * @property {boolean} [resolveWithXhr] To resolve with `XMLHttpRequest`.
      */
 
     /**
@@ -181,9 +181,8 @@ const Ajax = Espo.Ajax = {
 
                 onSuccess(xhr, options);
 
-                // @todo Revise the need to use wrapper.
                 if (options.resolveWithXhr) {
-                    response = new XhrWrapper(xhr);
+                    response = xhr;
                 }
 
                 resolve(response)
@@ -383,34 +382,6 @@ class Xhr extends XMLHttpRequest {
      * To be set in an error handler to bypass default handling.
      */
     errorIsHandled = false
-}
-
-/**
- * @name module:ajax.XhrWrapper
- */
-class XhrWrapper {
-
-    /**
-     * @param {XMLHttpRequest} xhr
-     */
-    constructor(xhr) {
-        this.xhr = xhr;
-    }
-
-    /**
-     * @param {string} name
-     * @return {string}
-     */
-    getResponseHeader(name) {
-        return this.xhr.getResponseHeader(name);
-    }
-
-    /**
-     * @return {Number}
-     */
-    getStatus() {
-        return this.xhr.status;
-    }
 }
 
 export default Ajax;

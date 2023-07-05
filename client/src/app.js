@@ -883,7 +883,7 @@ class App {
                 logoutWait = this.appParams.logoutWait || false;
 
                 Ajax.postRequest('App/destroyAuthToken', {token: arr[1]}, {resolveWithXhr: true})
-                    .then(/** module:ajax.XhrWrapper */xhr => {
+                    .then(/** XMLHttpRequest */xhr => {
                         let redirectUrl = xhr.getResponseHeader('X-Logout-Redirect-Url');
 
                         if (redirectUrl) {
@@ -1235,7 +1235,7 @@ class App {
         // For backward compatibility.
         // @todo Remove in v9.0.
         $.ajaxSetup({
-            beforeSend: (xhr,  options) => {
+            beforeSend: (xhr, options) => {
                 console.error(`$.ajax is deprecated, support will be removed in v9.0. Use Espo.Ajax instead.`);
 
                 // noinspection JSUnresolvedReference
