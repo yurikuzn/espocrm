@@ -28,8 +28,23 @@
 
 /** @module ajax */
 
-// noinspection JSUnusedGlobalSymbols
+let isConfigured = false;
+/** @type {number} */
+let defaultTimeout;
+/** @type {string} */
+let apiUrl;
+/** @type {function (xhr: XMLHttpRequest, options: Object.<string, *>)} */
+let beforeSend;
+/** @type {function (xhr: XMLHttpRequest, options: Object.<string, *>)} */
+let onSuccess;
+/** @type {function (xhr: XMLHttpRequest, options: Espo.Ajax~CatchOptions)} */
+let onError;
+/** @type {function (xhr: XMLHttpRequest, options: Object.<string, *>)} */
+let onTimeout;
 
+const baseUrl = window.location.origin + window.location.pathname;
+
+// noinspection JSUnusedGlobalSymbols
 /**
  * Functions for API HTTP requests.
  */
@@ -48,36 +63,124 @@ const Ajax = Espo.Ajax = {
      */
 
     /**
+     * @typedef {Object} Espo.Ajax~CatchOnlyOptions
+     * @property {boolean} errorIsHandled
+     */
+
+    /**
+     * @typedef {Espo.Ajax~Options & Espo.Ajax~CatchOnlyOptions & Object.<string, *>} Espo.Ajax~CatchOptions
+     */
+
+    /**
      * Request.
      *
      * @param {string} url An URL.
-     * @param {string} method An HTTP method.
+     * @param {'GET'|'POST'|'PUT'|'DELETE'|'PATCH'|'OPTIONS'} method An HTTP method.
      * @param {*} [data] Data.
      * @param {Espo.Ajax~Options & Object.<string, *>} [options] Options.
      * @returns {AjaxPromise<any>}
      */
     request: function (url, method, data, options) {
-        options = options || {};
+        options = {...options};
 
-        options.type = method;
-        options.url = url;
+        let timeout = 'timeout' in options ? options.timeout : defaultTimeout;
 
-        if (data) {
-            options.data = data;
+        if (apiUrl) {
+            url = Espo.Utils.trimSlash(apiUrl) + '/' + url;
+        }
+
+        let urlObj = new URL(baseUrl + url);
+
+        if (method === 'GET' && data) {
+            for (let key in data) {
+                urlObj.searchParams.append(key, data[key]);
+            }
+        }
+
+        let xhr = new XMLHttpRequest();
+
+        xhr.timeout = timeout;
+
+        xhr.open(method, urlObj);
+
+        let contentType = options.contentType || 'application/json';
+
+        xhr.setRequestHeader('Content-Type', contentType);
+
+        let body;
+
+        if (!['GET', 'OPTIONS'].includes(method) && data) {
+            body = data;
+
+            if (contentType === 'application/json') {
+                body = JSON.stringify(data);
+            }
+        }
+
+        if (beforeSend) {
+            beforeSend(xhr, options);
         }
 
         let promiseWrapper = {};
 
         let promise = new AjaxPromise((resolve, reject) => {
-            let xhr = $.ajax(options);
+            const onErrorGeneral = (isTimeout) => {
+                if (options.error) {
+                    options.error(xhr, options);
+                }
 
-            xhr
-                .then((response, status, xhr) => {
-                    let obj = options.fullResponse ? new XhrWrapper(xhr) : response;
+                reject(xhr, options);
 
-                    resolve(obj);
-                })
-                .fail(xhr => reject(xhr));
+                if (isTimeout) {
+                    if (onTimeout) {
+                        onTimeout(xhr, options);
+                    }
+
+                    return;
+                }
+
+                // @todo Check if executed after catch.
+                if (onError) {
+                    onError(xhr, /** @type {Espo.Ajax~CatchOptions} */options);
+                }
+            };
+
+            xhr.ontimeout = () => onErrorGeneral(true);
+            xhr.onerror = () => onErrorGeneral();
+
+            xhr.onload = () => {
+                if (xhr.status >= 400) {
+                    onErrorGeneral();
+
+                    return;
+                }
+
+                let response = xhr.responseText;
+
+                if ((options.dataType || 'json') === 'json') {
+                    try {
+                        response = JSON.parse(xhr.responseText)
+                    }
+                    catch (e) {
+                        console.error('Could not parse API response.');
+
+                        onErrorGeneral();
+                    }
+                }
+
+                if (options.success) {
+                    options.success(response);
+                }
+
+                onSuccess(xhr, options);
+
+                // @todo Revise. Pass xhr as a second parameter.
+                let obj = options.fullResponse ? new XhrWrapper(xhr) : response;
+
+                resolve(obj)
+            }
+
+            xhr.send(body);
 
             if (promiseWrapper.promise) {
                 promiseWrapper.promise.xhr = xhr;
@@ -169,6 +272,32 @@ const Ajax = Espo.Ajax = {
     getRequest: function (url, data, options) {
         return /** @type {Promise<any>} */ Ajax.request(url, 'GET', data, options);
     },
+
+    /**
+     * @internal
+     * @param {{
+     *     apiUrl: string,
+     *     timeout: number,
+     *     beforeSend: function (xhr: XMLHttpRequest, options: Object.<string, *>),
+     *     onSuccess: function (xhr: XMLHttpRequest, options: Object.<string, *>),
+     *     onError: function (xhr: XMLHttpRequest, options: Espo.Ajax~CatchOptions),
+     *     onTimeout: function (xhr: XMLHttpRequest, options: Object.<string, *>),
+     * }} options Options.
+     */
+    configure: function (options) {
+        if (isConfigured) {
+            throw new Error("Ajax is already configured.");
+        }
+
+        apiUrl = options.apiUrl;
+        defaultTimeout = options.timeout;
+        beforeSend = options.beforeSend;
+        onSuccess = options.onSuccess;
+        onError = options.onError;
+        onTimeout = options.onTimeout;
+
+        isConfigured = true;
+    },
 };
 
 /**
@@ -177,18 +306,24 @@ const Ajax = Espo.Ajax = {
 class AjaxPromise extends Promise {
 
     /**
-     * @type {JQueryXHR|null}
+     * @type {XMLHttpRequest|null}
      * @internal
      */
     xhr = null
 
     isAborted = false
 
-    /** @deprecated Use `catch`. */
+    /**
+     * @deprecated Use `catch`.
+     * @todo Remove in v9.0.
+     */
     fail(...args) {
         return this.catch(args[0]);
     }
-    /** @deprecated Use `then`. */
+    /**
+     * @deprecated Use `then`
+     * @todo Remove in v9.0.
+     */
     done(...args) {
         return this.then(args[0]);
     }
@@ -237,7 +372,7 @@ class AjaxPromise extends Promise {
 class XhrWrapper {
 
     /**
-     * @param {JQueryXHR} xhr
+     * @param {XMLHttpRequest} xhr
      */
     constructor(xhr) {
         this.xhr = xhr;
@@ -256,22 +391,6 @@ class XhrWrapper {
      */
     getStatus() {
         return this.xhr.status;
-    }
-
-    // noinspection JSUnusedGlobalSymbols
-    /**
-     * @return {*}
-     */
-    getResponseParsedBody() {
-        return this.xhr.responseJSON;
-    }
-
-    // noinspection JSUnusedGlobalSymbols
-    /**
-     * @return {string}
-     */
-    getResponseBody() {
-        return this.xhr.responseText;
     }
 }
 
