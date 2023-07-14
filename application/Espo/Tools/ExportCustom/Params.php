@@ -36,7 +36,7 @@ class Params
         private string $module,
         private string $version,
         private string $author,
-        private string $description
+        private ?string $description
     ) {}
 
     public function getName(): string
@@ -59,7 +59,7 @@ class Params
         return $this->author;
     }
 
-    public function getDescription(): string
+    public function getDescription(): ?string
     {
         return $this->description;
     }

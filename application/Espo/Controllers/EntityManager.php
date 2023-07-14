@@ -41,7 +41,6 @@ use Espo\Tools\ExportCustom\ExportCustom;
 use Espo\Tools\ExportCustom\Params as ExportCustomParams;
 
 use Espo\Tools\ExportCustom\Service as ExportCustomService;
-use Exception;
 use stdClass;
 
 class EntityManager
@@ -461,7 +460,7 @@ class EntityManager
             !is_string($version) ||
             !is_string($author) ||
             !is_string($module) ||
-            !is_string($description)
+            !is_string($description) && !is_null($description)
         ) {
             throw new BadRequest();
         }

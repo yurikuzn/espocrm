@@ -265,7 +265,7 @@ class ExportCustom
         }
 
         if (!preg_match('/^[A-Z][a-z][A-Za-z]+$/', $params->getModule())) {
-            throw new RuntimeException("Bad module name.");
+            throw new RuntimeException("Bad module name. Should be in CamelCase.");
         }
 
         if (!preg_match('/^[0-9]\.[0-9]\.[0-9]+$/', $params->getVersion())) {
