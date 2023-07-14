@@ -112,6 +112,29 @@ class ExportCustom
 
             $this->fileManager->putJsonContents($file, $defs);
         }
+
+        $dir = $data->getDestDir() . '/Resources/metadata/entityDefs';
+
+        /** @var string[] $files */
+        $files = $this->fileManager->getFileList($dir);
+
+        $files = array_filter($files, fn ($file) => str_ends_with($file, '.json'));
+
+        foreach ($files as $file) {
+            $fullFile = $dir . '/' . $file;
+
+            $defs = Json::decode($this->fileManager->getContents($fullFile));
+
+            foreach (get_object_vars($defs->fields ?? (object) []) as $key => $value) {
+                unset($defs->fields->$key->isCustom);
+            }
+
+            foreach (get_object_vars($defs->links ?? (object) []) as $key => $value) {
+                unset($defs->links->$key->isCustom);
+            }
+
+            $this->fileManager->putJsonContents($fullFile, $defs);
+        }
     }
 
     private function createControllers(Params $params, Data $data): void
