@@ -48,6 +48,8 @@ use ZipArchive;
 
 class ExportCustom
 {
+    private string $minVersion = '8.0.0';
+
     public function __construct(
         private Metadata $metadata,
         private FileManager $fileManager,
@@ -180,6 +182,7 @@ class ExportCustom
             'skipBackup' => true,
             'releaseDate' => DateTime::getSystemTodayString(),
             'description' => $params->getDescription(),
+            'acceptableVersions' => ['>=' . $this->minVersion]
         ];
 
         $this->fileManager->putJsonContents($file, $defs);
