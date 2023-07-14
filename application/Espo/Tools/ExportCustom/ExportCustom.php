@@ -29,23 +29,34 @@
 
 namespace Espo\Tools\ExportCustom;
 
+use GuzzleHttp\Psr7\Utils;
+
+use Espo\Core\FileStorage\Manager as FileStorageManager;
 use Espo\Core\Utils\DateTime;
 use Espo\Core\Utils\File\Manager as FileManager;
 use Espo\Core\Utils\Json;
 use Espo\Core\Utils\Metadata;
 use Espo\Core\Utils\Util;
+use Espo\Entities\Attachment;
+use Espo\ORM\EntityManager;
 use Espo\Tools\EntityManager\NameUtil;
+
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use RuntimeException;
+use ZipArchive;
 
 class ExportCustom
 {
     public function __construct(
         private Metadata $metadata,
         private FileManager $fileManager,
-        private NameUtil $nameUtil
+        private NameUtil $nameUtil,
+        private FileStorageManager $fileStorageManager,
+        private EntityManager $entityManager
     ) {}
 
-    public function process(Params $params): void
+    public function process(Params $params): Result
     {
         $this->validate($params);
 
@@ -57,14 +68,21 @@ class ExportCustom
         $this->createControllers($params, $data);
         $this->createModuleJson($data);
         $this->createManifest($params, $data);
-        $this->createAttachment($params, $data);
+        $attachmentId = $this->createAttachment($data);
+        $this->cleanup($data);
 
-        //$this->fileManager->removeInDir($data->getDir(), true);
+        return new Result($attachmentId);
+    }
+
+    private function cleanup(Data $data): void
+    {
+        $this->fileManager->removeInDir($data->getDir(), true);
+        $this->fileManager->removeFile($data->getDir() . '.zip');
     }
 
     private function createDir(Data $data): void
     {
-        $this->fileManager->mkdir($data->getDestDir(), '0755');
+        $this->fileManager->mkdir($data->getDestDir(), 0755);
     }
 
     private function copy(Data $data): void
@@ -144,8 +162,66 @@ class ExportCustom
         $this->fileManager->putJsonContents($file, $defs);
     }
 
-    private function createAttachment(Params $params, Data $data): void
+    private function createAttachment(Data $data): string
     {
+        $zipFile = $this->createZip($data);
+
+        $attachment = $this->entityManager->getRDBRepositoryByClass(Attachment::class)->getNew();
+
+        $attachment
+            ->setName($data->folder . '.zip')
+            ->setRole(Attachment::ROLE_EXPORT_FILE)
+            ->setType('application/zip')
+            ->setSize($this->fileManager->getSize($zipFile));
+
+        $this->entityManager->saveEntity($attachment);
+
+        $resource = fopen($zipFile, 'r');
+
+        if ($resource === false) {
+            throw new RuntimeException("Could not open file $zipFile.");
+        }
+
+        $this->fileStorageManager->putStream($attachment, Utils::streamFor($resource));
+
+        return $attachment->getId();
+    }
+
+    private function createZip(Data $data): string
+    {
+        $zip = new ZipArchive();
+
+        $archiveFile = $data->getDir() . '.zip';
+
+        $openResult = $zip->open($archiveFile, ZipArchive::CREATE);
+
+        if ($openResult !== true) {
+            throw new RuntimeException("Could not open zip.");
+        }
+
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($data->getDir() . '/'),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($files as $file => $fileDescriptor) {
+            $file = str_replace("\\", "/", $file);
+
+            if (!$this->fileManager->isFile($file)) {
+                continue;
+            }
+
+            $entry = substr($file, strlen('data/tmp/' . $data->folder . '/'));
+
+            $zip->addFile(
+                getcwd() . '/' . $file,
+                $entry
+            );
+        }
+
+        $zip->close();
+
+        return $archiveFile;
     }
 
     private function createData(Params $params): Data
