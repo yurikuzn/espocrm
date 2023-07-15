@@ -67,6 +67,7 @@ class ExportCustom
         $this->createDir($data);
         $this->copy($data);
         $this->fixMetadata($params, $data);
+        $this->filterLayouts($params, $data);
         $this->createControllers($params, $data);
         $this->createModuleJson($data);
         $this->createManifest($params, $data);
@@ -144,6 +145,29 @@ class ExportCustom
 
         if ($this->fileManager->isDir($appDir)) {
             $this->fileManager->removeInDir($appDir, true);
+        }
+    }
+
+    private function filterLayouts(Params $params, Data $data): void
+    {
+        $dir = $data->getDestDir() . '/Resources/layouts';
+
+        $list = $this->fileManager->getFileList($dir);
+
+        foreach ($list as $item) {
+            if (in_array($item, $data->customEntityTypeList)) {
+                continue;
+            }
+
+            $file = $dir . '/' . $item;
+
+            if ($this->fileManager->isFile($file)) {
+                $this->fileManager->removeFile($file);
+
+                continue;
+            }
+
+            $this->fileManager->removeInDir($file, true);
         }
     }
 
