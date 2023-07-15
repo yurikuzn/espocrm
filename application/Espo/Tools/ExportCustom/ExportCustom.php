@@ -110,7 +110,9 @@ class ExportCustom
             $defs = Json::decode($this->fileManager->getContents($file));
 
             unset($defs->isCustom);
+
             $defs->module = $params->getModule();
+            $defs->isCustomExported = true;
 
             $this->fileManager->putJsonContents($file, $defs);
         }
@@ -136,6 +138,12 @@ class ExportCustom
             }
 
             $this->fileManager->putJsonContents($fullFile, $defs);
+        }
+
+        $appDir = $data->getDestDir() . '/Resources/metadata/app';
+
+        if ($this->fileManager->isDir($appDir)) {
+            $this->fileManager->removeInDir($appDir, true);
         }
     }
 
