@@ -67,7 +67,7 @@ class ExportCustom
         $this->createDir($data);
         $this->copy($data);
         $this->fixMetadata($params, $data);
-        $this->filterLayouts($params, $data);
+        $this->filterLayouts($data);
         $this->createControllers($params, $data);
         $this->createModuleJson($data);
         $this->createManifest($params, $data);
@@ -148,7 +148,7 @@ class ExportCustom
         }
     }
 
-    private function filterLayouts(Params $params, Data $data): void
+    private function filterLayouts(Data $data): void
     {
         $dir = $data->getDestDir() . '/Resources/layouts';
 
