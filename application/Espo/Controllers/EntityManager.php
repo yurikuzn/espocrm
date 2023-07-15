@@ -429,6 +429,25 @@ class EntityManager
         return true;
     }
 
+    /**
+     * @throws BadRequest
+     */
+    public function postActionResetFormulaToDefault(Request $request): bool
+    {
+        $data = $request->getParsedBody();
+
+        $scope = $data->scope ?? null;
+        $type = $data->type ?? null;
+
+        if (!$scope || !$type) {
+            throw new BadRequest();
+        }
+
+        $this->entityManagerTool->resetFormulaToDefault($scope, $type);
+
+        return true;
+    }
+
     public function postActionResetToDefault(Request $request): bool
     {
         $data = $request->getParsedBody();

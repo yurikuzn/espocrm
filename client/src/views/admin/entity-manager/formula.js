@@ -26,145 +26,184 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-define('views/admin/entity-manager/formula', ['view', 'model'], function (Dep, Model) {
+import View from 'view';
+import Model from 'model';
+import EntityManagerEditFormulaRecordView from 'views/admin/entity-manager/record/edit-formula';
 
-    return Dep.extend({
+class EntityManagerFormulaView extends View {
 
-        template: 'admin/entity-manager/formula',
+    template = 'admin/entity-manager/formula'
 
-        scope: null,
+    /** @type {string} */
+    scope
 
-        events: {
-            'click [data-action="save"]': function () {
-                this.actionSave();
-            },
-            'click [data-action="close"]': function () {
-                this.actionClose();
-            },
-            'keydown.form': function (e) {
-                let key = Espo.Utils.getKeyFromKeyEvent(e);
+    data() {
+        return {
+            scope: this.scope,
+            type: this.type,
+        };
+    }
 
-                if (key === 'Control+KeyS' || key === 'Control+Enter') {
-                    this.actionSave();
+    setup() {
+        this.addActionHandler('save', () => this.actionSave());
+        this.addActionHandler('close', () => this.actionClose());
+        this.addActionHandler('resetToDefault', () => this.actionResetToDefault());
 
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
-            },
-        },
+        this.addHandler('keydown.form', '', 'onKeyDown');
 
-        data: function () {
-            return {
-                scope: this.scope,
-                type: this.type,
-            };
-        },
+        this.scope = this.options.scope;
+        this.type = this.options.type;
 
-        setup: function () {
-            let scope = this.scope = this.options.scope || false;
-            this.type = this.options.type;
+        if (!this.scope || !this.type) {
+            throw Error("No scope or type.");
+        }
 
-            if (!['beforeSaveCustomScript', 'beforeSaveApiScript'].includes(this.type)) {
-                Espo.Ui.error('No allowed formula type.', true);
+        if (!['beforeSaveCustomScript', 'beforeSaveApiScript'].includes(this.type)) {
+            Espo.Ui.error('No allowed formula type.', true);
 
-                throw new Espo.Exceptions.NotFound('No allowed formula type specified.');
-            }
+            throw new Espo.Exceptions.NotFound('No allowed formula type specified.');
+        }
 
-            let model = this.model = new Model();
+        this.model = new Model();
+        this.model.name = 'EntityManager';
 
-            model.name = 'EntityManager';
+        this.wait(
+            this.loadFormula().then(() => {
+                this.recordView = new EntityManagerEditFormulaRecordView({
+                    model: this.model,
+                    targetEntityType: this.scope,
+                    type: this.type,
+                });
 
-            this.wait(
-                Espo.Ajax
-                    .getRequest('Metadata/action/get', {key: 'formula.' + scope})
-                    .then(formulaData => {
-                        formulaData = formulaData || {};
+                this.assignView('record', this.recordView, '.record');
+            })
+        );
 
-                        model.set(this.type, formulaData[this.type] || null);
-
-                        this.createView('record', 'views/admin/entity-manager/record/edit-formula', {
-                            selector: '.record',
-                            model: model,
-                            targetEntityType: this.scope,
-                            type: this.type,
-                        });
-                    })
-            );
-
-            this.listenTo(this.model, 'change', (m, o) => {
-                if (!o.ui) {
-                    return;
-                }
-
-                this.setIsChanged();
-            });
-        },
-
-        afterRender: function () {
-            this.$save = this.$el.find('[data-action="save"]');
-        },
-
-        disableButtons: function () {
-            this.$save.addClass('disabled').attr('disabled', 'disabled');
-        },
-
-        enableButtons: function () {
-            this.$save.removeClass('disabled').removeAttr('disabled');
-        },
-
-        actionSave: function () {
-            this.disableButtons();
-
-            let data = this.getView('record').fetch();
-
-            this.model.set(data);
-
-            if (this.getView('record').validate()) {
+        this.listenTo(this.model, 'change', (m, o) => {
+            if (!o.ui) {
                 return;
             }
 
-            if (data[this.type] === '') {
-                data[this.type] = null;
-            }
+            this.setIsChanged();
+        });
+    }
 
-            Espo.Ui.notify(' ... ');
+    async loadFormula() {
+        await Espo.Ajax
+            .getRequest('Metadata/action/get', {key: 'formula.' + this.scope})
+            .then(formulaData => {
+                formulaData = formulaData || {};
 
-            Espo.Ajax
-                .postRequest('EntityManager/action/formula', {
-                    data: data,
-                    scope: this.scope,
-                })
-                .then(() => {
-                    Espo.Ui.success(this.translate('Saved'));
+                this.model.set(this.type, formulaData[this.type] || null);
+            });
+    }
 
-                    this.enableButtons();
-                    this.setIsNotChanged();
-                })
-                .catch(() => this.enableButtons());
-        },
+    afterRender() {
+        this.$save = this.$el.find('[data-action="save"]');
+    }
 
-        actionClose: function () {
-            this.setIsNotChanged();
+    disableButtons() {
+        this.$save.addClass('disabled').attr('disabled', 'disabled');
+    }
 
-            this.getRouter().navigate('#Admin/entityManager/scope=' + this.scope, {trigger: true});
-        },
+    enableButtons() {
+        this.$save.removeClass('disabled').removeAttr('disabled');
+    }
 
-        setConfirmLeaveOut: function (value) {
-            this.getRouter().confirmLeaveOut = value;
-        },
+    actionSave() {
+        this.disableButtons();
 
-        setIsChanged: function () {
-            this.isChanged = true;
-            this.setConfirmLeaveOut(true);
-        },
+        let data = this.recordView.fetch();
 
-        setIsNotChanged: function () {
-            this.isChanged = false;
-            this.setConfirmLeaveOut(false);
-        },
+        this.model.set(data);
 
-        updatePageTitle: function () {
-            this.setPageTitle(this.getLanguage().translate('Formula', 'labels', 'EntityManager'));
-        },
-    });
-});
+        if (this.recordView.validate()) {
+            return;
+        }
+
+        if (data[this.type] === '') {
+            data[this.type] = null;
+        }
+
+        Espo.Ui.notify(' ... ');
+
+        Espo.Ajax
+            .postRequest('EntityManager/action/formula', {
+                data: data,
+                scope: this.scope,
+            })
+            .then(() => {
+                Espo.Ui.success(this.translate('Saved'));
+
+                this.enableButtons();
+                this.setIsNotChanged();
+            })
+            .catch(() => this.enableButtons());
+    }
+
+    actionClose() {
+        this.setIsNotChanged();
+
+        this.getRouter().navigate('#Admin/entityManager/scope=' + this.scope, {trigger: true});
+    }
+
+    async actionResetToDefault() {
+        await this.confirm(this.translate('confirmation', 'messages'));
+
+        this.disableButtons();
+        Espo.Ui.notify(' ... ');
+
+        try {
+            await Espo.Ajax.postRequest('EntityManager/action/resetFormulaToDefault', {
+                scope: this.scope,
+                type: this.type,
+            });
+        }
+        catch (e) {
+            this.enableButtons();
+
+            return;
+        }
+
+        await this.loadFormula();
+
+        this.recordView.reRender();
+
+        this.enableButtons();
+        Espo.Ui.success(this.translate('Done'));
+    }
+
+    setConfirmLeaveOut(value) {
+        this.getRouter().confirmLeaveOut = value;
+    }
+
+    setIsChanged() {
+        this.isChanged = true;
+        this.setConfirmLeaveOut(true);
+    }
+
+    setIsNotChanged() {
+        this.isChanged = false;
+        this.setConfirmLeaveOut(false);
+    }
+
+    updatePageTitle() {
+        this.setPageTitle(this.getLanguage().translate('Formula', 'labels', 'EntityManager'));
+    }
+
+    /**
+     * @param {KeyboardEvent} e
+     */
+    onKeyDown(e) {
+        let key = Espo.Utils.getKeyFromKeyEvent(e);
+
+        if (key === 'Control+KeyS' || key === 'Control+Enter') {
+            this.actionSave();
+
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }
+}
+
+export default EntityManagerFormulaView;
