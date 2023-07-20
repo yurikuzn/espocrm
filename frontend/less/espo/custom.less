@@ -989,6 +989,17 @@ section {
 #main > .list-container > .list {
     margin-left: -@container-padding;
     margin-right: -@container-padding;
+
+}
+
+#main > .list-container,
+.modal-body > .list-container,
+.modal-body .categories-container + .list-container,
+.left-container + .list-container,
+.nested-categories-container + .list-container {
+    > .list {
+        border: var(--panel-border-width) solid var(--default-border-color);
+    }
 }
 
 #main > .list-container > .list-tree > ul,
@@ -2787,6 +2798,8 @@ table.table-admin-panel {
 }
 
 .admin-panel-iframe-container {
+    border: var(--panel-border-width) solid var(--default-border-color);
+
     > h4 {
         padding: @padding-base-vertical @padding-base-horizontal;
         padding-bottom: 7px;
