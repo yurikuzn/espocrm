@@ -30,6 +30,10 @@ html {
     box-shadow: none;
 }
 
+#main > .calendar-container .calendar {
+    border: var(--panel-border-width) solid var(--default-border-color);
+}
+
 a:focus-visible,
 a.btn:focus-visible,
 button:focus-visible,
@@ -2460,7 +2464,7 @@ table.table td.cell .html-container {
     }
 
     .timeline {
-        border: var(--panel-border-width);
+        border: var(--panel-border-width) solid var(--default-border-color);
         border-radius: var(--panel-border-radius);
     }
 }
