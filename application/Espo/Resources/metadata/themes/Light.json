@@ -1,4 +1,5 @@
 {
+    "logo": "client/img/logo-gray.svg",
     "stylesheet": "client/css/espo/light.css",
     "stylesheetIframe": "client/css/espo/light-iframe.css",
     "textColor": "#424242",
