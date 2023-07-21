@@ -993,7 +993,6 @@ section {
 #main > .list-container > .list {
     margin-left: -@container-padding;
     margin-right: -@container-padding;
-
 }
 
 #main > .list-container,
@@ -1004,6 +1003,16 @@ section {
     > .list {
         border: var(--panel-border-width) solid var(--default-border-color);
     }
+}
+
+.modal-body > .list-container > .list {
+    border-left-width: 0;
+    border-right-width: 0;
+}
+
+#main > .list-container > .list {
+    border-left-width: 0;
+    border-right-width: 0;
 }
 
 #main > .list-container > .list-tree > ul,
@@ -1073,6 +1082,9 @@ section {
         .list {
             margin-right: -@container-padding;
             margin-left: -@container-padding;
+
+            border-left-width: 0;
+            border-right-width: 0;
 
             > table td:first-child,
             > table th:first-child {
