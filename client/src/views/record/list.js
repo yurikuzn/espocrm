@@ -33,6 +33,8 @@ import MassActionHelper from 'helpers/mass-action';
 import ExportHelper from 'helpers/export';
 import RecordModal from 'helpers/record-modal';
 import SelectProvider from 'helpers/list/select-provider';
+import RecordListSettingsView from 'views/record/list/settings';
+import ListSettingsHelper from 'helpers/list/settings';
 
 /**
  * A record-list view. Renders and processes list items, actions.
@@ -1985,6 +1987,7 @@ class ListRecordView extends View {
         }
 
         this.setupRowActionDefs();
+        this.setupSettings();
 
         this.wait(
             this.getHelper().processSetupHandlers(this, this.setupHandlerType)
@@ -3343,6 +3346,37 @@ class ListRecordView extends View {
         }
 
         handler.process(model, action);
+    }
+
+    /**
+     * @private
+     */
+    setupSettings() {
+        if (!this.options.settingsEnabled || !this.collection.entityType) {
+            return;
+        }
+
+        this._listSettingsHelper = new ListSettingsHelper(
+            this.entityType,
+            this.type,
+            this.getStorage(),
+        );
+
+        const view = new RecordListSettingsView({
+            layoutProvider: () => this.listLayout,
+            helper: this._listSettingsHelper,
+            entityType: this.entityType,
+            onChange: () => {
+                this._internalLayout = null;
+
+                Espo.Ui.notify(' ... ');
+
+                this.collection.fetch()
+                    .then(() => Espo.Ui.notify(false));
+            },
+        });
+
+        this.assignView('settings', view, '.settings-container');
     }
 }
 
