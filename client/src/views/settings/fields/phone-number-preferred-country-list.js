@@ -27,21 +27,20 @@
  ************************************************************************/
 
 import MultiEnumFieldView from 'views/fields/multi-enum';
-
-// noinspection ES6UnusedImports
-import intlTelInput from 'intl-tel-input';
+// noinspection NpmUsedModulesInstalled
+import intlTelInputGlobals from 'intl-tel-input-globals';
 
 class SettingsPhoneNumberPreferredCountryListFieldView extends MultiEnumFieldView {
 
     setupOptions() {
         try {
-            const dataList = window.intlTelInputGlobals.getCountryData();
+            const dataList = intlTelInputGlobals.getCountryData();
 
             this.params.options = dataList
                 .map(item => item.iso2);
 
             this.translatedOptions = dataList.reduce((map, item) => {
-                map[item.iso2] = `${item.iso2.toUpperCase()} +${item.dialCode}`
+                map[item.iso2] = `${item.iso2.toUpperCase()} +${item.dialCode}`;
 
                 return map;
             }, {});

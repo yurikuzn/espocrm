@@ -31,6 +31,8 @@ import Select from 'ui/select';
 import intlTelInput from 'intl-tel-input';
 // noinspection NpmUsedModulesInstalled
 import intlTelInputUtils from 'intl-tel-input-utils';
+// noinspection NpmUsedModulesInstalled
+import intlTelInputGlobals from 'intl-tel-input-globals';
 
 class PhoneFieldView extends VarcharFieldView {
 
@@ -500,7 +502,7 @@ class PhoneFieldView extends VarcharFieldView {
         this.preferredCountryList = this.getConfig().get('phoneNumberPreferredCountryList') || [];
 
         if (this.useInternational && !this.isListMode() && !this.isSearchMode()) {
-            this._codeNames = window.intlTelInputGlobals.getCountryData()
+            this._codeNames = intlTelInputGlobals.getCountryData()
                 .reduce((map, item) => {
                     map[item.iso2] = item.iso2.toUpperCase();
 
