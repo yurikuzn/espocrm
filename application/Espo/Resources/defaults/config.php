@@ -280,5 +280,7 @@ return [
     'listViewSettingsDisabled' => false,
     'cleanupDeletedRecords' => true,
     'phoneNumberNumericSearch' => false,
+    'phoneNumberInternational' => false,
+    'phoneNumberPreferredCountryList' => ['us', 'de'],
     'isInstalled' => false,
 ];

@@ -28,6 +28,9 @@
 
 import VarcharFieldView from 'views/fields/varchar';
 import Select from 'ui/select';
+import intlTelInput from 'intl-tel-input';
+// noinspection NpmUsedModulesInstalled
+import intlTelInputUtils from 'intl-tel-input-utils';
 
 class PhoneFieldView extends VarcharFieldView {
 
@@ -239,13 +242,17 @@ class PhoneFieldView extends VarcharFieldView {
         if (phoneNumberData) {
             phoneNumberData = Espo.Utils.cloneDeep(phoneNumberData);
 
-            phoneNumberData.forEach((item) => {
+            phoneNumberData.forEach(item => {
                 const number = item.phoneNumber || '';
 
                 item.erased = number.indexOf(this.erasedPlaceholder) === 0;
 
                 if (!item.erased) {
                     item.valueForLink = number.replace(/ /g, '');
+
+                    if (this.isReadMode()) {
+                        item.phoneNumber = this.formatNumber(item.phoneNumber);
+                    }
                 }
 
                 item.lineThrough = item.optOut || item.invalid || this.model.get('doNotCall');
@@ -253,12 +260,15 @@ class PhoneFieldView extends VarcharFieldView {
         }
 
         if ((!phoneNumberData || phoneNumberData.length === 0) && this.model.get(this.name)) {
-
             const o = {
-                phoneNumber: number,
+                phoneNumber: this.formatNumber(number),
                 primary: true,
                 valueForLink: number.replace(/ /g, ''),
             };
+
+            if (this.isReadMode()) {
+                o.phoneNumber = this.formatNumber(o.phoneNumber);
+            }
 
             if (this.mode === 'edit' && this.model.isNew()) {
                 o.type = this.defaultType;
@@ -266,6 +276,8 @@ class PhoneFieldView extends VarcharFieldView {
 
             phoneNumberData = [o];
         }
+
+
 
         const data = {
             ...super.data(),
@@ -287,6 +299,7 @@ class PhoneFieldView extends VarcharFieldView {
             }
 
             data.valueIsSet = this.model.has(this.name);
+            data.value = this.formatNumber(data.value);
         }
 
         data.itemMaxLength = this.itemMaxLength;
@@ -312,6 +325,19 @@ class PhoneFieldView extends VarcharFieldView {
         }
 
         this.trigger('change');
+    }
+
+    formatNumber(value) {
+        if (!value || value === '' || !this.useInternational) {
+            return value;
+        }
+
+        // noinspection JSUnresolvedReference
+        return intlTelInputUtils.formatNumber(
+            value,
+            null,
+            intlTelInputUtils.numberFormat.INTERNATIONAL
+        );
     }
 
     addPhoneNumber() {
@@ -342,6 +368,25 @@ class PhoneFieldView extends VarcharFieldView {
         if (this.mode === this.MODE_EDIT) {
             this.$el.find('select').toArray().forEach(selectElement => {
                 Select.init($(selectElement));
+            });
+        }
+    }
+
+    afterRenderEdit() {
+        super.afterRenderEdit();
+
+        if (this.useInternational) {
+            const inputElements = this.element.querySelectorAll('input.phone-number');
+
+            inputElements.forEach(inputElement => {
+                const obj = intlTelInput(inputElement, {
+                    separateDialCode: true,
+                    showFlags: false,
+                    preferredCountries: this.preferredCountryList,
+                    localizedCountries: this._codeNames,
+                });
+
+                this.intlTelInputMap.set(inputElement, obj);
             });
         }
     }
@@ -424,6 +469,17 @@ class PhoneFieldView extends VarcharFieldView {
         this.isInvalidFieldName = this.name + 'IsInvalid';
 
         this.phoneNumberOptedOutByDefault = this.getConfig().get('phoneNumberIsOptedOutByDefault');
+        this.useInternational = this.getConfig().get('phoneNumberInternational') || false;
+        this.preferredCountryList = this.getConfig().get('phoneNumberPreferredCountryList') || [];
+
+        if (this.useInternational && !this.isListMode() && !this.isSearchMode()) {
+            this._codeNames = window.intlTelInputGlobals.getCountryData()
+                .reduce((map, item) => {
+                    map[item.iso2] = item.iso2.toUpperCase();
+
+                    return map;
+                }, {});
+        }
 
         if (this.model.has('doNotCall')) {
             this.listenTo(this.model, 'change:doNotCall', (model, value, o) => {
@@ -443,6 +499,16 @@ class PhoneFieldView extends VarcharFieldView {
 
         this.itemMaxLength = this.getMetadata()
             .get(['entityDefs', 'PhoneNumber', 'fields', 'name', 'maxLength']);
+
+        this.intlTelInputMap = new Map();
+
+        this.once('remove', () => {
+            for (const obj of this.intlTelInputMap.values()) {
+                obj.destroy();
+            }
+
+            this.intlTelInputMap.clear();
+        })
     }
 
     fetchPhoneNumberData() {
@@ -455,7 +521,18 @@ class PhoneFieldView extends VarcharFieldView {
                 const row = {};
                 const $d = $(d);
 
-                row.phoneNumber = $d.find('input.phone-number').val().trim();
+                /** @type {HTMLInputElement} */
+                const inputElement = $d.find('input.phone-number').get(0);
+
+                if (!inputElement) {
+                    return;
+                }
+
+                row.phoneNumber = inputElement.value.trim();
+
+                if (this.intlTelInputMap.has(inputElement)) {
+                    row.phoneNumber = this.intlTelInputMap.get(inputElement).getNumber();
+                }
 
                 if (row.phoneNumber === '') {
                     return;
