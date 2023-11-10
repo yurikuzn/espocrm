@@ -179,20 +179,47 @@ class PhoneFieldView extends VarcharFieldView {
                 .replace('{field}', this.getLabelText());
             const number = row.phoneNumber;
 
+            const n = (i + 1).toString();
+            const selector = `div.phone-number-block:nth-child(${n}) input.phone-number`;
+
             if (!regExp.test(number)) {
                 notValid = true;
 
                 const msg = this.translate('fieldPhoneInvalidCharacters', 'messages')
                     .replace('{field}', this.getLabelText());
 
-                this.showValidationMessage(msg, 'div.phone-number-block:nth-child(' + (i + 1)
-                    .toString() + ') input.phone-number');
+                this.showValidationMessage(msg, selector);
+            }
+
+            if (this.useInternational) {
+                const element = this.$el.find(selector).get(0);
+
+                if (element) {
+                    const obj = this.intlTelInputMap.get(element);
+
+                    if (obj && !obj.isPossibleNumber()) {
+                        notValid = true;
+
+                        const code = obj.getValidationError();
+
+                        const key = [
+                            'fieldPhoneInvalid',
+                            'fieldPhoneInvalidCode',
+                            'fieldPhoneTooShort',
+                            'fieldPhoneTooLong',
+                        ][code || 0] || 'fieldPhoneInvalid';
+
+                        const msg = this.translate(key, 'messages')
+                            .replace('{field}', this.getLabelText());
+
+                        this.showValidationMessage(msg, selector);
+                    }
+                }
             }
 
             const numberClean = String(number).replace(/[\s+]/g, '');
 
             if (~numberList.indexOf(numberClean)) {
-
                 this.showValidationMessage(msg, 'div.phone-number-block:nth-child(' + (i + 1)
                     .toString() + ') input.phone-number');
 
