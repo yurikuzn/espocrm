@@ -30,7 +30,6 @@
         "zordius/lightncandy": "dev-espo#v1.2.5e",
         "composer/semver": "^3",
         "spatie/async": "1.5.6",
-        "tecnickcom/tcpdf": "6.3.5",
         "symfony/process": "6.0.*",
         "symfony/http-foundation": "6.0.*",
         "symfony/routing": "6.0.*",
@@ -74,7 +73,6 @@
             "Espo\\Modules\\": "custom/Espo/Modules/"
         },
         "files": [
-            "application/Espo/Resources/defaults/tcpdf-config.php",
             "application/Espo/Resources/defaults/class-aliases.php"
         ]
     },
