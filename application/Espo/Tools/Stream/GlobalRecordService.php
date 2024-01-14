@@ -34,19 +34,13 @@ use Espo\Core\Exceptions\BadRequest;
 use Espo\Core\Exceptions\Forbidden;
 use Espo\Core\Record\Collection as RecordCollection;
 use Espo\Core\Select\SearchParams;
-use Espo\Core\Select\SelectBuilderFactory;
 use Espo\Core\Utils\Metadata;
 use Espo\Entities\Note;
 use Espo\Entities\User;
 use Espo\ORM\Collection;
 use Espo\ORM\EntityManager;
-use Espo\ORM\Query\Part\Condition as Cond;
-use Espo\ORM\Query\Part\Expression as Expr;
 use Espo\ORM\Query\Part\Order;
-use Espo\ORM\Query\Select;
-use Espo\ORM\Query\SelectBuilder;
 use Espo\Tools\Stream\RecordService\Helper;
-use RuntimeException;
 
 class GlobalRecordService
 {
@@ -57,7 +51,6 @@ class GlobalRecordService
         private User $user,
         private Metadata $metadata,
         private EntityManager $entityManager,
-        private SelectBuilderFactory $selectBuilderFactory,
         private Helper $helper,
         private NoteAccessControl $noteAccessControl
     ) {}
@@ -69,49 +62,44 @@ class GlobalRecordService
      */
     public function find(SearchParams $searchParams): RecordCollection
     {
-        if (!$this->acl->checkScope(self::SCOPE_NAME)) {
-            throw new Forbidden();
-        }
+        $this->preCheck($searchParams);
 
-        if ($searchParams->getOffset()) {
-            throw new BadRequest("Offset is not supported.");
-        }
-
-        $maxSize = $searchParams->getMaxSize();
-
-        $entityTypeList = $this->getEntityTypeList();
-
-        $entityTypeList = ['Meeting'];
+        $maxSize = $searchParams->getMaxSize() ?? 0;
 
         $baseBuilder = $this->helper->buildBaseQueryBuilder($searchParams)
             ->select($this->helper->getUserQuerySelect())
+            ->where(['parentType' => $this->getEntityTypeList()])
             ->order('number', Order::DESC)
             ->limit(0, $maxSize + 1);
 
-        $queryList = [];
+        $builder = (clone $baseBuilder);
 
-        foreach ($entityTypeList as $entityType) {
-            $queryList[] = $this->buildForEntityType($entityType, $baseBuilder);
-        }
-
-        /** @var Note[] $list */
         $list = [];
 
-        foreach ($queryList as $query) {
-            $subCollection = $this->entityManager
+        while (true) {
+            $collection = $this->entityManager
                 ->getRDBRepositoryByClass(Note::class)
-                ->clone($query)
+                ->clone($builder->build())
                 ->sth()
                 ->find();
 
-            //echo $this->entityManager->getQueryComposer()->compose($query);die;
+            /** @var Note[] $subList */
+            $subList = iterator_to_array($collection);
 
-            foreach ($subCollection as $note) {
-                $list[] = $note;
+            if ($subList === []) {
+                break;
             }
-        }
 
-        usort($list, fn (Note $note1, Note $note2) => $note2->get('number') - $note1->get('number'));
+            $lastNumber = end($subList)->get('number');
+
+            $list = array_merge($list, $this->filter($subList));
+
+            if (count($list) >= $maxSize + 1) {
+                break;
+            }
+
+            $builder = (clone $baseBuilder)->where(['number<' => $lastNumber]);
+        }
 
         $list = array_slice($list, 0, $maxSize + 1);
 
@@ -124,6 +112,48 @@ class GlobalRecordService
         }
 
         return RecordCollection::createNoCount($collection, $maxSize);
+    }
+
+    /**
+     * @param Note[] $noteList
+     * @return Note[]
+     */
+    private function filter(array $noteList): array
+    {
+        /** @var Note[] $outputList */
+        $outputList = [];
+
+        foreach ($noteList as $note) {
+            if (!$this->checkAccess($note)) {
+                continue;
+            }
+
+            $outputList[] = $note;
+        }
+
+        return $outputList;
+    }
+
+    private function checkAccess(Note $note): bool
+    {
+        $parentType = $note->getParentType();
+        $parentId = $note->getParentId();
+
+        if (!$parentType || !$parentId) {
+            return false;
+        }
+
+        if (!$this->acl->checkScope($parentType, Acl\Table::ACTION_STREAM)) {
+            return false;
+        }
+
+        $parent = $this->entityManager->getEntityById($parentType, $parentId);
+
+        if (!$parent) {
+            return false;
+        }
+
+        return $this->acl->checkEntityStream($parent);
     }
 
     /**
@@ -158,38 +188,17 @@ class GlobalRecordService
     }
 
     /**
-     * Applies access filtering according 'read' level as filtering by 'stream' level is not implemented
-     * in the system.
+     * @throws BadRequest
+     * @throws Forbidden
      */
-    private function buildForEntityType(string $entityType, SelectBuilder $baseBuilder): Select
+    private function preCheck(SearchParams $searchParams): void
     {
-        try {
-            $subQuery = $this->selectBuilderFactory
-                ->create()
-                ->from($entityType)
-                ->withAccessControlFilter()
-                ->buildQueryBuilder()
-                ->select(['id'])
-                ->build();
-        }
-        catch (BadRequest|Forbidden) {
-            throw new RuntimeException();
+        if (!$this->acl->checkScope(self::SCOPE_NAME)) {
+            throw new Forbidden();
         }
 
-        $builder = (clone $baseBuilder)
-            ->where(
-                Cond::and(
-                    Cond::equal(
-                        Expr::column('parentType'),
-                        $entityType
-                    ),
-                    Cond::in(
-                        Expr::column('parentId'),
-                        $subQuery
-                    )
-                )
-            );
-
-        return $builder->build();
+        if ($searchParams->getOffset()) {
+            throw new BadRequest("Offset is not supported.");
+        }
     }
 }

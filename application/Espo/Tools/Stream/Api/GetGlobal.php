@@ -90,16 +90,16 @@ class GetGlobal implements Action
                 );
         }
 
-        $afterNumber = $request->getQueryParam('afterNumber');
+        $beforeNumber = $request->getQueryParam('beforeNumber');
 
-        if ($after) {
+        if ($beforeNumber) {
             $searchParams = $searchParams
                 ->withWhereAdded(
                     WhereItem
                         ::createBuilder()
                         ->setAttribute('number')
-                        ->setType(WhereItem\Type::GREATER_THAN)
-                        ->setValue($afterNumber)
+                        ->setType(WhereItem\Type::LESS_THAN)
+                        ->setValue($beforeNumber)
                         ->build()
                 );
         }
