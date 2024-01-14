@@ -51,12 +51,14 @@
         },
         "parent": {
             "type": "linkParent",
-            "customizationDisabled": true
+            "customizationDisabled": true,
+            "view": "views/note/fields/parent"
         },
         "related": {
             "type": "linkParent",
             "readOnly": true,
-            "customizationDisabled": true
+            "customizationDisabled": true,
+            "view": "views/note/fields/related"
         },
         "attachments": {
             "type": "attachmentMultiple",
