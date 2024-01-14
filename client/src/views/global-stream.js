@@ -95,6 +95,12 @@ class GlobalStreamView extends View {
     }
 
     afterRender() {
+        if (!this.listView) {
+            this.fetchAndRender();
+        }
+    }
+
+    fetchAndRender() {
         Espo.Ui.notify(' ... ');
 
         this.collection.fetch()

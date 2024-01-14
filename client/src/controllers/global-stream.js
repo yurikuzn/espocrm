@@ -27,12 +27,25 @@
  ************************************************************************/
 
 import Controller from 'controller';
+import GlobalStreamView from 'views/global-stream';
 
 class GlobalStreamController extends Controller {
 
     // noinspection JSUnusedGlobalSymbols
     actionIndex() {
-        this.main('views/global-stream', {}, view => view.render());
+        const key = 'index';
+        const isReturn = this.getRouter().backProcessed;
+
+        if (!isReturn) {
+            this.clearStoredMainView(key);
+        }
+
+        const view = new GlobalStreamView();
+
+        this.main(view, undefined, undefined, {
+            key: key,
+            useStored: isReturn,
+        });
     }
 }
 
