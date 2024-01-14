@@ -26,14 +26,12 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-import Controller from 'controller';
+import EnumFieldView from 'views/fields/enum';
 
-class GlobalStreamController extends Controller {
+export default class extends EnumFieldView {
 
-    // noinspection JSUnusedGlobalSymbols
-    actionIndex() {
-        this.main('views/global-stream', {}, view => view.render());
-    }
+    searchTypeList = [
+        'anyOf',
+        'noneOf',
+    ]
 }
-
-export default GlobalStreamController;

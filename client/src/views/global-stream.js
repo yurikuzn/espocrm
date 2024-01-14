@@ -54,10 +54,6 @@ class GlobalStreamView extends View {
     /** @type {import('collections/note').default} */
     collection
 
-    data() {
-        return {};
-    }
-
     setup() {
         this.wait(
             this.getCollectionFactory().create('Note')
@@ -65,11 +61,10 @@ class GlobalStreamView extends View {
                     this.collection = collection;
                     this.collection.url = 'GlobalStream';
                     this.collection.maxSize = this.getConfig().get('recordsPerPage');
+                    this.collection.paginationByNumber = true;
 
                     this.setupSearchManager();
                     this.createSearchView();
-
-                    // @todo Fetch 'beforeNumber' instead of pagination.
                 })
         );
     }

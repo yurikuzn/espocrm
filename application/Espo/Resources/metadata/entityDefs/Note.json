@@ -22,7 +22,7 @@
         "type": {
             "type": "enum",
             "readOnly": true,
-            "view": "views/fields/enum",
+            "view": "views/note/fields/type",
             "options": [
                 "Post",
                 "Create",
@@ -176,7 +176,9 @@
     "collection": {
         "orderBy": "number",
         "order": "desc",
-        "textFilterFields": ["post"]
+        "textFilterFields": ["post"],
+        "fullTextSearch": true,
+        "fullTextSearchOrderType": "original"
     },
     "statusStyles": {
         "Lead": {

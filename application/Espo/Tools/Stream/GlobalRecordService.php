@@ -68,7 +68,15 @@ class GlobalRecordService
 
         $baseBuilder = $this->helper->buildBaseQueryBuilder($searchParams)
             ->select($this->helper->getUserQuerySelect())
-            ->where(['parentType' => $this->getEntityTypeList()])
+            ->where([
+                'OR' => [
+                    ['parentType' => $this->getEntityTypeList()],
+                    [
+                        'parentType' => null,
+                        'type' => Note::TYPE_POST,
+                    ],
+                ]
+            ])
             ->order('number', Order::DESC)
             ->limit(0, $maxSize + 1);
 
@@ -90,7 +98,7 @@ class GlobalRecordService
                 break;
             }
 
-            $lastNumber = end($subList)->get('number');
+            $lastNumber = end($subList)->getNumber();
 
             $list = array_merge($list, $this->filter($subList));
 
@@ -138,6 +146,10 @@ class GlobalRecordService
     {
         $parentType = $note->getParentType();
         $parentId = $note->getParentId();
+
+        if (!$note->getParentType()) {
+            return $this->acl->checkEntityRead($note);
+        }
 
         if (!$parentType || !$parentId) {
             return false;

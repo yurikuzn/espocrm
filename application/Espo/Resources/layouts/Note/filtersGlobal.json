@@ -6,5 +6,8 @@
     "related",
     "post",
     "attachments",
-    "isInternal"
+    "isInternal",
+    "targetType",
+    "modifiedBy",
+    "modifiedAt"
 ]
