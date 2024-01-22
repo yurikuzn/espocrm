@@ -54,6 +54,7 @@ class WysiwygFieldView extends TextFieldView {
     tableBorderWidth
     tableCellPadding
     noStylesheet = false
+    handlebars = false
 
     events = {
         /** @this WysiwygFieldView */
@@ -558,6 +559,7 @@ class WysiwygFieldView extends TextFieldView {
 
         // noinspection JSUnusedGlobalSymbols
         const options = {
+            handlebars: this.handlebars,
             prettifyHtml: true,
             disableResizeEditor: true,
             isDark: this.getThemeManager().getParam('isDark'),

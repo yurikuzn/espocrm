@@ -246,7 +246,11 @@ function init(langSets) {
                     // noinspection JSValidateTypes
                     context.aceEditor = aceEditor;
 
-                    const Mode = ace.require('ace/mode/html').Mode;
+                    const modeToRequired = options.handlebars ?
+                        'ace/mode/handlebars' :
+                        'ace/mode/html';
+
+                    const Mode = ace.require(modeToRequired).Mode;
                     aceEditor.session.setMode(new Mode());
 
                     isActivated = true;
@@ -271,15 +275,22 @@ function init(langSets) {
                     Espo.loader.requirePromise('lib!js-beautify')
                         .then(lib => {
                             beautifier = lib;
+
+                            return lib;
                         }),
                     Espo.loader.requirePromise('lib!ace')
                         .then(lib => {
                             ace = /** window.ace */lib;
 
                             const list = [
-                                Espo.loader.requirePromise('lib!ace-mode-html'),
                                 Espo.loader.requirePromise('lib!ace-ext-language_tools'),
                             ];
+
+                            list.push(
+                                options.handlebars ?
+                                    Espo.loader.requirePromise('lib!ace-mode-handlebars') :
+                                    Espo.loader.requirePromise('lib!ace-mode-handlebars')
+                            );
 
                             if (options.isDark) {
                                 list.push(Espo.loader.requirePromise('lib!ace-theme-tomorrow_night'));

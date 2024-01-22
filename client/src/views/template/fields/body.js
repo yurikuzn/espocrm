@@ -36,6 +36,7 @@ class BodyTemplateFieldView extends WysiwygFieldView {
     tableClassName = ''
     tableBorderWidth = 1
     tableCellPadding = 2
+    handlebars = true
 }
 
 export default BodyTemplateFieldView;
