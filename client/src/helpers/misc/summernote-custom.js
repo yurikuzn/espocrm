@@ -153,8 +153,6 @@ function init(langSets) {
                 context.triggerEvent('codeview.toggled');
             };
 
-            // @todo Format.
-
             const deactivate = () => {
                 if (!isActivated) {
                     return;
