@@ -578,9 +578,9 @@ class WysiwygFieldView extends TextFieldView {
                             Espo.Ui.notify(false);
                         });
                 },
-                //onBlurCodeview: () => {
-                //    this.trigger('change');
-                //},
+                /*onBlurCodeview: () => {
+                    this.trigger('change');
+                },*/
                 onBlur: () => {
                     this.trigger('change');
                 },
