@@ -235,6 +235,7 @@ function init(langSets) {
                         context.triggerEvent('change.codeview', aceEditor.getValue());
                     });
 
+                    // noinspection JSValidateTypes
                     context.aceEditor = aceEditor;
 
                     const Mode = ace.require('ace/mode/html').Mode;
@@ -263,7 +264,7 @@ function init(langSets) {
                         ace = /** window.ace */lib;
 
                         const list = [
-                            //Espo.loader.requirePromise('lib!ace-mode-html'),
+                            Espo.loader.requirePromise('lib!ace-mode-html'),
                             Espo.loader.requirePromise('lib!ace-ext-language_tools'),
                         ];
 

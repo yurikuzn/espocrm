@@ -188,6 +188,10 @@
                 "dest": "client/lib/ace-mode-css.js"
             },
             {
+                "src": "node_modules/ace-builds/src-noconflict/mode-html.js",
+                "dest": "client/lib/ace-mode-html.js"
+            },
+            {
                 "src": "node_modules/ace-builds/src-noconflict/ext-language_tools.js",
                 "dest": "client/lib/ace-ext-language_tools.js"
             },
