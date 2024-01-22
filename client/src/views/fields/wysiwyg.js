@@ -182,7 +182,7 @@ class WysiwygFieldView extends TextFieldView {
             ['para', ['ul', 'ol', 'paragraph']],
             ['height', ['height']],
             ['table', ['espoTable', 'espoLink', 'espoImage', 'hr']],
-            ['misc', ['codeview', 'fullscreen']],
+            ['misc', [/*'codeview', */'aceCodeview', 'fullscreen']],
         ];
 
         if (this.params.toolbar) {
@@ -558,6 +558,8 @@ class WysiwygFieldView extends TextFieldView {
 
         // noinspection JSUnusedGlobalSymbols
         const options = {
+            prettifyHtml: true,
+            isDark: this.getThemeManager().getParam('isDark'),
             espoView: this,
             lang: this.getConfig().get('language'),
             keyMap: keyMap,
@@ -575,6 +577,9 @@ class WysiwygFieldView extends TextFieldView {
                             Espo.Ui.notify(false);
                         });
                 },
+                //onBlurCodeview: () => {
+                //    this.trigger('change');
+                //},
                 onBlur: () => {
                     this.trigger('change');
                 },
@@ -673,6 +678,7 @@ class WysiwygFieldView extends TextFieldView {
 
     destroySummernote() {
         if (this.summernoteIsInitialized && this.$summernote) {
+            this.$summernote.summernote('destroyAceCodeview');
             this.$summernote.summernote('destroy');
             this.summernoteIsInitialized = false;
         }
