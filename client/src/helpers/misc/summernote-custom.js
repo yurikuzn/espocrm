@@ -36,6 +36,8 @@ import $ from 'jquery';
  */
 let ace;
 
+let beautifier;
+
 function init(langSets) {
     $.extend($.summernote.options, {
         espoImage: {
@@ -119,6 +121,12 @@ function init(langSets) {
 
             const domHtml = (/** JQuery */$node, isNewlineOnBlock) => {
                 let markup = prepareValue($node.html());
+
+                if (isNewlineOnBlock) {
+                    return beautifier.html(markup, {
+                        indent_size: 2,
+                    });
+                }
 
                 if (isNewlineOnBlock) {
                     const regexTag = /<(\/?)(\b(?!!)[^>\s]*)(.*?)(\s*\/?>)/g;
@@ -213,6 +221,8 @@ function init(langSets) {
                     aceEditor.setOptions({
                         maxLines: !$editor.hasClass('fullscreen') ? 34: null,
                         enableLiveAutocompletion: true,
+                        tabSize: 2,
+                        useSoftTabs: true,
                     });
 
                     if (options.isDark) {
@@ -259,21 +269,27 @@ function init(langSets) {
              * @return Promise
              */
             const requireAce = function () {
-                return Espo.loader.requirePromise('lib!ace')
-                    .then(lib => {
-                        ace = /** window.ace */lib;
+                return Promise.all([
+                    Espo.loader.requirePromise('lib!js-beautify')
+                        .then(lib => {
+                            beautifier = lib;
+                        }),
+                    Espo.loader.requirePromise('lib!ace')
+                        .then(lib => {
+                            ace = /** window.ace */lib;
 
-                        const list = [
-                            Espo.loader.requirePromise('lib!ace-mode-html'),
-                            Espo.loader.requirePromise('lib!ace-ext-language_tools'),
-                        ];
+                            const list = [
+                                Espo.loader.requirePromise('lib!ace-mode-html'),
+                                Espo.loader.requirePromise('lib!ace-ext-language_tools'),
+                            ];
 
-                        if (options.isDark) {
-                            list.push(Espo.loader.requirePromise('lib!ace-theme-tomorrow_night'));
-                        }
+                            if (options.isDark) {
+                                list.push(Espo.loader.requirePromise('lib!ace-theme-tomorrow_night'));
+                            }
 
-                        return Promise.all(list);
-                    });
+                            return Promise.all(list);
+                        })
+                ]);
             }
         },
 
