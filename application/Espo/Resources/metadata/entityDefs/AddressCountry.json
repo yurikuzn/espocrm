@@ -1,0 +1,38 @@
+{
+    "fields": {
+        "name": {
+            "type": "varchar",
+            "required": true,
+            "maxLength": 100
+        },
+        "code": {
+            "type": "varchar",
+            "required": true,
+            "maxLength": 2,
+            "tooltip": true
+        },
+        "isPreferred": {
+            "type": "bool",
+            "tooltip": true
+        }
+    },
+    "links": {},
+    "collection": {
+        "orderBy": "name",
+        "order": "asc",
+        "textFilterFields": [
+            "name",
+            "code"
+        ]
+    },
+    "indexes": {
+        "name": {
+            "unique": true,
+            "columns": [
+                "name"
+            ]
+        }
+    },
+    "noDeletedAttribute": true,
+    "hooksDisabled": true
+}

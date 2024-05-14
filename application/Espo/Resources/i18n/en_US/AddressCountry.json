@@ -1,0 +1,14 @@
+{
+    "labels": {
+        "Create AddressCountry": "Create Address Country",
+        "Populate": "Populate"
+    },
+    "fields": {
+        "code": "Code",
+        "isPreferred": "Is Preferred"
+    },
+    "tooltips": {
+        "code": "ISO 3166-1 alpha-2 code.",
+        "isPreferred": "Preferred counties appear first in the picklist."
+    }
+}
