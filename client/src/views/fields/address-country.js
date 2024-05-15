@@ -43,13 +43,44 @@ class AddressCountryFieldView extends VarcharFieldView {
      * @return {string[]}
      */
     getCountryList() {
-        const list = this.getHelper().getAppParam('addressCountryList') || [];
+        const list = (this.getHelper().getAppParam('addressCountryData') || {}).list || [];
 
         if (list.length) {
             return list;
         }
 
         return this.getConfig().get('addressCountryList') || [];
+    }
+
+    getAutocompleteLookupFunction() {
+        // noinspection JSUnresolvedReference
+        const list = (this.getHelper().getAppParam('addressCountryData') || {}).preferredList || [];
+
+        if (!list.length) {
+            return undefined;
+        }
+
+        const fullList = (this.params.options || []);
+
+        return query => {
+            if (query.length === 0) {
+                const result = list.map(item => ({value: item}));
+
+                return Promise.resolve(result);
+            }
+
+            const queryLowerCase = query.toLowerCase();
+
+            const result = fullList
+                .filter(item => {
+                    if (item.toLowerCase().indexOf(queryLowerCase) === 0) {
+                        return item.length !== queryLowerCase.length;
+                    }
+                })
+                .map(item => ({value: item}));
+
+            return Promise.resolve(result);
+        };
     }
 }
 

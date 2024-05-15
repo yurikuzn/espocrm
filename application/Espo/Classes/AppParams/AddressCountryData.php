@@ -29,17 +29,17 @@
 
 namespace Espo\Classes\AppParams;
 
-use Espo\Core\Utils\Address\CountryListProvider;
+use Espo\Core\Utils\Address\CountryDataProvider;
 use Espo\Tools\App\AppParam;
 
-class AddressCountryList implements AppParam
+class AddressCountryData implements AppParam
 {
     public function __construct(
-        private CountryListProvider $provider
+        private CountryDataProvider $provider
     ) {}
 
     /**
-     * @return string[]
+     * @return array{list: string[], preferredList: string[]}
      */
     public function get(): array
     {

@@ -44,4 +44,9 @@ class AddressCountry extends Entity
     {
         return $this->get('code');
     }
+
+    public function isPreferred(): bool
+    {
+        return (bool) $this->get('isPreferred');
+    }
 }

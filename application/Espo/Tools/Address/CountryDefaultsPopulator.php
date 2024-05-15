@@ -42,7 +42,7 @@ class CountryDefaultsPopulator
 {
     private string $file = 'application/Espo/Resources/data/locale/en_US/countryList.json';
 
-    private const CACHE_KEY = 'addressCountryList';
+    private const CACHE_KEY = 'addressCountryData';
 
     public function __construct(
         private Manager $fileManager,

@@ -43,7 +43,7 @@ use Espo\ORM\Repository\Option\SaveOptions;
  */
 class ClearCache implements AfterRemove, AfterSave
 {
-    private const CACHE_KEY = 'addressCountryList';
+    private const CACHE_KEY = 'addressCountryData';
 
     public function __construct(
         private DataCache $dataCache,
