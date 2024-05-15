@@ -1,4 +1,3 @@
-<?php
 /************************************************************************
  * This file is part of EspoCRM.
  *
@@ -27,24 +26,23 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Controllers;
+import ActionHandler from 'action-handler';
 
-use Espo\Core\Controllers\RecordBase;
-use Espo\Tools\Address\CountryDefaultsPopulator;
+class PopulateDefaultsHandler extends ActionHandler {
 
-class AddressCountry extends RecordBase
-{
-    protected function checkAccess(): bool
-    {
-        return $this->user->isAdmin();
-    }
+    async populate() {
+        const confirmMessage = this.view.translate('confirmPopulateDefaults', 'messages', 'AddressCountry');
 
-    public function postActionPopulateDefaults(): bool
-    {
-        $populate = $this->injectableFactory->create(CountryDefaultsPopulator::class);
+        await this.view.confirm(confirmMessage);
 
-        $populate->populate();
+        Espo.Ui.notify(' ... ');
 
-        return true;
+        await Espo.Ajax.postRequest('AddressCountry/action/populateDefaults');
+        await this.view.collection.fetch();
+
+        Espo.Ui.success(this.view.translate('Done'));
     }
 }
+
+// noinspection JSUnusedGlobalSymbols
+export default PopulateDefaultsHandler;

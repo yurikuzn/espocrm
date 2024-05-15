@@ -53,7 +53,8 @@
     },
     {
         "name": "Austria",
-        "code": "AT"
+        "code": "AT",
+        "isPreferred": true
     },
     {
         "name": "Azerbaijan",
@@ -81,7 +82,8 @@
     },
     {
         "name": "Belgium",
-        "code": "BE"
+        "code": "BE",
+        "isPreferred": true
     },
     {
         "name": "Belize",
@@ -153,7 +155,8 @@
     },
     {
         "name": "Canada",
-        "code": "CA"
+        "code": "CA",
+        "isPreferred": true
     },
     {
         "name": "Cape Verde",
@@ -200,7 +203,7 @@
         "code": "CG"
     },
     {
-        "name": "Congo",
+        "name": "Congo, Democratic Republic",
         "code": "CD"
     },
     {
@@ -237,7 +240,8 @@
     },
     {
         "name": "Denmark",
-        "code": "DK"
+        "code": "DK",
+        "isPreferred": true
     },
     {
         "name": "Djibouti",
@@ -293,11 +297,13 @@
     },
     {
         "name": "Finland",
-        "code": "FI"
+        "code": "FI",
+        "isPreferred": true
     },
     {
         "name": "France",
-        "code": "FR"
+        "code": "FR",
+        "isPreferred": true
     },
     {
         "name": "French Guiana",
@@ -325,7 +331,8 @@
     },
     {
         "name": "Germany",
-        "code": "DE"
+        "code": "DE",
+        "isPreferred": true
     },
     {
         "name": "Ghana",
@@ -421,7 +428,8 @@
     },
     {
         "name": "Ireland",
-        "code": "IE"
+        "code": "IE",
+        "isPreferred": true
     },
     {
         "name": "Isle of Man",
@@ -433,7 +441,8 @@
     },
     {
         "name": "Italy",
-        "code": "IT"
+        "code": "IT",
+        "isPreferred": true
     },
     {
         "name": "Jamaica",
@@ -621,7 +630,8 @@
     },
     {
         "name": "Netherlands",
-        "code": "NL"
+        "code": "NL",
+        "isPreferred": true
     },
     {
         "name": "New Caledonia",
@@ -657,7 +667,8 @@
     },
     {
         "name": "Norway",
-        "code": "NO"
+        "code": "NO",
+        "isPreferred": true
     },
     {
         "name": "Oman",
@@ -829,7 +840,8 @@
     },
     {
         "name": "Spain",
-        "code": "ES"
+        "code": "ES",
+        "isPreferred": true
     },
     {
         "name": "Sri Lanka",
@@ -844,20 +856,18 @@
         "code": "SR"
     },
     {
-        "name": "Svalbard and Jan Mayen",
-        "code": "SJ"
-    },
-    {
         "name": "Swaziland",
         "code": "SZ"
     },
     {
         "name": "Sweden",
-        "code": "SE"
+        "code": "SE",
+        "isPreferred": true
     },
     {
         "name": "Switzerland",
-        "code": "CH"
+        "code": "CH",
+        "isPreferred": true
     },
     {
         "name": "Syrian Arab Republic",
@@ -933,11 +943,13 @@
     },
     {
         "name": "United Kingdom",
-        "code": "GB"
+        "code": "GB",
+        "isPreferred": true
     },
     {
         "name": "United States",
-        "code": "US"
+        "code": "US",
+        "isPreferred": true
     },
     {
         "name": "United States Minor Outlying Islands",
