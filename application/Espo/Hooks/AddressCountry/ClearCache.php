@@ -1,3 +1,4 @@
+<?php
 /************************************************************************
  * This file is part of EspoCRM.
  *
@@ -26,31 +27,35 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-import VarcharFieldView from 'views/fields/varchar';
+namespace Espo\Hooks\AddressCountry;
 
-class AddressCountryFieldView extends VarcharFieldView {
+use Espo\Core\Hook\Hook\AfterRemove;
+use Espo\Core\Hook\Hook\AfterSave;
+use Espo\Core\Utils\DataCache;
+use Espo\Entities\AddressCountry;
+use Espo\ORM\Entity;
+use Espo\ORM\Repository\Option\RemoveOptions;
+use Espo\ORM\Repository\Option\SaveOptions;
 
-    setupOptions() {
-        const countryList = this.getCountryList();
+/**
+ * @implements AfterRemove<AddressCountry>
+ * @implements AfterSave<AddressCountry>
+ */
+class ClearCache implements AfterRemove, AfterSave
+{
+    private const CACHE_KEY = 'addressCountryList';
 
-        if (countryList.length) {
-            this.params.options = Espo.Utils.clone(countryList);
-        }
+    public function __construct(
+        private DataCache $dataCache,
+    ) {}
+
+    public function afterSave(Entity $entity, SaveOptions $options): void
+    {
+        $this->dataCache->clear(self::CACHE_KEY);
     }
 
-    /**
-     * @private
-     * @return {string[]}
-     */
-    getCountryList() {
-        const list = this.getHelper().getAppParam('addressCountryList') || [];
-
-        if (list.length) {
-            return list;
-        }
-
-        return this.getConfig().get('addressCountryList') || [];
+    public function afterRemove(Entity $entity, RemoveOptions $options): void
+    {
+        $this->dataCache->clear(self::CACHE_KEY);
     }
 }
-
-export default AddressCountryFieldView;

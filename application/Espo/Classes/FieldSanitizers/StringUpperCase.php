@@ -1,3 +1,4 @@
+<?php
 /************************************************************************
  * This file is part of EspoCRM.
  *
@@ -26,31 +27,30 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-import VarcharFieldView from 'views/fields/varchar';
+namespace Espo\Classes\FieldSanitizers;
 
-class AddressCountryFieldView extends VarcharFieldView {
+use Espo\Core\FieldSanitize\Sanitizer;
+use Espo\Core\FieldSanitize\Sanitizer\Data;
 
-    setupOptions() {
-        const countryList = this.getCountryList();
-
-        if (countryList.length) {
-            this.params.options = Espo.Utils.clone(countryList);
-        }
-    }
-
-    /**
-     * @private
-     * @return {string[]}
-     */
-    getCountryList() {
-        const list = this.getHelper().getAppParam('addressCountryList') || [];
-
-        if (list.length) {
-            return list;
+/**
+ * @noinspection PhpUnused
+ */
+class StringUpperCase implements Sanitizer
+{
+    public function sanitize(Data $data, string $field): void
+    {
+        if (!$data->has($field)) {
+            return;
         }
 
-        return this.getConfig().get('addressCountryList') || [];
+        $value = $data->get($field);
+
+        if (!is_string($value)) {
+            return;
+        }
+
+        $value = mb_strtoupper($value);
+
+        $data->set($field, $value);
     }
 }
-
-export default AddressCountryFieldView;

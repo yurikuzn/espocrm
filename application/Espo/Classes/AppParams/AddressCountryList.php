@@ -1,3 +1,4 @@
+<?php
 /************************************************************************
  * This file is part of EspoCRM.
  *
@@ -26,31 +27,22 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-import VarcharFieldView from 'views/fields/varchar';
+namespace Espo\Classes\AppParams;
 
-class AddressCountryFieldView extends VarcharFieldView {
+use Espo\Core\Utils\Address\CountryListProvider;
+use Espo\Tools\App\AppParam;
 
-    setupOptions() {
-        const countryList = this.getCountryList();
-
-        if (countryList.length) {
-            this.params.options = Espo.Utils.clone(countryList);
-        }
-    }
+class AddressCountryList implements AppParam
+{
+    public function __construct(
+        private CountryListProvider $provider
+    ) {}
 
     /**
-     * @private
-     * @return {string[]}
+     * @return string[]
      */
-    getCountryList() {
-        const list = this.getHelper().getAppParam('addressCountryList') || [];
-
-        if (list.length) {
-            return list;
-        }
-
-        return this.getConfig().get('addressCountryList') || [];
+    public function get(): array
+    {
+        return $this->provider->get();
     }
 }
-
-export default AddressCountryFieldView;

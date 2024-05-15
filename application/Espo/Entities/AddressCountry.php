@@ -34,4 +34,14 @@ use Espo\Core\ORM\Entity;
 class AddressCountry extends Entity
 {
     public const ENTITY_TYPE = 'AddressCountry';
+
+    public function getName(): string
+    {
+        return $this->get('name');
+    }
+
+    public function getCode(): string
+    {
+        return $this->get('code');
+    }
 }

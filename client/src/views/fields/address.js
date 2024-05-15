@@ -386,7 +386,7 @@ class AddressFieldView extends BaseFieldView {
             this.$city.on('change', () => this.trigger('change'));
             this.$country.on('change', () => this.trigger('change'));
 
-            const countryList = this.getConfig().get('addressCountryList') || [];
+            const countryList = this.getCountryList();
             const cityList = this.getConfig().get('addressCityList') || [];
             const stateList = this.getConfig().get('addressStateList') || [];
 
@@ -609,6 +609,20 @@ class AddressFieldView extends BaseFieldView {
             model: this.model,
             field: this.name,
         }, view => view.render());
+    }
+
+    /**
+     * @private
+     * @return {string[]}
+     */
+    getCountryList() {
+        const list = this.getHelper().getAppParam('addressCountryList') || [];
+
+        if (list.length) {
+            return list;
+        }
+
+        return this.getConfig().get('addressCountryList') || [];
     }
 }
 
