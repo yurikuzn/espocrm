@@ -265,11 +265,16 @@
         "isPreferred": {
             "type": "bool",
             "tooltip": true
+        },
+        "preferredName": {
+            "type": "base",
+            "notStorable": true,
+            "utility": true
         }
     },
     "links": {},
     "collection": {
-        "orderBy": "name",
+        "orderBy": "preferredName",
         "order": "asc",
         "textFilterFields": [
             "name",
