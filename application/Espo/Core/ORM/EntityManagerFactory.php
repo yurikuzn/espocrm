@@ -42,6 +42,7 @@ use Espo\ORM\EventDispatcher;
 use Espo\ORM\DatabaseParams;
 use Espo\ORM\PDO\PDOFactory;
 use Espo\ORM\QueryComposer\QueryComposerFactory as QueryComposerFactoryInterface;
+use Espo\ORM\Relation\RelationsMap;
 use Espo\ORM\Repository\RepositoryFactory as RepositoryFactoryInterface;
 use Espo\ORM\EntityFactory as EntityFactoryInterface;
 use Espo\ORM\Executor\SqlExecutor;
@@ -61,17 +62,25 @@ class EntityManagerFactory
         private PDOFactoryFactory $pdoFactoryFactory,
         private DatabaseParamsFactory $databaseParamsFactory,
         private ConfigDataProvider $configDataProvider,
-        private Log $log
+        private Log $log,
     ) {}
 
     public function create(): EntityManager
     {
-        $entityFactory = $this->injectableFactory->create(EntityFactory::class);
+        $relationsMap = new RelationsMap();
+
+        $entityFactory = $this->injectableFactory->createWithBinding(
+            EntityFactory::class,
+            BindingContainerBuilder::create()
+                ->bindInstance(RelationsMap::class, $relationsMap)
+                ->build()
+        );
 
         $repositoryFactory = $this->injectableFactory->createWithBinding(
             RepositoryFactory::class,
             BindingContainerBuilder::create()
                 ->bindInstance(EntityFactoryInterface::class, $entityFactory)
+                ->bindInstance(RelationsMap::class, $relationsMap)
                 ->build()
         );
 
@@ -140,6 +149,7 @@ class EntityManagerFactory
             ->bindInstance(PDOProvider::class, $pdoProvider)
             ->bindInstance(FunctionConverterFactoryInterface::class, $functionConverterFactory)
             ->bindInstance(SqlExecutor::class, $sqlExecutor)
+            ->bindInstance(RelationsMap::class, $relationsMap)
             ->build();
 
         return $this->injectableFactory->createWithBinding(EntityManager::class, $binding);
