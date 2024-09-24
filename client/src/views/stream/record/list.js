@@ -257,6 +257,32 @@ class ListStreamRecordView extends ListExpandedRecordView {
      * @param {{id: string}} data
      */
     actionQuoteReply(data) {
+        const rowView = this.getView(data.id);
+
+        const selection = window.getSelection();
+
+
+
+        if (selection && selection.anchorNode && selection.focusNode) {
+            const postContainer = rowView.element.querySelector('.complex-text');
+
+            if (
+                postContainer.contains(selection.anchorNode) &&
+                postContainer.contains(selection.focusNode)
+            ) {
+                let contents = '';
+
+                for (let i = 0; i < selection.rangeCount; i++) {
+                    const range = selection.getRangeAt(i);
+
+                    const div = document.createElement('div');
+                    div.appendChild(range.cloneContents());
+
+                    contents += div.innerHTML;
+                }
+            }
+        }
+
         const model = this.collection.get(data.id);
 
         if (!model) {
