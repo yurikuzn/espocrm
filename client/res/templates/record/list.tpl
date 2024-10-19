@@ -142,7 +142,10 @@
         data-scope="{{scope}}"
         tabindex="-1"
     >
-        <table class="table"{{#if tableMinWidth}} style="min-width: {{tableMinWidth}}px;"{{/if}}>
+        <table
+            class="table {{#if hasColumnResize}} column-resizable {{/if}}"
+            {{#if tableMinWidth}} style="min-width: {{tableMinWidth}}px;"{{/if}}
+        >
             {{#if header}}
             <thead>
                 <tr>
@@ -204,6 +207,10 @@
                             {{else}}
                             {{label}}
                             {{/if}}
+                        {{/if}}
+
+                        {{#if resizable}}
+                            <div class="column-resizer {{#if resizeOnRight}} column-resizer-right {{/if}}"></div>
                         {{/if}}
                     </th>
                     {{/each}}

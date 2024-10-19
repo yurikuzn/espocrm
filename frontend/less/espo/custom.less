@@ -1029,6 +1029,42 @@ input.global-search-input {
             user-select: none;
         }
     }
+
+    table.column-resizable {
+        > thead > tr {
+            > th {
+                > .column-resizer {
+                    display: none;
+                    position: absolute;
+                    width: 3px;
+                    height: 40px;
+                    background: var(--default-border-color);
+                    left: 0;
+                    top: 1px;
+                    user-select: none;
+
+                    &.column-resizer-right {
+                        left: unset;
+                        right: 0;
+                    }
+
+                    &:hover {
+                        cursor: col-resize;
+                    }
+                }
+            }
+
+            &:hover {
+                > th {
+                    > .column-resizer {
+                        display: block;
+                    }
+
+                    position: relative;
+                }
+            }
+        }
+    }
 }
 
 .list > table {

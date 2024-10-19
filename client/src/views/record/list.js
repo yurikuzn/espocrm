@@ -324,6 +324,15 @@ class ListRecordView extends View {
     showMore = true
 
     /**
+     * Column resize.
+     *
+     * @protected
+     * @type {boolean}
+     * @since 8.5.0
+     */
+    columnResize = true
+
+    /**
      * A mass-action list.
      *
      * @protected
@@ -992,6 +1001,7 @@ class ListRecordView extends View {
             collectionLength: this.collection.models.length,
             entityType: this.entityType,
             header: this.header,
+            hasColumnResize: this._hasColumnResize(),
             headerDefs: this._getHeaderDefs(),
             hasPagination: this.hasPagination(),
             showMoreActive: this.collection.hasMore(),
@@ -2544,26 +2554,36 @@ class ListRecordView extends View {
         return selectProvider.getFromLayout(this.entityType, this.listLayout);
     }
 
+    /**
+     * @private
+     */
+    _hasColumnResize() {
+        return this._listSettingsHelper ? this._listSettingsHelper.getColumnResize() : false;
+    }
+
     /** @protected */
     _getHeaderDefs() {
         const defs = [];
 
-        const hiddenMap = this._listSettingsHelper ?
-            this._listSettingsHelper.getHiddenColumnMap() : {};
+        const hiddenMap = this._listSettingsHelper ? this._listSettingsHelper.getHiddenColumnMap() : {};
+        const resize = this._hasColumnResize();
 
         // noinspection JSIncompatibleTypesComparison
         if (!this.listLayout || !Array.isArray(this.listLayout)) {
             return [];
         }
 
+        let emptyWidthMet = false;
+
         for (const col of this.listLayout) {
             let width = false;
 
             if ('width' in col && col.width !== null) {
                 width = col.width + '%';
-            }
-            else if ('widthPx' in col) {
+            } else if ('widthPx' in col) {
                 width = col.widthPx + 'px';
+            } else {
+                emptyWidthMet = true;
             }
 
             const itemName = col.name;
@@ -2574,6 +2594,8 @@ class ListRecordView extends View {
                 isSortable: !(col.notSortable || false),
                 width: width,
                 align: ('align' in col) ? col.align : false,
+                resizable: resize && width,
+                resizeOnRight: resize && width && !emptyWidthMet,
             };
 
             if ('customLabel' in col) {
@@ -3585,6 +3607,7 @@ class ListRecordView extends View {
             layoutProvider: () => this.listLayout,
             helper: this._listSettingsHelper,
             entityType: this.entityType,
+            columnResize: this.columnResize,
             onChange: () => {
                 this._internalLayout = null;
 

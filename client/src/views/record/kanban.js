@@ -55,6 +55,7 @@ class KanbanRecordView extends ListRecordView {
     buttonsDisabled = false
     backDragStarted = true
     paginationDisabled = true
+    columnResize = false
 
     /**
      * @private

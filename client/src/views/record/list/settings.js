@@ -82,7 +82,7 @@ class RecordListSettingsView extends View {
     data() {
         const columnResize = this.helper.getColumnResize();
         const dataList = this.getDataList();
-        const hasColumnResize = columnResize || this.isColumnResizeApplicable();
+        const hasColumnResize = this.columnResize && (columnResize || this.isColumnResizeApplicable());
 
         const isNotDefault =
             dataList.find(item => item.hiddenDefault !== item.hidden) !== undefined ||
@@ -111,6 +111,7 @@ class RecordListSettingsView extends View {
      *     helper: import('helpers/list/settings').default,
      *     entityType: string,
      *     onChange: function(),
+     *     columnResize?: boolean,
      * }} options
      */
     constructor(options) {
@@ -120,6 +121,7 @@ class RecordListSettingsView extends View {
         this.helper = options.helper;
         this.entityType = options.entityType;
         this.onChange = options.onChange;
+        this.columnResize = options.columnResize || false;
     }
 
     setup() {
