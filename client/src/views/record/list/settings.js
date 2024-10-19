@@ -52,16 +52,18 @@ class RecordListSettingsView extends View {
                     ><span class="check-icon fas fa-check pull-right{{#if hidden}} hidden{{/if}}"></span><div>{{label}}</div></a>
                 </li>
             {{/each}}
-            <li class="divider"></li>
-            <li>
-                <a
-                    role="button"
-                    tabindex="0"
-                    data-action="toggleColumnResize"
-                >
-                    <span class="check-icon fas fa-check pull-right {{#unless columnResize}} hidden {{/unless}}"></span>
-                    <div>{{translate 'Column Resize'}}</div></a>
-            </li>
+            {{#if hasColumnResize}}
+                <li class="divider"></li>
+                <li>
+                    <a
+                        role="button"
+                        tabindex="0"
+                        data-action="toggleColumnResize"
+                    >
+                        <span class="check-icon fas fa-check pull-right {{#unless columnResize}} hidden {{/unless}}"></span>
+                        <div>{{translate 'Column Resize'}}</div></a>
+                </li>
+            {{/if}}
             {{#if isNotDefault}}
                 <li class="divider"></li>
                 <li>
@@ -80,6 +82,7 @@ class RecordListSettingsView extends View {
     data() {
         const columnResize = this.helper.getColumnResize();
         const dataList = this.getDataList();
+        const hasColumnResize = columnResize || this.isColumnResizeApplicable();
 
         const isNotDefault =
             dataList.find(item => item.hiddenDefault !== item.hidden) !== undefined ||
@@ -90,13 +93,21 @@ class RecordListSettingsView extends View {
             toDisplay: dataList.length > 0,
             isNotDefault: isNotDefault,
             fieldsLabel: this.translate('Fields'),
+            hasColumnResize: hasColumnResize,
             columnResize: columnResize,
         };
     }
 
     /**
      * @param {{
-     *     layoutProvider: function(): Array,
+     *     layoutProvider: function(): {
+     *         name: string,
+     *         width?: number,
+     *         widthPx?: number,
+     *         label?: string,
+     *         customLabel?: string,
+     *         noLabel?: boolean,
+     *     }[],
      *     helper: import('helpers/list/settings').default,
      *     entityType: string,
      *     onChange: function(),
@@ -113,7 +124,7 @@ class RecordListSettingsView extends View {
 
     setup() {
         this.addActionHandler('toggleColumn', (e, target) => this.toggleColumn(target.dataset.name));
-        this.addActionHandler('toggleColumnResize', (e, target) => this.toggleColumnResize());
+        this.addActionHandler('toggleColumnResize', () => this.toggleColumnResize());
         this.addActionHandler('resetToDefault', () => this.resetToDefault());
     }
 
@@ -142,6 +153,20 @@ class RecordListSettingsView extends View {
                     hiddenDefault: !!item.hidden,
                 };
             })
+    }
+
+    /**
+     * @private
+     * @return {boolean}
+     */
+    isColumnResizeApplicable() {
+        const list = this.layoutProvider();
+
+        if (!list || list.length <= 1) {
+            return false;
+        }
+
+        return !!list.find(it => it.widthPx || it.width);
     }
 
     /**
