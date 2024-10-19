@@ -183,7 +183,7 @@
                     {{#each headerDefs}}
                     <th
                         style="{{#if width}}width: {{width}};{{/if}}{{#if align}} text-align: {{align}};{{/if}}"
-                        {{#if className}}class="{{className}}"{{/if}}
+                        class="{{#if className}} {{className}} {{/if}} field-header-cell"
                         {{#if name}}data-name="{{name}}"{{/if}}
                     >
                         {{#if this.isSortable}}

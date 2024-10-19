@@ -36,6 +36,7 @@ import SelectProvider from 'helpers/list/select-provider';
 import RecordListSettingsView from 'views/record/list/settings';
 import ListSettingsHelper from 'helpers/list/settings';
 import StickyBarHelper from 'helpers/list/misc/sticky-bar';
+import ListColumnResizeHelper from 'helpers/record/list/column-resize';
 
 /**
  * A record-list view. Renders and processes list items, actions.
@@ -2135,6 +2136,10 @@ class ListRecordView extends View {
         }
 
         this._renderEmpty = this.options.skipBuildRows;
+
+        if (this.columnResize && this._listSettingsHelper) {
+            new ListColumnResizeHelper(this);
+        }
     }
 
     /**
