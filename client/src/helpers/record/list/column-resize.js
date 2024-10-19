@@ -93,6 +93,8 @@ export default class ListColumnResizeHelper {
             thElements: thElements,
         };
 
+        document.body.style.cursor = 'col-resize';
+
         document.addEventListener('mouseup', this.onMouseUpBind);
         document.addEventListener('mousemove', this.onMouseMoveBind);
     }
@@ -158,6 +160,8 @@ export default class ListColumnResizeHelper {
     onMouseUp(event) {
         document.removeEventListener('mousemove', this.onMouseMoveBind);
         document.removeEventListener('mouseup', this.onMouseUpBind);
+
+        document.body.style.cursor = '';
 
         console.log(event);
 

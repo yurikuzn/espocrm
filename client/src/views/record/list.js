@@ -94,6 +94,7 @@ class ListRecordView extends View {
      * @property {import('helpers/list/settings').default} [settingsHelper] A settings helper.
      * @property {boolean} [displayTotalCount] Display total count.
      * @property {Record} [rootData] Root data.
+     * @property {boolean} [columnResize] Column resize. Actual only if the settings is enabled.
      */
 
     /**
@@ -1047,6 +1048,10 @@ class ListRecordView extends View {
 
         if (this.paginationDisabled) {
             this.pagination = false;
+        }
+
+        if (this.options.columnResize !== undefined) {
+            this.columnResize = this.options.columnResize;
         }
 
         this.checkboxes = _.isUndefined(this.options.checkboxes) ? this.checkboxes :
