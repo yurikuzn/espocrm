@@ -40,6 +40,12 @@ class ListSettingsHelper {
 
         this.layoutColumnsKey = `${type}-${entityType}-${userId}`;
         this.hiddenColumnMapCache = {};
+
+        /**
+         * @private
+         * @type {boolean|undefined}
+         */
+        this.columnResize = undefined;
     }
 
     /**
@@ -53,6 +59,40 @@ class ListSettingsHelper {
         }
 
         return this.storage.get('listHiddenColumns', this.layoutColumnsKey) || {};
+    }
+
+    /**
+     * Is column resize enabled.
+     *
+     * @return {boolean}
+     * @since 8.5.0
+     */
+    getColumnResize() {
+        if (this.columnResize === undefined) {
+            this.columnResize = this.storage.get('listColumnResize', this.layoutColumnsKey) || false;
+        }
+
+        return this.columnResize;
+    }
+
+    /**
+     * Store column width editable.
+     *
+     * @param {boolean} columnResize
+     */
+    storeColumnResize(columnResize) {
+        this.columnResize = columnResize;
+
+        this.storage.set('listColumnResize', this.layoutColumnsKey, columnResize);
+    }
+
+    /**
+     * Clear column width editable.
+     */
+    clearColumnResize() {
+        this.columnResize = undefined;
+
+        this.storage.clear('listColumnResize', this.layoutColumnsKey);
     }
 
     /**
@@ -73,6 +113,16 @@ class ListSettingsHelper {
         delete this.hiddenColumnMapCache[this.layoutColumnsKey];
 
         this.storage.clear('listHiddenColumns', this.layoutColumnsKey);
+    }
+
+    /**
+     * Clear all.
+     *
+     * @since 8.5.0
+     */
+    clearAll() {
+        this.clearColumnResize();
+        this.clearHiddenColumnMap();
     }
 }
 

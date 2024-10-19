@@ -52,6 +52,16 @@ class RecordListSettingsView extends View {
                     ><span class="check-icon fas fa-check pull-right{{#if hidden}} hidden{{/if}}"></span><div>{{label}}</div></a>
                 </li>
             {{/each}}
+            <li class="divider"></li>
+            <li>
+                <a
+                    role="button"
+                    tabindex="0"
+                    data-action="toggleColumnResize"
+                >
+                    <span class="check-icon fas fa-check pull-right {{#unless columnResize}} hidden {{/unless}}"></span>
+                    <div>{{translate 'Column Resize'}}</div></a>
+            </li>
             {{#if isNotDefault}}
                 <li class="divider"></li>
                 <li>
@@ -68,14 +78,19 @@ class RecordListSettingsView extends View {
     `
 
     data() {
+        const columnResize = this.helper.getColumnResize();
         const dataList = this.getDataList();
-        const isNotDefault = dataList.find(item => item.hiddenDefault !== item.hidden) !== undefined;
+
+        const isNotDefault =
+            dataList.find(item => item.hiddenDefault !== item.hidden) !== undefined ||
+            columnResize;
 
         return {
             dataList: dataList,
             toDisplay: dataList.length > 0,
             isNotDefault: isNotDefault,
             fieldsLabel: this.translate('Fields'),
+            columnResize: columnResize,
         };
     }
 
@@ -98,6 +113,7 @@ class RecordListSettingsView extends View {
 
     setup() {
         this.addActionHandler('toggleColumn', (e, target) => this.toggleColumn(target.dataset.name));
+        this.addActionHandler('toggleColumnResize', (e, target) => this.toggleColumnResize());
         this.addActionHandler('resetToDefault', () => this.resetToDefault());
     }
 
@@ -149,8 +165,20 @@ class RecordListSettingsView extends View {
     /**
      * @private
      */
+    toggleColumnResize() {
+        const value = !this.helper.getColumnResize();
+
+        this.helper.storeColumnResize(value);
+
+        // @todo Revise. Pass {subject: 'columnResize'} ?
+        this.onChange();
+    }
+
+    /**
+     * @private
+     */
     resetToDefault() {
-        this.helper.clearHiddenColumnMap();
+        this.helper.clearAll();
 
         this.onChange();
     }
