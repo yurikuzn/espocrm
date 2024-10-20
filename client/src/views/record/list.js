@@ -2707,9 +2707,6 @@ class ListRecordView extends View {
             });
         }
 
-        const hiddenMap = this._listSettingsHelper ?
-            this._listSettingsHelper.getHiddenColumnMap() : {};
-
         for (const col of listLayout) {
             const type = col.type || model.getFieldType(col.name) || 'base';
 
