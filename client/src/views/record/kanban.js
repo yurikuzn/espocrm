@@ -1447,12 +1447,15 @@ class KanbanRecordView extends ListRecordView {
         }
     }
 
-    /** @protected */
-    afterSettingsChange() {
+    /** @inheritDoc */
+    async afterSettingsChange(options) {
+        this._internalLayout = null;
+
         Espo.Ui.notify(' ... ');
 
-        this.collection.fetch({maxSize: this.collection.maxSize})
-            .then(() => Espo.Ui.notify(false));
+        await this.collection.fetch({maxSize: this.collection.maxSize});
+
+        Espo.Ui.notify(false)
     }
 
     // noinspection JSUnusedGlobalSymbols

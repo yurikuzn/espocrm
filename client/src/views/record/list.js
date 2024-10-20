@@ -3618,22 +3618,30 @@ class ListRecordView extends View {
             helper: this._listSettingsHelper,
             entityType: this.entityType,
             columnResize: this.columnResize,
-            onChange: () => {
-                this._internalLayout = null;
-
-                this.afterSettingsChange();
-            },
+            onChange: (options) => this.afterSettingsChange(options),
         });
 
         this.assignView('settings', view, '.settings-container');
     }
 
-    /** @protected */
-    afterSettingsChange() {
+    /**
+     * @protected
+     * @param {RecordListSettingsView~onChangeOptions} options
+     */
+    async afterSettingsChange(options) {
+        if (options.subject === 'toggleColumnResize') {
+            await this.reRender();
+
+            return;
+        }
+
+        this._internalLayout = null;
+
         Espo.Ui.notify(' ... ');
 
-        this.collection.fetch()
-            .then(() => Espo.Ui.notify(false));
+        await this.collection.fetch();
+
+        Espo.Ui.notify(false);
     }
 
     /**

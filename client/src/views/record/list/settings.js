@@ -85,8 +85,7 @@ class RecordListSettingsView extends View {
         const hasColumnResize = this.columnResize && (columnResize || this.isColumnResizeApplicable());
 
         const isNotDefault =
-            dataList.find(item => item.hiddenDefault !== item.hidden) !== undefined ||
-            columnResize;
+            dataList.find(item => item.hiddenDefault !== item.hidden) !== undefined;
 
         return {
             dataList: dataList,
@@ -97,6 +96,11 @@ class RecordListSettingsView extends View {
             columnResize: columnResize,
         };
     }
+
+    /**
+     * @typedef {Object} RecordListSettingsView~onChangeOptions
+     * @property {'resetToDefault'|'toggleColumn'|'toggleColumnResize'} subject
+     */
 
     /**
      * @param {{
@@ -110,7 +114,7 @@ class RecordListSettingsView extends View {
      *     }[],
      *     helper: import('helpers/list/settings').default,
      *     entityType: string,
-     *     onChange: function(),
+     *     onChange: function(RecordListSettingsView~onChangeOptions),
      *     columnResize?: boolean,
      * }} options
      */
@@ -186,7 +190,7 @@ class RecordListSettingsView extends View {
 
         this.helper.storeHiddenColumnMap(map);
 
-        this.onChange();
+        this.onChange({subject: 'toggleColumn'});
     }
 
     /**
@@ -197,17 +201,16 @@ class RecordListSettingsView extends View {
 
         this.helper.storeColumnResize(value);
 
-        // @todo Revise. Pass {subject: 'columnResize'} ?
-        this.onChange();
+        this.onChange({subject: 'toggleColumnResize'});
     }
 
     /**
      * @private
      */
     resetToDefault() {
-        this.helper.clearAll();
+        this.helper.clearHiddenColumnMap();
 
-        this.onChange();
+        this.onChange({subject: 'resetToDefault'});
     }
 }
 

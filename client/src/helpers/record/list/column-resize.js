@@ -83,7 +83,7 @@ export default class ListColumnResizeHelper {
             .filter(it => !it.style.width);
 
         this.item = {
-            startX: event.screenX,
+            startX: event.clientX,
             startWidth: th.clientWidth,
             thElement: th,
             name: th.dataset.name,
@@ -126,7 +126,7 @@ export default class ListColumnResizeHelper {
      * @param {MouseEvent} event
      */
     onMouseMove(event) {
-        let diff = event.screenX - this.item.startX;
+        let diff = event.clientX - this.item.startX;
 
         if (!this.item.onRight) {
             diff *= -1;

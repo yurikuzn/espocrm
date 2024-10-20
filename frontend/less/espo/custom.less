@@ -1036,16 +1036,19 @@ input.global-search-input {
                 > .column-resizer {
                     display: none;
                     position: absolute;
-                    width: 3px;
-                    height: 40px;
-                    background: var(--default-border-color);
-                    left: 0;
-                    top: 1px;
+                    width: 2px;
+                    height: 37px;
+                    top: 0;
                     user-select: none;
 
+                    &:not(.column-resizer-right) {
+                        left: 0;
+                        border-left: 1px solid var(--default-border-color);
+                    }
+
                     &.column-resizer-right {
-                        left: unset;
                         right: 0;
+                        border-right: 1px solid var(--default-border-color);
                     }
 
                     &:hover {

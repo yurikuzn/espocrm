@@ -86,6 +86,7 @@ class ListSettingsHelper {
         this.storage.set('listColumnResize', this.layoutColumnsKey, columnResize);
     }
 
+    // noinspection JSUnusedGlobalSymbols
     /**
      * Clear column width editable.
      */
@@ -113,16 +114,6 @@ class ListSettingsHelper {
         delete this.hiddenColumnMapCache[this.layoutColumnsKey];
 
         this.storage.clear('listHiddenColumns', this.layoutColumnsKey);
-    }
-
-    /**
-     * Clear all.
-     *
-     * @since 8.5.0
-     */
-    clearAll() {
-        this.clearColumnResize();
-        this.clearHiddenColumnMap();
     }
 }
 
