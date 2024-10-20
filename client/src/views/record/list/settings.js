@@ -133,6 +133,22 @@ class RecordListSettingsView extends View {
         this.addActionHandler('toggleColumn', (e, target) => this.toggleColumn(target.dataset.name));
         this.addActionHandler('toggleColumnResize', () => this.toggleColumnResize());
         this.addActionHandler('resetToDefault', () => this.resetToDefault());
+
+        /** @private */
+        this.onColumnWidthChangeBind = this.onColumnWidthChange.bind(this);
+
+        this.helper.subscribeToColumnWidthChange(this.onColumnWidthChangeBind);
+    }
+
+    onRemove() {
+        this.helper.unsubscribeFromColumnWidthChange(this.onColumnWidthChangeBind);
+    }
+
+    /**
+     * @private
+     */
+    onColumnWidthChange() {
+        this.reRender();
     }
 
     /**

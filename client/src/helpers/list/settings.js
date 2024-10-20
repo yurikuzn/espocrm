@@ -64,6 +64,12 @@ class ListSettingsHelper {
          * @type {boolean|undefined}
          */
         this.columnResize = undefined;
+
+        /**
+         * @private
+         * @type {function()[]}
+         */
+        this.columnWidthChangeFunctions = [];
     }
 
     /**
@@ -185,6 +191,34 @@ class ListSettingsHelper {
         this.columnWidthMapCache[name] = width;
 
         this.storeColumnWidthMap(this.columnWidthMapCache);
+
+        for (const handler of this.columnWidthChangeFunctions) {
+            handler();
+        }
+    }
+
+    /**
+     * Subscribe to a column width change.
+     *
+     * @param {function()} handler A handler.
+     */
+    subscribeToColumnWidthChange(handler) {
+        this.columnWidthChangeFunctions.push(handler);
+    }
+
+    /**
+     * Unsubscribe from a column width change.
+     *
+     * @param {function()} handler A handler.
+     */
+    unsubscribeFromColumnWidthChange(handler) {
+        const index = this.columnWidthChangeFunctions.findIndex(it => handler);
+
+        if (!~index) {
+            return;
+        }
+
+        this.columnWidthChangeFunctions.splice(index, 1);
     }
 }
 

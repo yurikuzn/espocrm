@@ -180,8 +180,6 @@ export default class ListColumnResizeHelper {
 
             unit = '%';
             value = widthPercentsRounded;
-
-            //console.log(width, widthPercents, Math.floor(factor * widthPercents) / factor, widthPercentsRounded);
         }
 
         this.helper.storeColumnWidth(this.item.name, {value: value, unit: unit});
