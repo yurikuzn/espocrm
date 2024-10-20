@@ -212,7 +212,7 @@ class ListSettingsHelper {
      * @param {function()} handler A handler.
      */
     unsubscribeFromColumnWidthChange(handler) {
-        const index = this.columnWidthChangeFunctions.findIndex(it => handler);
+        const index = this.columnWidthChangeFunctions.findIndex(it => handler === it);
 
         if (!~index) {
             return;
