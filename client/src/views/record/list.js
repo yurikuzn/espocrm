@@ -37,6 +37,7 @@ import RecordListSettingsView from 'views/record/list/settings';
 import ListSettingsHelper from 'helpers/list/settings';
 import StickyBarHelper from 'helpers/list/misc/sticky-bar';
 import ListColumnResizeHelper from 'helpers/record/list/column-resize';
+import ListColumnWidthControlHelper from 'helpers/record/list/column-width-control';
 
 /**
  * A record-list view. Renders and processes list items, actions.
@@ -2149,11 +2150,7 @@ class ListRecordView extends View {
         this._renderEmpty = this.options.skipBuildRows;
 
         if (this.columnResize && this._listSettingsHelper) {
-            this._columnResizeHelper = new ListColumnResizeHelper(
-                this,
-                this._listSettingsHelper,
-                () => this.listLayout
-            );
+            this._columnResizeHelper = new ListColumnResizeHelper(this, this._listSettingsHelper);
         }
     }
 
@@ -3650,7 +3647,15 @@ class ListRecordView extends View {
             !this._listSettingsHelper.getHiddenColumnMap()[options.column] &&
             this._columnResizeHelper
         ) {
-            this._columnResizeHelper.controlWidth();
+            const helper = new ListColumnWidthControlHelper({
+                view: this,
+                helper: this._listSettingsHelper,
+                layoutProvider: () => this.listLayout,
+            })
+
+            helper.adjust();
+
+            //this._columnResizeHelper.controlWidth();
         }
 
         this._internalLayout = null;

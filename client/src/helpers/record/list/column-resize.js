@@ -59,20 +59,12 @@ export default class ListColumnResizeHelper {
     /**
      * @param {import('views/record/list').default} view
      * @param {import('helpers/list/settings').default} helper
-     * @param {function(): {
-     *     name: string,
-     *     width?: number,
-     *     widthPx?: number,
-     *     hidden?: boolean,
-     * }[]} layoutProvider
      */
-    constructor(view, helper, layoutProvider) {
+    constructor(view, helper) {
         /** @private */
         this.view = view;
         /** @private */
         this.helper = helper;
-        /** @private */
-        this.layoutProvider = layoutProvider;
 
         this.onMouseUpBind = this.onMouseUp.bind(this);
         this.onMouseMoveBind = this.onMouseMove.bind(this);
@@ -205,141 +197,5 @@ export default class ListColumnResizeHelper {
         this.item.thElement.classList.remove('being-resized');
 
         this.item = undefined;
-    }
-
-    /**
-     * Control width.
-     */
-    controlWidth() {
-        const tableElement = this.view.element.querySelector('.list > table');
-
-        if (!tableElement) {
-            return;
-        }
-
-        const tableWidth = tableElement.clientWidth;
-        let staticWidth = 0;
-
-        tableElement.querySelectorAll(':scope > thead > tr > th').forEach(th => {
-            if (
-                !th.classList.contains('field-header-cell') ||
-                th.classList.contains('action-cell')
-            ) {
-                staticWidth += th.clientWidth;
-            }
-        });
-
-        this.controlWidthInternal(tableWidth, staticWidth);
-    }
-
-    /**
-     * @private
-     * @param {number} tableWidth
-     * @param {number} staticWidth
-     * @return {boolean}
-     */
-    controlWidthInternal(tableWidth, staticWidth) {
-        const widthMap = this.helper.getColumnWidthMap();
-
-        /**
-         * @type {{
-         *     name: string,
-         *     width: {
-         *         value: number,
-         *         unit: 'px'|'%',
-         *     }|null,
-         *     isCustom: boolean,
-         *     widthPx: number|null,
-         * }[]}
-         */
-        const list = this.layoutProvider()
-            .filter(it => !this.helper.isColumnHidden(it.name, it.hidden))
-            .map(it => {
-                let widthItem = widthMap[it.name];
-
-                const isCustom = !!widthItem;
-
-                if (!widthItem) {
-                    widthItem = null;
-
-                    if (it.width) {
-                        widthItem = {value: it.width, unit: '%'};
-                    } else if (it.widthPx) {
-                        widthItem = {value: it.widthPx, unit: 'px'};
-                    }
-                }
-
-                let widthPx = null;
-
-                if (widthItem) {
-                    if (widthItem.unit === 'px') {
-                        widthPx = widthItem.value;
-                    } else {
-                        widthPx = tableWidth * (widthItem.value / 100.0);
-                    }
-                }
-
-                return {
-                    name: it.name,
-                    width: widthItem,
-                    isCustom: isCustom,
-                    widthPx: widthPx,
-                };
-            });
-
-        const flexColumnCount = list.filter(it => !it.width).length;
-        const extraWidth = flexColumnCount * this.minWidth;
-
-        let sumWidth = 0;
-
-        list.filter(it => it.widthPx)
-            .forEach(it => sumWidth += it.widthPx);
-
-        if (tableWidth - extraWidth - staticWidth - sumWidth >= 0) {
-            return true;
-        }
-
-        const listSorted = list
-            .filter(it => it.widthPx && it.width)
-            .sort((a, b) => b.widthPx - a.widthPx);
-
-        if (!listSorted.length) {
-            return true;
-        }
-
-        const item = listSorted[0];
-
-        const reduceWidthPx = 10;
-
-        if (item.widthPx < reduceWidthPx) {
-            return true;
-        }
-
-        /** @type {{value: number, unit: 'px'|'%'}} */
-        let newWidth;
-
-        if (item.width.unit === 'px') {
-            newWidth = {
-                value: item.width.value - reduceWidthPx,
-                unit: 'px',
-            };
-        } else {
-            const factor = Math.pow(10, 4);
-            const reducePercent = Math.floor(factor * (reduceWidthPx / tableWidth) * 100) / factor;
-
-            newWidth = {
-                value: item.width.value - reducePercent,
-                unit: '%',
-            }
-        }
-
-        const map = this.helper.getColumnWidthMap();
-        map[item.name] = newWidth;
-
-        this.helper.storeColumnWidthMap(map);
-
-        this.controlWidthInternal(tableWidth, staticWidth);
-
-        return false;
     }
 }
