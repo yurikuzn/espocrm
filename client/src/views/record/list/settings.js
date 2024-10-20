@@ -100,7 +100,8 @@ class RecordListSettingsView extends View {
 
     /**
      * @typedef {Object} RecordListSettingsView~onChangeOptions
-     * @property {'resetToDefault'|'toggleColumn'|'toggleColumnResize'} subject
+     * @property {'resetToDefault'|'toggleColumn'|'toggleColumnResize'} action An action.
+     * @property {string} [column] A column.
      */
 
     /**
@@ -207,7 +208,7 @@ class RecordListSettingsView extends View {
 
         this.helper.storeHiddenColumnMap(map);
 
-        this.onChange({subject: 'toggleColumn'});
+        this.onChange({action: 'toggleColumn', column: name});
     }
 
     /**
@@ -218,7 +219,7 @@ class RecordListSettingsView extends View {
 
         this.helper.storeColumnResize(value);
 
-        this.onChange({subject: 'toggleColumnResize'});
+        this.onChange({action: 'toggleColumnResize'});
     }
 
     /**
@@ -228,7 +229,7 @@ class RecordListSettingsView extends View {
         this.helper.clearHiddenColumnMap();
         this.helper.clearColumnWidthMap();
 
-        this.onChange({subject: 'resetToDefault'});
+        this.onChange({action: 'resetToDefault'});
     }
 }
 

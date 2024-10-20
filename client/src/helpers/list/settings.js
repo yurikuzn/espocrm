@@ -220,6 +220,13 @@ class ListSettingsHelper {
 
         this.columnWidthChangeFunctions.splice(index, 1);
     }
+
+    /**
+     * Control width.
+     */
+    controlWidth() {
+
+    }
 }
 
 export default ListSettingsHelper;

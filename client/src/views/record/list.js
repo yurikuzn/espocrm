@@ -3636,10 +3636,14 @@ class ListRecordView extends View {
      * @param {RecordListSettingsView~onChangeOptions} options
      */
     async afterSettingsChange(options) {
-        if (options.subject === 'toggleColumnResize') {
+        if (options.action === 'toggleColumnResize') {
             await this.reRender();
 
             return;
+        }
+
+        if (options.action === 'toggleColumn' && !this._listSettingsHelper.getHiddenColumnMap()[options.column]) {
+            this._listSettingsHelper.controlWidth();
         }
 
         this._internalLayout = null;

@@ -1067,10 +1067,7 @@ input.global-search-input {
                     position: relative;
 
                     &.being-resized {
-                        &,
-                        > a[data-name] {
-                            color: var(--state-warning-text);
-                        }
+                        background-color: var(--default-heading-bg-color);
                     }
                 }
             }
@@ -1111,6 +1108,10 @@ input.global-search-input {
             position: relative;
             top: 3px;
         }
+    }
+
+    th.field-header-cell {
+        min-width: 10px;
     }
 }
 
@@ -1588,7 +1589,7 @@ section {
 }
 
 .list .checkbox-dropdown {
-    margin-left: 3px;
+    margin-left: 2px;
     top: -2px;
 }
 
