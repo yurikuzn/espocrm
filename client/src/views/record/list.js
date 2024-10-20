@@ -593,6 +593,12 @@ class ListRecordView extends View {
     /** @private */
     _additionalRowActionList
 
+    /**
+     * @private
+     * @type {import('helpers/record/list/column-resize').default}
+     */
+    _columnResizeHelper
+
     /** @inheritDoc */
     events = {
         /**
@@ -2143,7 +2149,11 @@ class ListRecordView extends View {
         this._renderEmpty = this.options.skipBuildRows;
 
         if (this.columnResize && this._listSettingsHelper) {
-            new ListColumnResizeHelper(this, this._listSettingsHelper);
+            this._columnResizeHelper = new ListColumnResizeHelper(
+                this,
+                this._listSettingsHelper,
+                () => this.listLayout
+            );
         }
     }
 
@@ -2747,12 +2757,8 @@ class ListRecordView extends View {
                 }
             }
 
-            if (col.name) {
-                if (hiddenMap[col.name]) {
-                    continue;
-                }
-
-                if (col.hidden && !(col.name in hiddenMap)) {
+            if (col.name && this._listSettingsHelper) {
+                if (this._listSettingsHelper.isColumnHidden(col.name, col.hidden)) {
                     continue;
                 }
             }
@@ -3642,8 +3648,12 @@ class ListRecordView extends View {
             return;
         }
 
-        if (options.action === 'toggleColumn' && !this._listSettingsHelper.getHiddenColumnMap()[options.column]) {
-            this._listSettingsHelper.controlWidth();
+        if (
+            options.action === 'toggleColumn' &&
+            !this._listSettingsHelper.getHiddenColumnMap()[options.column] &&
+            this._columnResizeHelper
+        ) {
+            this._columnResizeHelper.controlWidth();
         }
 
         this._internalLayout = null;

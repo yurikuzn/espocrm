@@ -143,7 +143,7 @@
         tabindex="-1"
     >
         <table
-            class="table {{#if hasColumnResize}} column-resizable {{/if}}"
+            class="table {{#if hasColumnResize~}} column-resizable {{~/if}}"
             {{#if tableMinWidth}} style="min-width: {{tableMinWidth}}px;"{{/if}}
         >
             {{#if header}}
@@ -153,6 +153,7 @@
                     <th
                         style="width: {{checkboxColumnWidth}}"
                         data-name="r-checkbox"
+                        class="checkbox-cell"
                     >
                         <span
                             class="select-all-container"
@@ -183,7 +184,7 @@
                     {{#each headerDefs}}
                     <th
                         style="{{#if width}}width: {{width}};{{/if}}{{#if align}} text-align: {{align}};{{/if}}"
-                        class="{{#if className}} {{className}} {{/if}} field-header-cell"
+                        class="{{#if className~}} {{className}} {{~/if}} field-header-cell"
                         {{#if name}}data-name="{{name}}"{{/if}}
                     >
                         {{#if this.isSortable}}

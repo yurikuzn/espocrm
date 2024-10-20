@@ -88,6 +88,32 @@ class ListSettingsHelper {
     }
 
     /**
+     * Is a column hidden.
+     *
+     * @param {string} name A name.
+     * @param {boolean} [hidden] Is hidden by default.
+     * @return {boolean}
+     * @since 8.5.0
+     */
+    isColumnHidden(name, hidden) {
+        const hiddenMap = this.getHiddenColumnMap();
+
+        if (hiddenMap[name]) {
+            return true;
+        }
+
+        if (!hidden) {
+            return false;
+        }
+
+        if (!(name in hiddenMap)) {
+            return true;
+        }
+
+        return hiddenMap[name];
+    }
+
+    /**
      * Is column resize enabled.
      *
      * @return {boolean}
@@ -219,13 +245,6 @@ class ListSettingsHelper {
         }
 
         this.columnWidthChangeFunctions.splice(index, 1);
-    }
-
-    /**
-     * Control width.
-     */
-    controlWidth() {
-
     }
 }
 
