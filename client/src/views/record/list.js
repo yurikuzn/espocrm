@@ -2143,7 +2143,7 @@ class ListRecordView extends View {
         this._renderEmpty = this.options.skipBuildRows;
 
         if (this.columnResize && this._listSettingsHelper) {
-            new ListColumnResizeHelper(this);
+            new ListColumnResizeHelper(this, this._listSettingsHelper);
         }
     }
 
@@ -2578,6 +2578,8 @@ class ListRecordView extends View {
         const hiddenMap = this._listSettingsHelper ? this._listSettingsHelper.getHiddenColumnMap() : {};
         const resize = this._hasColumnResize();
 
+        const widthMap = this._listSettingsHelper ? this._listSettingsHelper.getColumnWidthMap() : {};
+
         // noinspection JSIncompatibleTypesComparison
         if (!this.listLayout || !Array.isArray(this.listLayout)) {
             return [];
@@ -2588,7 +2590,13 @@ class ListRecordView extends View {
         for (const col of this.listLayout) {
             let width = false;
 
-            if ('width' in col && col.width !== null) {
+            const itemName = col.name;
+
+            if (itemName && (itemName in widthMap)) {
+                const widthItem = widthMap[itemName];
+
+                width = widthItem.value + widthItem.unit;
+            } else if ('width' in col && col.width !== null) {
                 width = col.width + '%';
             } else if ('widthPx' in col) {
                 width = col.widthPx + 'px';
@@ -2596,7 +2604,6 @@ class ListRecordView extends View {
                 emptyWidthMet = true;
             }
 
-            const itemName = col.name;
             const label = col.label || itemName;
 
             const item = {

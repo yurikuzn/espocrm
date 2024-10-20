@@ -58,10 +58,13 @@ export default class ListColumnResizeHelper {
 
     /**
      * @param {import('views/record/list').default} view
+     * @param {import('helpers/list/settings').default} helper
      */
-    constructor(view) {
+    constructor(view, helper) {
         /** @private */
         this.view = view;
+        /** @private */
+        this.helper = helper;
 
         this.onMouseUpBind = this.onMouseUp.bind(this);
         this.onMouseMoveBind = this.onMouseMove.bind(this);
@@ -155,15 +158,33 @@ export default class ListColumnResizeHelper {
 
     /**
      * @private
-     * @param {MouseEvent} event
      */
-    onMouseUp(event) {
+    onMouseUp() {
         document.removeEventListener('mousemove', this.onMouseMoveBind);
         document.removeEventListener('mouseup', this.onMouseUpBind);
-
         document.body.style.cursor = '';
 
-        console.log(event);
+        const width = this.item.newWidth;
+
+        let unit = 'px';
+        let value = width;
+
+        if (!this.item.inPx) {
+            const tableWidth = this.item.thElement.closest('table').clientWidth;
+
+            const factor = Math.pow(10, 4);
+            const widthPercents = width / tableWidth;
+            const widthPercentsRounded = Math.floor(factor * widthPercents * 100) / factor;
+
+            this.item.thElement.style.width = widthPercentsRounded.toString() + '%';
+
+            unit = '%';
+            value = widthPercentsRounded;
+
+            //console.log(width, widthPercents, Math.floor(factor * widthPercents) / factor, widthPercentsRounded);
+        }
+
+        this.helper.storeColumnWidth(this.item.name, {value: value, unit: unit});
 
         this.item = undefined;
     }

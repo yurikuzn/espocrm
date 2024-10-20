@@ -85,7 +85,8 @@ class RecordListSettingsView extends View {
         const hasColumnResize = this.columnResize && (columnResize || this.isColumnResizeApplicable());
 
         const isNotDefault =
-            dataList.find(item => item.hiddenDefault !== item.hidden) !== undefined;
+            dataList.find(item => item.hiddenDefault !== item.hidden) !== undefined ||
+            Object.keys(this.helper.getColumnWidthMap()).length > 0;
 
         return {
             dataList: dataList,
@@ -209,6 +210,7 @@ class RecordListSettingsView extends View {
      */
     resetToDefault() {
         this.helper.clearHiddenColumnMap();
+        this.helper.clearColumnWidthMap();
 
         this.onChange({subject: 'resetToDefault'});
     }
