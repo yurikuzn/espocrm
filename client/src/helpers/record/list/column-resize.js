@@ -100,6 +100,11 @@ export default class ListColumnResizeHelper {
 
         document.addEventListener('mouseup', this.onMouseUpBind);
         document.addEventListener('mousemove', this.onMouseMoveBind);
+
+        const trElement = this.item.thElement.closest('tr');
+
+        trElement.classList.add('being-column-resized');
+        this.item.thElement.classList.add('being-resized');
     }
 
     /**
@@ -170,7 +175,9 @@ export default class ListColumnResizeHelper {
         let value = width;
 
         if (!this.item.inPx) {
-            const tableWidth = this.item.thElement.closest('table').clientWidth;
+            const tableElement = this.item.thElement.closest('table');
+
+            const tableWidth = tableElement.clientWidth;
 
             const factor = Math.pow(10, 4);
             const widthPercents = width / tableWidth;
@@ -183,6 +190,11 @@ export default class ListColumnResizeHelper {
         }
 
         this.helper.storeColumnWidth(this.item.name, {value: value, unit: unit});
+
+        const trElement = this.item.thElement.closest('tr')
+
+        trElement.classList.remove('being-column-resized');
+        this.item.thElement.classList.remove('being-resized');
 
         this.item = undefined;
     }

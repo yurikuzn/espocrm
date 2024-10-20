@@ -1057,13 +1057,21 @@ input.global-search-input {
                 }
             }
 
-            &:hover {
+            &:hover,
+            &.being-column-resized {
                 > th {
                     > .column-resizer {
                         display: block;
                     }
 
                     position: relative;
+
+                    &.being-resized {
+                        &,
+                        > a[data-name] {
+                            color: var(--state-warning-text);
+                        }
+                    }
                 }
             }
         }
