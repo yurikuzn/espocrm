@@ -171,6 +171,12 @@ export default class ListColumnResizeHelper {
 
         const width = this.item.newWidth;
 
+        if (width === null) {
+            this.disableResizingState();
+
+            return;
+        }
+
         let unit = 'px';
         let value = width;
 
@@ -191,6 +197,13 @@ export default class ListColumnResizeHelper {
 
         this.helper.storeColumnWidth(this.item.name, {value: value, unit: unit});
 
+        this.disableResizingState();
+    }
+
+    /**
+     * @private
+     */
+    disableResizingState() {
         const trElement = this.item.thElement.closest('tr')
 
         trElement.classList.remove('being-column-resized');

@@ -2594,7 +2594,19 @@ class ListRecordView extends View {
 
         let emptyWidthMet = false;
 
-        for (const col of this.listLayout) {
+        const visibleColumns = this.listLayout.filter(it => {
+            if (!this._listSettingsHelper) {
+                return true;
+            }
+
+            if (it.name && this._listSettingsHelper.isColumnHidden(it.name, it.hidden)) {
+                return false;
+            }
+
+            return true;
+        })
+
+        for (const col of visibleColumns) {
             let width = false;
 
             const itemName = col.name;
@@ -2618,7 +2630,7 @@ class ListRecordView extends View {
                 isSortable: !(col.notSortable || false),
                 width: width,
                 align: ('align' in col) ? col.align : false,
-                resizable: resize && width,
+                resizable: resize && width && visibleColumns.length > 1,
                 resizeOnRight: resize && width && !emptyWidthMet,
             };
 
@@ -2640,20 +2652,6 @@ class ListRecordView extends View {
 
                 if (item.isSorted) {
                     item.isDesc = this.collection.order === 'desc' ;
-                }
-            }
-
-            if (itemName && hiddenMap[itemName]) {
-                continue;
-            }
-
-            if (itemName) {
-                if (hiddenMap[itemName]) {
-                    continue;
-                }
-
-                if (col.hidden && !(itemName in hiddenMap)) {
-                    continue;
                 }
             }
 
