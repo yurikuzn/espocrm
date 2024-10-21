@@ -3651,11 +3651,9 @@ class ListRecordView extends View {
                 view: this,
                 helper: this._listSettingsHelper,
                 layoutProvider: () => this.listLayout,
-            })
+            });
 
             helper.adjust();
-
-            //this._columnResizeHelper.controlWidth();
         }
 
         this._internalLayout = null;
