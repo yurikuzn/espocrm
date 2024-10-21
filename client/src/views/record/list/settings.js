@@ -41,17 +41,19 @@ class RecordListSettingsView extends View {
                 tabindex="0"
             ><span class="caret"></span></a>
             <ul class="dropdown-menu pull-right">
+                {{#if dataList.length}}
                 <li class="dropdown-header">{{fieldsLabel}}</li>
-            {{#each dataList}}
-                <li>
-                    <a
-                        role="button"
-                        tabindex="0"
-                        data-action="toggleColumn"
-                        data-name="{{name}}"
-                    ><span class="check-icon fas fa-check pull-right{{#if hidden}} hidden{{/if}}"></span><div>{{label}}</div></a>
-                </li>
-            {{/each}}
+                    {{#each dataList}}
+                        <li>
+                            <a
+                                role="button"
+                                tabindex="0"
+                                data-action="toggleColumn"
+                                data-name="{{name}}"
+                            ><span class="check-icon fas fa-check pull-right{{#if hidden}} hidden{{/if}}"></span><div>{{label}}</div></a>
+                        </li>
+                    {{/each}}
+                {{/if}}
             {{#if hasColumnResize}}
                 <li class="divider"></li>
                 <li>
@@ -90,7 +92,7 @@ class RecordListSettingsView extends View {
 
         return {
             dataList: dataList,
-            toDisplay: dataList.length > 0,
+            toDisplay: dataList.length > 0 || columnResize,
             isNotDefault: isNotDefault,
             fieldsLabel: this.translate('Fields'),
             hasColumnResize: hasColumnResize,
@@ -139,6 +141,10 @@ class RecordListSettingsView extends View {
         this.onColumnWidthChangeBind = this.onColumnWidthChange.bind(this);
 
         this.helper.subscribeToColumnWidthChange(this.onColumnWidthChangeBind);
+
+        if (window.innerWidth < this.getThemeManager().getParam('screenWidthXs')) {
+            this.columnResize = false;
+        }
     }
 
     onRemove() {

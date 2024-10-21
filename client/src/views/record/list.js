@@ -2582,7 +2582,6 @@ class ListRecordView extends View {
     _getHeaderDefs() {
         const defs = [];
 
-        const hiddenMap = this._listSettingsHelper ? this._listSettingsHelper.getHiddenColumnMap() : {};
         const resize = this._hasColumnResize();
 
         const widthMap = this._listSettingsHelper ? this._listSettingsHelper.getColumnWidthMap() : {};
