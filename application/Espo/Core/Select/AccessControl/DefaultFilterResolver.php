@@ -46,6 +46,10 @@ class DefaultFilterResolver implements FilterResolver
             return 'onlyOwn';
         }
 
+        if ($this->acl->checkReadOnlyShared($this->entityType)) {
+            return 'onlyShared';
+        }
+
         if ($this->acl->checkReadOnlyTeam($this->entityType)) {
             return 'onlyTeam';
         }

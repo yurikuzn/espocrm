@@ -29,38 +29,18 @@
 
 namespace Espo\Core\Acl;
 
+use Espo\ORM\Entity;
+use Espo\Entities\User;
+
 /**
- * Access levels for a user.
+ * @template TEntity of Entity
  */
-interface Table
+interface OwnershipSharedChecker extends OwnershipChecker
 {
-    public const LEVEL_YES = 'yes';
-    public const LEVEL_NO = 'no';
-    public const LEVEL_ALL = 'all';
-    public const LEVEL_TEAM = 'team';
-    public const LEVEL_SHARED = 'shared';
-    public const LEVEL_OWN = 'own';
-
-    public const ACTION_READ = 'read';
-    public const ACTION_STREAM = 'stream';
-    public const ACTION_EDIT = 'edit';
-    public const ACTION_DELETE = 'delete';
-    public const ACTION_CREATE = 'create';
-
     /**
-     * Get scope data.
-     */
-    public function getScopeData(string $scope): ScopeData;
-
-    /**
-     * Get field data.
-     */
-    public function getFieldData(string $scope, string $field): FieldData;
-
-    /**
-     * Get a permission level.
+     * Check whether an entity is shared with a user.
      *
-     * @return self::ACTION_*
+     * @param TEntity $entity
      */
-    public function getPermissionLevel(string $permission): string;
+    public function checkShared(User $user, Entity $entity): bool;
 }

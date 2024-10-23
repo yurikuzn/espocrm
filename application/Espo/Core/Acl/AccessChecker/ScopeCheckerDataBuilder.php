@@ -38,6 +38,7 @@ class ScopeCheckerDataBuilder
 {
     private Closure $isOwnChecker;
     private Closure $inTeamChecker;
+    private Closure $isSharedChecker;
 
     public function __construct()
     {
@@ -84,6 +85,19 @@ class ScopeCheckerDataBuilder
         return $this;
     }
 
+    public function setIsShared(bool $value): self
+    {
+        if ($value) {
+            $this->isSharedChecker = fn(): bool => true;
+
+            return $this;
+        }
+
+        $this->isSharedChecker = fn(): bool => false;
+
+        return $this;
+    }
+
     /**
      * @param Closure(): bool $checker
      */
@@ -104,8 +118,18 @@ class ScopeCheckerDataBuilder
         return $this;
     }
 
+    /**
+     * @param Closure(): bool $checker
+     */
+    public function setIsSharedChecker(Closure $checker): self
+    {
+        $this->isSharedChecker = $checker;
+
+        return $this;
+    }
+
     public function build(): ScopeCheckerData
     {
-        return new ScopeCheckerData($this->isOwnChecker, $this->inTeamChecker);
+        return new ScopeCheckerData($this->isOwnChecker, $this->inTeamChecker, $this->isSharedChecker);
     }
 }

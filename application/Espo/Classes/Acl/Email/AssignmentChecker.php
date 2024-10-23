@@ -40,7 +40,7 @@ class AssignmentChecker extends DefaultAssignmentChecker
         return true;
     }
 
-    protected function isPermittedAssignedUsers(User $user, Entity $entity): bool
+    protected function isPermittedUsers(User $user, Entity $entity): bool
     {
         return true;
     }

@@ -50,6 +50,7 @@ class BeforeSaveValidate implements SaveHook
         Table::LEVEL_YES,
         Table::LEVEL_ALL,
         Table::LEVEL_TEAM,
+        Table::LEVEL_SHARED,
         Table::LEVEL_OWN,
         Table::LEVEL_NO,
     ];

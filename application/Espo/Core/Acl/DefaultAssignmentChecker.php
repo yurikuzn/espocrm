@@ -30,6 +30,7 @@
 namespace Espo\Core\Acl;
 
 use Espo\Core\ORM\Entity as CoreEntity;
+use Espo\Core\ORM\Type\FieldType;
 use Espo\Repositories\User as UserRepository;
 use Espo\ORM\Defs;
 use Espo\ORM\Entity;
@@ -46,6 +47,7 @@ class DefaultAssignmentChecker implements AssignmentChecker
     protected const FIELD_TEAMS = 'teams';
     protected const ATTR_ASSIGNED_USER_ID = 'assignedUserId';
     protected const ATTR_ASSIGNED_USERS_IDS = 'assignedUsersIds';
+    private const FIELD_COLLABORATORS = 'collaborators';
 
     public function __construct(
         private AclManager $aclManager,
@@ -64,12 +66,27 @@ class DefaultAssignmentChecker implements AssignmentChecker
         }
 
         if ($this->hasAssignedUsersField($entity->getEntityType())) {
-            if (!$this->isPermittedAssignedUsers($user, $entity)) {
+            if (!$this->isPermittedUsers($user, $entity, self::FIELD_ASSIGNED_USERS)) {
+                return false;
+            }
+        }
+
+        if ($this->hasCollaboratorsField($entity->getEntityType())) {
+            if (!$this->isPermittedUsers($user, $entity, self::FIELD_COLLABORATORS)) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    private function hasCollaboratorsField(string $entityType)
+    {
+        $entityDefs = $this->ormDefs->getEntity($entityType);
+
+        return
+            $entityDefs->tryGetField(self::FIELD_COLLABORATORS)?->getType() === FieldType::LINK_MULTIPLE &&
+            $entityDefs->tryGetRelation(self::FIELD_COLLABORATORS)?->tryGetForeignEntityType() === User::ENTITY_TYPE;
     }
 
     private function hasAssignedUsersField(string $entityType): bool
@@ -78,9 +95,9 @@ class DefaultAssignmentChecker implements AssignmentChecker
 
         return
             $entityDefs->hasField(self::FIELD_ASSIGNED_USERS) &&
-            $entityDefs->getField(self::FIELD_ASSIGNED_USERS)->getType() === 'linkMultiple' &&
+            $entityDefs->getField(self::FIELD_ASSIGNED_USERS)->getType() === FieldType::LINK_MULTIPLE &&
             $entityDefs->hasRelation(self::FIELD_ASSIGNED_USERS) &&
-            $entityDefs->getRelation(self::FIELD_ASSIGNED_USERS)->getForeignEntityType() === 'User';
+            $entityDefs->getRelation(self::FIELD_ASSIGNED_USERS)->getForeignEntityType() === User::ENTITY_TYPE;
     }
 
     protected function isPermittedAssignedUser(User $user, Entity $entity): bool
@@ -237,18 +254,20 @@ class DefaultAssignmentChecker implements AssignmentChecker
         return true;
     }
 
-    protected function isPermittedAssignedUsers(User $user, Entity $entity): bool
+    protected function isPermittedUsers(User $user, Entity $entity, string $field): bool
     {
         if (!$entity instanceof CoreEntity) {
             return true;
         }
 
-        if (!$entity->hasLinkMultipleField(self::FIELD_ASSIGNED_USERS)) {
+        $idsAttr = $field . 'Ids';
+
+        if (!$entity->hasLinkMultipleField($field)) {
             return true;
         }
 
         if ($user->isPortal()) {
-            if (!$entity->isAttributeChanged(self::ATTR_ASSIGNED_USERS_IDS)) {
+            if (!$entity->isAttributeChanged($idsAttr)) {
                 return true;
             }
 
@@ -268,22 +287,22 @@ class DefaultAssignmentChecker implements AssignmentChecker
 
         if (!$entity->isNew()) {
             // Might be on purpose.
-            $entity->getLinkMultipleIdList(self::FIELD_ASSIGNED_USERS);
+            $entity->getLinkMultipleIdList($field);
 
-            if ($entity->isAttributeChanged(self::ATTR_ASSIGNED_USERS_IDS)) {
+            if ($entity->isAttributeChanged($idsAttr)) {
                 $toProcess = true;
             }
         } else {
             $toProcess = true;
         }
 
-        $userIdList = $entity->getLinkMultipleIdList(self::FIELD_ASSIGNED_USERS);
+        $userIdList = $entity->getLinkMultipleIdList($field);
 
         if (!$toProcess) {
             return true;
         }
 
-        if (empty($userIdList)) {
+        if ($userIdList === []) {
             if ($assignmentPermission === Table::LEVEL_NO && !$user->isApi()) {
                 return false;
             }
@@ -292,22 +311,23 @@ class DefaultAssignmentChecker implements AssignmentChecker
         }
 
         if ($assignmentPermission === Table::LEVEL_NO) {
-            return $this->isPermittedAssignedUsersLevelNo($user, $entity);
+            return $this->isPermittedUsersLevelNo($user, $entity, $field);
         }
 
         if ($assignmentPermission === Table::LEVEL_TEAM) {
-            return $this->isPermittedAssignedUsersLevelTeam($user, $entity);
+            return $this->isPermittedUsersLevelTeam($user, $entity, $field);
         }
 
         /** @phpstan-ignore-next-line */
         return true;
     }
 
-    private function isPermittedAssignedUsersLevelNo(User $user, CoreEntity $entity): bool
+    private function isPermittedUsersLevelNo(User $user, CoreEntity $entity, string $field): bool
     {
-        $userIdList = $entity->getLinkMultipleIdList(self::FIELD_ASSIGNED_USERS);
+        $idsAttr = $field . 'Ids';
 
-        $fetchedAssignedUserIdList = $entity->getFetched(self::ATTR_ASSIGNED_USERS_IDS);
+        $userIdList = $entity->getLinkMultipleIdList($field);
+        $fetchedAssignedUserIdList = $entity->getFetched($idsAttr);
 
         foreach ($userIdList as $userId) {
             if (!$entity->isNew() && in_array($userId, $fetchedAssignedUserIdList)) {
@@ -322,12 +342,12 @@ class DefaultAssignmentChecker implements AssignmentChecker
         return true;
     }
 
-    private function isPermittedAssignedUsersLevelTeam(User $user, CoreEntity $entity): bool
+    private function isPermittedUsersLevelTeam(User $user, CoreEntity $entity, string $field): bool
     {
-        $userIdList = $entity->getLinkMultipleIdList(self::FIELD_ASSIGNED_USERS);
+        $idsAttr = $field . 'Ids';
 
-        $fetchedAssignedUserIdList = $entity->getFetched(self::ATTR_ASSIGNED_USERS_IDS);
-
+        $userIdList = $entity->getLinkMultipleIdList($field);
+        $fetchedAssignedUserIdList = $entity->getFetched($idsAttr);
         $teamIdList = $user->getLinkMultipleIdList(self::FIELD_TEAMS);
 
         foreach ($userIdList as $userId) {

@@ -29,6 +29,7 @@
 
 namespace Espo\Core;
 
+use Espo\Core\Acl\OwnershipSharedChecker;
 use Espo\Core\Acl\Permission;
 use Espo\ORM\Entity;
 use Espo\ORM\EntityManager;
@@ -225,6 +226,14 @@ class AclManager
     }
 
     /**
+     * Whether 'read' access is set to 'shared' for a specific scope.
+     */
+    public function checkReadOnlyShared(User $user, string $scope): bool
+    {
+        return $this->getLevel($user, $scope, Table::ACTION_READ) === Table::LEVEL_SHARED;
+    }
+
+    /**
      * Whether 'read' access is set to 'own' for a specific scope.
      */
     public function checkReadOnlyOwn(User $user, string $scope): bool
@@ -403,6 +412,22 @@ class AclManager
         }
 
         return $checker->checkTeam($user, $entity);
+    }
+
+    /**
+     * Check whether an entity is shared with a user.
+     *
+     * @since 8.5.0
+     */
+    public function checkOwnershipShared(User $user, Entity $entity): bool
+    {
+        $checker = $this->getOwnershipChecker($entity->getEntityType());
+
+        if (!$checker instanceof OwnershipSharedChecker) {
+            return false;
+        }
+
+        return $checker->checkShared($user, $entity);
     }
 
     /**

@@ -73,14 +73,13 @@ class DefaultAccessChecker implements
         $checkerData = ScopeCheckerData
             ::createBuilder()
             ->setIsOwnChecker(
-                function () use ($user, $entity): bool {
-                    return $this->aclManager->checkOwnershipOwn($user, $entity);
-                }
+                fn(): bool => $this->aclManager->checkOwnershipOwn($user, $entity)
             )
             ->setInTeamChecker(
-                function () use ($user, $entity): bool {
-                    return $this->aclManager->checkOwnershipTeam($user, $entity);
-                }
+                fn(): bool => $this->aclManager->checkOwnershipTeam($user, $entity)
+            )
+            ->setIsSharedChecker(
+                fn(): bool => $this->aclManager->checkOwnershipShared($user, $entity)
             )
             ->build();
 
@@ -93,6 +92,7 @@ class DefaultAccessChecker implements
             ::createBuilder()
             ->setIsOwn(true)
             ->setInTeam(true)
+            ->setIsShared(true)
             ->build();
 
         return $this->scopeChecker->check($data, $action, $checkerData);

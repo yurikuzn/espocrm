@@ -31,12 +31,11 @@ namespace Espo\Core\Select\AccessControl\Filters;
 
 use Espo\Core\Select\AccessControl\Filter;
 use Espo\Core\Select\Helpers\FieldHelper;
-use Espo\Entities\Team;
 use Espo\Entities\User;
 use Espo\ORM\Defs;
 use Espo\ORM\Query\SelectBuilder as QueryBuilder;
 
-class OnlyTeam implements Filter
+class OnlyShared implements Filter
 {
     public function __construct(
         private User $user,
@@ -47,23 +46,31 @@ class OnlyTeam implements Filter
 
     public function apply(QueryBuilder $queryBuilder): void
     {
-        if (!$this->fieldHelper->hasTeamsField()) {
+        if (!$this->fieldHelper->hasCollaboratorsField()) {
             $queryBuilder->where(['id' => null]);
 
             return;
         }
 
+        $orGroup = [];
+
+        $relationDefs = $this->defs
+            ->getEntity($this->entityType)
+            ->getRelation('collaborators');
+
+        $middleEntityType = ucfirst($relationDefs->getRelationshipName());
+        $key1 = $relationDefs->getMidKey();
+        $key2 = $relationDefs->getForeignMidKey();
+
         $subQueryBuilder = QueryBuilder::create()
             ->select('id')
             ->from($this->entityType)
-            ->leftJoin(Team::RELATIONSHIP_ENTITY_TEAM, 'entityTeam', [
-                'entityTeam.entityId:' => 'id',
-                'entityTeam.entityType' => $this->entityType,
-                'entityTeam.deleted' => false,
+            ->leftJoin($middleEntityType, 'collaboratorsMiddle', [
+                "collaboratorsMiddle.$key1:" => 'id',
+                'collaboratorsMiddle.deleted' => false,
             ]);
 
-        // Empty list is converted to false statement by ORM.
-        $orGroup = ['entityTeam.teamId' => $this->user->getTeamIdList()];
+        $orGroup["collaboratorsMiddle.$key2"] = $this->user->getId();
 
         if ($this->fieldHelper->hasAssignedUsersField()) {
             $relationDefs = $this->defs
@@ -84,23 +91,6 @@ class OnlyTeam implements Filter
             $orGroup['assignedUserId'] = $this->user->getId();
         } else if ($this->fieldHelper->hasCreatedByField()) {
             $orGroup['createdById'] = $this->user->getId();
-        }
-
-        if ($this->fieldHelper->hasCollaboratorsField()) {
-            $relationDefs = $this->defs
-                ->getEntity($this->entityType)
-                ->getRelation('collaborators');
-
-            $middleEntityType = ucfirst($relationDefs->getRelationshipName());
-            $key1 = $relationDefs->getMidKey();
-            $key2 = $relationDefs->getForeignMidKey();
-
-            $subQueryBuilder->leftJoin($middleEntityType, 'collaboratorsMiddle', [
-                "collaboratorsMiddle.$key1:" => 'id',
-                'collaboratorsMiddle.deleted' => false,
-            ]);
-
-            $orGroup["collaboratorsMiddle.$key2"] = $this->user->getId();
         }
 
         $subQuery = $subQueryBuilder

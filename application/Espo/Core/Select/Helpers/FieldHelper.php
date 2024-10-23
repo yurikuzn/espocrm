@@ -55,6 +55,7 @@ class FieldHelper
     private const LINK_ASSIGNED_USERS = 'assignedUsers';
     private const LINK_ASSIGNED_USER = 'assignedUser';
     private const LINK_CREATED_BY = 'createdBy';
+    private const LINK_COLLABORATORS = 'collaborators';
 
     public function __construct(private string $entityType, private EntityManager $entityManager)
     {}
@@ -70,6 +71,19 @@ class FieldHelper
             $this->getSeed()->hasRelation(self::LINK_ASSIGNED_USERS) &&
             $this->getSeed()->hasAttribute(self::LINK_ASSIGNED_USERS . 'Ids') &&
             $this->getRelationEntityType(self::LINK_ASSIGNED_USERS) === User::ENTITY_TYPE
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function hasCollaboratorsField(): bool
+    {
+        if (
+            $this->getSeed()->hasRelation(self::LINK_COLLABORATORS) &&
+            $this->getSeed()->hasAttribute(self::LINK_COLLABORATORS . 'Ids') &&
+            $this->getRelationEntityType(self::LINK_COLLABORATORS) === User::ENTITY_TYPE
         ) {
             return true;
         }

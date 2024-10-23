@@ -93,6 +93,14 @@ class Acl
     }
 
     /**
+     * Whether 'read' access is set to 'shared' for a specific scope.
+     */
+    public function checkReadOnlyShared(string $scope): bool
+    {
+        return $this->aclManager->checkReadOnlyShared($this->user, $scope);
+    }
+
+    /**
      * Whether 'read' access is set to 'own' for a specific scope.
      */
     public function checkReadOnlyOwn(string $scope): bool
@@ -210,6 +218,16 @@ class Acl
     public function checkOwnershipTeam(Entity $entity): bool
     {
         return $this->aclManager->checkOwnershipTeam($this->user, $entity);
+    }
+
+    /**
+     * Check whether an entity is shared with a user.
+     *
+     * @since 8.5.0
+     */
+    public function checkOwnershipShared(Entity $entity): bool
+    {
+        return $this->aclManager->checkOwnershipShared($this->user, $entity);
     }
 
     /**

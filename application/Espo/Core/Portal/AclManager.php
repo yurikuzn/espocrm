@@ -157,6 +157,15 @@ class AclManager extends InternalAclManager
         return false;
     }
 
+    public function checkReadOnlyShared(User $user, string $scope): bool
+    {
+        if ($this->checkUserIsNotPortal($user)) {
+            return $this->internalAclManager->checkReadOnlyShared($user, $scope);
+        }
+
+        return false;
+    }
+
     public function checkReadNo(User $user, string $scope): bool
     {
         if ($this->checkUserIsNotPortal($user)) {
@@ -232,13 +241,22 @@ class AclManager extends InternalAclManager
         return parent::checkOwnershipOwn($user, $entity);
     }
 
+    public function checkOwnershipShared(User $user, Entity $entity): bool
+    {
+        if ($this->checkUserIsNotPortal($user)) {
+            return $this->internalAclManager->checkOwnershipShared($user, $entity);
+        }
+
+        return false;
+    }
+
     public function checkOwnershipTeam(User $user, Entity $entity): bool
     {
         if ($this->checkUserIsNotPortal($user)) {
             return $this->internalAclManager->checkOwnershipTeam($user, $entity);
         }
 
-        return parent::checkOwnershipOwn($user, $entity);
+        return false;
     }
 
     /**

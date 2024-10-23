@@ -70,6 +70,7 @@ class DefaultTable implements Table
         self::LEVEL_YES,
         self::LEVEL_ALL,
         self::LEVEL_TEAM,
+        self::LEVEL_SHARED,
         self::LEVEL_OWN,
         self::LEVEL_NO,
     ];
