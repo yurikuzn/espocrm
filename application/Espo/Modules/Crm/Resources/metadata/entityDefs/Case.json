@@ -119,10 +119,8 @@
             "view": "views/fields/teams"
         },
         "collaborators": {
-            "type": "hasMany",
-            "entity": "User",
-            "relationName": "entityCollaborator",
-            "layoutRelationshipsDisabled": true
+            "type": "linkMultiple",
+            "view": "views/fields/collaborators"
         },
         "attachments": {
             "type": "attachmentMultiple"

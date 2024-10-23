@@ -21,6 +21,13 @@
                 "type": "bool",
                 "tooltip": true
             }
+        },
+        "collaborators": {
+            "location": "scopes",
+            "fieldDefs": {
+                "type": "bool",
+                "tooltip": true
+            }
         }
     },
     "Contact": {
@@ -40,6 +47,13 @@
             }
         },
         "assignedUsers": {
+            "location": "scopes",
+            "fieldDefs": {
+                "type": "bool",
+                "tooltip": true
+            }
+        },
+        "collaborators": {
             "location": "scopes",
             "fieldDefs": {
                 "type": "bool",
@@ -69,6 +83,13 @@
                 "type": "bool",
                 "tooltip": true
             }
+        },
+        "collaborators": {
+            "location": "scopes",
+            "fieldDefs": {
+                "type": "bool",
+                "tooltip": true
+            }
         }
     },
     "Opportunity": {
@@ -78,10 +99,24 @@
                 "type": "bool",
                 "tooltip": true
             }
+        },
+        "collaborators": {
+            "location": "scopes",
+            "fieldDefs": {
+                "type": "bool",
+                "tooltip": true
+            }
         }
     },
     "Document": {
         "assignedUsers": {
+            "location": "scopes",
+            "fieldDefs": {
+                "type": "bool",
+                "tooltip": true
+            }
+        },
+        "collaborators": {
             "location": "scopes",
             "fieldDefs": {
                 "type": "bool",
@@ -100,6 +135,13 @@
     },
     "KnowledgeBaseArticle": {
         "assignedUsers": {
+            "location": "scopes",
+            "fieldDefs": {
+                "type": "bool",
+                "tooltip": true
+            }
+        },
+        "collaborators": {
             "location": "scopes",
             "fieldDefs": {
                 "type": "bool",
@@ -210,6 +252,15 @@
             }
         }
     },
+    "TargetList": {
+        "collaborators": {
+            "location": "scopes",
+            "fieldDefs": {
+                "type": "bool",
+                "tooltip": true
+            }
+        }
+    },
     "@Event": {
         "activityStatusList": {
             "location": "scopes",
@@ -248,6 +299,13 @@
             }
         },
         "assignedUsers": {
+            "location": "scopes",
+            "fieldDefs": {
+                "type": "bool",
+                "tooltip": true
+            }
+        },
+        "collaborators": {
             "location": "scopes",
             "fieldDefs": {
                 "type": "bool",

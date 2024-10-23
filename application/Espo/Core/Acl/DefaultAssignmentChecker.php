@@ -46,7 +46,6 @@ class DefaultAssignmentChecker implements AssignmentChecker
     protected const FIELD_ASSIGNED_USERS = 'assignedUsers';
     protected const FIELD_TEAMS = 'teams';
     protected const ATTR_ASSIGNED_USER_ID = 'assignedUserId';
-    protected const ATTR_ASSIGNED_USERS_IDS = 'assignedUsersIds';
     private const FIELD_COLLABORATORS = 'collaborators';
 
     public function __construct(
