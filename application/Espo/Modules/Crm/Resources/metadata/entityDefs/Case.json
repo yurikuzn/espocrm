@@ -118,6 +118,12 @@
             "type": "linkMultiple",
             "view": "views/fields/teams"
         },
+        "collaborators": {
+            "type": "hasMany",
+            "entity": "User",
+            "relationName": "entityCollaborator",
+            "layoutRelationshipsDisabled": true
+        },
         "attachments": {
             "type": "attachmentMultiple"
         }
@@ -139,6 +145,12 @@
             "type": "hasMany",
             "entity": "Team",
             "relationName": "entityTeam",
+            "layoutRelationshipsDisabled": true
+        },
+        "collaborators": {
+            "type": "hasMany",
+            "entity": "User",
+            "relationName": "entityCollaborator",
             "layoutRelationshipsDisabled": true
         },
         "inboundEmail": {
