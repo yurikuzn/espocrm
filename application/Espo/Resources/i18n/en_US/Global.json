@@ -457,6 +457,7 @@
         "salutationName": "Salutation",
         "assignedUser": "Assigned User",
         "assignedUsers": "Assigned Users",
+        "collaborators": "Collaborators",
         "emailAddress": "Email",
         "emailAddressData": "Email Address Data",
         "emailAddressIsOptedOut": "Email Address is Opted-Out",
@@ -493,6 +494,7 @@
     "links": {
         "assignedUser": "Assigned User",
         "assignedUsers": "Assigned Users",
+        "collaborators": "Collaborators",
         "createdBy": "Created By",
         "modifiedBy": "Modified By",
         "team": "Team",
