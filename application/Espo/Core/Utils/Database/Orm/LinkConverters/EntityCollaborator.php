@@ -27,21 +27,42 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Classes\Acl\Email;
+namespace Espo\Core\Utils\Database\Orm\LinkConverters;
 
+use Espo\Core\Utils\Database\Orm\Defs\AttributeDefs;
+use Espo\Core\Utils\Database\Orm\Defs\EntityDefs;
+use Espo\Core\Utils\Database\Orm\Defs\RelationDefs;
+use Espo\Core\Utils\Database\Orm\LinkConverter;
 use Espo\Entities\User;
-use Espo\ORM\Entity;
-use Espo\Core\Acl\DefaultAssignmentChecker;
+use Espo\ORM\Defs\RelationDefs as LinkDefs;
+use Espo\ORM\Type\AttributeType;
+use Espo\ORM\Type\RelationType;
 
-class AssignmentChecker extends DefaultAssignmentChecker
+/**
+ * @noinspection PhpUnused
+ */
+class EntityCollaborator implements LinkConverter
 {
-    protected function isPermittedAssignedUser(User $user, Entity $entity): bool
-    {
-        return true;
-    }
+    private const ENTITY_TYPE_LENGTH = 100;
 
-    protected function isPermittedAssignedUsers(User $user, Entity $entity): bool
+    public function convert(LinkDefs $linkDefs, string $entityType): EntityDefs
     {
-        return true;
+        $name = $linkDefs->getName();
+        $relationshipName = $linkDefs->getRelationshipName();
+
+        return EntityDefs::create()
+            ->withRelation(
+                RelationDefs::create($name)
+                    ->withType(RelationType::MANY_MANY)
+                    ->withForeignEntityType(User::ENTITY_TYPE)
+                    ->withRelationshipName($relationshipName)
+                    ->withMidKeys('entityId', 'userId')
+                    ->withConditions(['entityType' => $entityType])
+                    ->withAdditionalColumn(
+                        AttributeDefs::create('entityType')
+                            ->withType(AttributeType::VARCHAR)
+                            ->withLength(self::ENTITY_TYPE_LENGTH)
+                    )
+            );
     }
 }

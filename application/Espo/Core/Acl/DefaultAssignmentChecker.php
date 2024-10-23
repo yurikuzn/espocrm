@@ -66,7 +66,7 @@ class DefaultAssignmentChecker implements AssignmentChecker
         }
 
         if ($this->hasAssignedUsersField($entity->getEntityType())) {
-            if (!$this->isPermittedUsers($user, $entity, self::FIELD_ASSIGNED_USERS)) {
+            if (!$this->isPermittedAssignedUsers($user, $entity)) {
                 return false;
             }
         }
@@ -80,7 +80,7 @@ class DefaultAssignmentChecker implements AssignmentChecker
         return true;
     }
 
-    private function hasCollaboratorsField(string $entityType)
+    private function hasCollaboratorsField(string $entityType): bool
     {
         $entityDefs = $this->ormDefs->getEntity($entityType);
 
@@ -254,7 +254,15 @@ class DefaultAssignmentChecker implements AssignmentChecker
         return true;
     }
 
-    protected function isPermittedUsers(User $user, Entity $entity, string $field): bool
+    /**
+     * Left for backward compatibility.
+     */
+    protected function isPermittedAssignedUsers(User $user, Entity $entity): bool
+    {
+        return $this->isPermittedUsers($user, $entity, self::FIELD_ASSIGNED_USERS);
+    }
+
+    private function isPermittedUsers(User $user, Entity $entity, string $field): bool
     {
         if (!$entity instanceof CoreEntity) {
             return true;
