@@ -56,7 +56,17 @@ class Acl {
 
         this.aclAllowDeleteCreated = params.aclAllowDeleteCreated;
         this.teamsFieldIsForbidden = params.teamsFieldIsForbidden;
-        this.forbiddenFieldList = params.forbiddenFieldList;
+
+        /**
+         * @type {string[]}
+         */
+        this.forbiddenFieldList = params.forbiddenFieldList || [];
+
+        /**
+         * @protected
+         * @type {boolean}
+         */
+        this.collaboratorsFieldIsForbidden = this.forbiddenFieldList.includes('collaborators');
 
         /**
          * @type {import('acl-manager').default}
@@ -81,7 +91,7 @@ class Acl {
      * @param {string|boolean|Object.<string, string>} data Access data.
      * @param {module:acl-manager~action|null} [action=null] An action.
      * @param {boolean} [precise=false] To return `null` if `inTeam == null`.
-     * @param {Object|null} [entityAccessData=null] Entity access data. `inTeam`, `isOwner`.
+     * @param {Record.<string, boolean|null>|null} [entityAccessData=null] Entity access data. `inTeam`, `isOwner`.
      * @returns {boolean|null} True if access allowed.
      */
     checkScope(data, action, precise, entityAccessData) {
@@ -89,6 +99,7 @@ class Acl {
 
         const inTeam = entityAccessData.inTeam;
         const isOwner = entityAccessData.isOwner;
+        const isShared = entityAccessData.isShared;
 
         if (this.getUser().isAdmin()) {
             if (data === false) {
@@ -143,7 +154,7 @@ class Acl {
         }
 
         if (isOwner) {
-            if (value === 'own' || value === 'team') {
+            if (value === 'own' || value === 'team' || value === 'shared') {
                 return true;
             }
         }
@@ -159,8 +170,31 @@ class Acl {
                 } else {
                     return true;
                 }
+            } else if (inTeam) {
+                return true;
+            } else if (isShared) {
+                return true;
             }
-            else if (inTeam) {
+
+            if (isShared === null) {
+                if (precise) {
+                    result = null;
+                } else {
+                    return true;
+                }
+            }
+        }
+
+        if (value === 'shared') {
+            result = false;
+
+            if (isShared === null) {
+                if (precise) {
+                    result = null;
+                } else {
+                    return true;
+                }
+            } else if (isShared) {
                 return true;
             }
         }
@@ -194,6 +228,7 @@ class Acl {
         const entityAccessData = {
             isOwner: this.checkIsOwner(model),
             inTeam: this.checkInTeam(model),
+            isShared: this.checkIsShared(model),
         };
 
         return this.checkScope(data, action, precise, entityAccessData);
@@ -304,6 +339,10 @@ class Acl {
                 return true;
             }
 
+            if (!model.hasField('teams')) {
+                return false;
+            }
+
             return null;
         }
 
@@ -318,6 +357,30 @@ class Acl {
         });
 
         return inTeam;
+    }
+
+    /**
+     * Check if a record is shared with the user.
+     *
+     * @param {module:model} model A model.
+     * @returns {boolean|null} True if shared. Null if not enough data to determine.
+     */
+    checkIsShared(model) {
+        if (!model.has('collaboratorsIds')) {
+            if (this.collaboratorsFieldIsForbidden) {
+                return true;
+            }
+
+            if (!model.hasField('collaborators')) {
+                return false;
+            }
+
+            return null;
+        }
+
+        const collaboratorsIds = model.getLinkMultipleIdList('collaborators');
+
+        return collaboratorsIds.includes(this.user.id);
     }
 
     /**
