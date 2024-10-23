@@ -428,7 +428,8 @@
     "boolFilters": {
         "onlyMy": "Only My",
         "onlyMyTeam": "My Team",
-        "followed": "Followed"
+        "followed": "Followed",
+        "shared": "Shared"
     },
     "presetFilters": {
         "followed": "Followed",
