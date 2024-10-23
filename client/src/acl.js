@@ -149,12 +149,24 @@ class Acl {
             return false;
         }
 
-        if (typeof isOwner === 'undefined') {
+        if (isOwner === undefined) {
             return true;
         }
 
         if (isOwner) {
-            if (value === 'own' || value === 'team' || value === 'shared') {
+            if (value === 'own' || value === 'shared' || value === 'team') {
+                return true;
+            }
+        }
+
+        if (isShared) {
+            if (value === 'shared' || value === 'team') {
+                return true;
+            }
+        }
+
+        if (inTeam) {
+            if (value === 'team') {
                 return true;
             }
         }
@@ -162,21 +174,7 @@ class Acl {
         let result = false;
 
         if (value === 'team') {
-            result = inTeam;
-
-            if (inTeam === null) {
-                if (precise) {
-                    result = null;
-                } else {
-                    return true;
-                }
-            } else if (inTeam) {
-                return true;
-            } else if (isShared) {
-                return true;
-            }
-
-            if (isShared === null) {
+            if (inTeam === null || isShared === null) {
                 if (precise) {
                     result = null;
                 } else {
@@ -186,16 +184,12 @@ class Acl {
         }
 
         if (value === 'shared') {
-            result = false;
-
             if (isShared === null) {
                 if (precise) {
                     result = null;
                 } else {
                     return true;
                 }
-            } else if (isShared) {
-                return true;
             }
         }
 
