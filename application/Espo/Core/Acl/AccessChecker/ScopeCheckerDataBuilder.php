@@ -42,13 +42,9 @@ class ScopeCheckerDataBuilder
 
     public function __construct()
     {
-        $this->isOwnChecker = function (): bool {
-            return false;
-        };
-
-        $this->inTeamChecker = function (): bool {
-            return false;
-        };
+        $this->isOwnChecker = fn(): bool => false;
+        $this->inTeamChecker = fn(): bool => false;
+        $this->isSharedChecker = fn(): bool => false;
     }
 
     public function setIsOwn(bool $value): self
