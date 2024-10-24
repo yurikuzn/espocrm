@@ -45,7 +45,7 @@ class RoleRecordTableView extends View {
     accessList = ['not-set', 'enabled', 'disabled']
     fieldLevelList = ['yes', 'no']
     fieldActionList = ['read', 'edit']
-    levelList = ['yes', 'all', 'team', 'shared', 'own', 'no']
+    levelList = ['yes', 'all', 'team', 'own', 'no']
     booleanLevelList = ['yes', 'no']
     booleanActionList = ['create']
 
@@ -54,7 +54,7 @@ class RoleRecordTableView extends View {
         'recordAllTeamNo': ['all', 'team', 'no'],
         'recordAllOwnNo': ['all', 'own', 'no'],
         'recordAllNo': ['all', 'no'],
-        'record': ['all', 'team', 'shared', 'own', 'no'],
+        'record': ['all', 'team', 'own', 'no'],
     }
 
     defaultLevels = {
@@ -67,7 +67,6 @@ class RoleRecordTableView extends View {
         account: 'info',
         contact: 'info',
         team: 'info',
-        shared: 'primary',
         own: 'warning',
         no: 'danger',
         enabled: 'success',
@@ -262,19 +261,7 @@ class RoleRecordTableView extends View {
 
         const type = this.aclTypeMap[scope];
 
-        let list = this.levelListMap[type] || [];
-
-        const collaborators = this.collaborators && this.getMetadata().get(`scopes.${scope}.collaborators`);
-
-        if (!collaborators) {
-            list = list.filter(it => it !== 'shared');
-        }
-
-        if (collaborators && action === 'read') {
-            list = list.filter(it => it !== 'own');
-        }
-
-        return list;
+        return this.levelListMap[type] || [];
     }
 
     setup() {

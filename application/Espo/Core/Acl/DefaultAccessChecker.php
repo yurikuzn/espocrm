@@ -68,6 +68,10 @@ class DefaultAccessChecker implements
         private ScopeChecker $scopeChecker
     ) {}
 
+    /**
+     * @param Table::ACTION_* $action
+     * @noinspection PhpDocSignatureInspection
+     */
     private function checkEntity(User $user, Entity $entity, ScopeData $data, string $action): bool
     {
         $checkerData = ScopeCheckerData
@@ -79,7 +83,7 @@ class DefaultAccessChecker implements
                 fn(): bool => $this->aclManager->checkOwnershipTeam($user, $entity)
             )
             ->setIsSharedChecker(
-                fn(): bool => $this->aclManager->checkOwnershipShared($user, $entity)
+                fn(): bool => $this->aclManager->checkOwnershipShared($user, $entity, $action)
             )
             ->build();
 

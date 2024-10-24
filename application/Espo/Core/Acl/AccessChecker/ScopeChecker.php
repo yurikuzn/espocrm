@@ -68,13 +68,13 @@ class ScopeChecker
             return false;
         }
 
-        if ($level === Table::LEVEL_OWN || $level === Table::LEVEL_SHARED || $level === Table::LEVEL_TEAM) {
+        if ($level === Table::LEVEL_OWN || $level === Table::LEVEL_TEAM) {
             if ($checkerData->isOwn()) {
                 return true;
             }
         }
 
-        if ($level === Table::LEVEL_SHARED || $level === Table::LEVEL_TEAM) {
+        if ($level === Table::LEVEL_OWN || $level === Table::LEVEL_TEAM) {
             if ($checkerData->isShared()) {
                 return true;
             }

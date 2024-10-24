@@ -38,7 +38,6 @@ interface Table
     public const LEVEL_NO = 'no';
     public const LEVEL_ALL = 'all';
     public const LEVEL_TEAM = 'team';
-    public const LEVEL_SHARED = 'shared';
     public const LEVEL_OWN = 'own';
 
     public const ACTION_READ = 'read';

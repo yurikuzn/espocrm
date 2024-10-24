@@ -112,9 +112,13 @@ class DefaultOwnershipChecker implements OwnershipOwnChecker, OwnershipTeamCheck
         return false;
     }
 
-    public function checkShared(User $user, Entity $entity): bool
+    public function checkShared(User $user, Entity $entity, string $action): bool
     {
         if (!$entity instanceof CoreEntity) {
+            return false;
+        }
+
+        if ($action !== Table::ACTION_READ && $action !== Table::ACTION_STREAM) {
             return false;
         }
 

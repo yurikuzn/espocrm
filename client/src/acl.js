@@ -154,15 +154,13 @@ class Acl {
         }
 
         if (isOwner) {
-            if (value === 'own' || value === 'shared' || value === 'team') {
+            if (value === 'own' || value === 'team') {
                 return true;
             }
         }
 
         if (isShared) {
-            if (value === 'shared' || value === 'team') {
-                return true;
-            }
+            return true;
         }
 
         if (inTeam) {
@@ -174,31 +172,17 @@ class Acl {
         let result = false;
 
         if (value === 'team') {
-            if (inTeam === null || isShared === null) {
-                if (precise) {
-                    result = null;
-                } else {
-                    return true;
-                }
-            }
-        }
-
-        if (value === 'shared') {
-            if (isShared === null) {
-                if (precise) {
-                    result = null;
-                } else {
-                    return true;
-                }
-            }
-        }
-
-        if (isOwner === null) {
-            if (precise) {
+            if (inTeam === null && precise) {
                 result = null;
-            } else {
-                return true;
             }
+        }
+
+        if (isOwner === null && precise) {
+            result = null;
+        }
+
+        if (isShared === null) {
+            result = null;
         }
 
         return result;
@@ -219,10 +203,16 @@ class Acl {
             return true;
         }
 
+        let isShared = false;
+
+        if (action === 'read' || action === 'stream') {
+            isShared = this.checkIsShared(model);
+        }
+
         const entityAccessData = {
             isOwner: this.checkIsOwner(model),
             inTeam: this.checkInTeam(model),
-            isShared: this.checkIsShared(model),
+            isShared: isShared,
         };
 
         return this.checkScope(data, action, precise, entityAccessData);

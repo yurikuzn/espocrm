@@ -157,7 +157,7 @@ class AclManager {
      *
      * @param {string} scope A scope.
      * @param {module:acl-manager~action} action An action.
-     * @returns {'yes'|'all'|'team'|'shared'|'own'|'no'|null}
+     * @returns {'yes'|'all'|'team'|'own'|'no'|null}
      */
     getLevel(scope, action) {
         if (!(scope in this.data.table)) {

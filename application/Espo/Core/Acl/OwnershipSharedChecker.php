@@ -41,6 +41,8 @@ interface OwnershipSharedChecker extends OwnershipChecker
      * Check whether an entity is shared with a user.
      *
      * @param TEntity $entity
+     * @param Table::ACTION_* $action
+     * @noinspection PhpDocSignatureInspection
      */
-    public function checkShared(User $user, Entity $entity): bool;
+    public function checkShared(User $user, Entity $entity, string $action): bool;
 }

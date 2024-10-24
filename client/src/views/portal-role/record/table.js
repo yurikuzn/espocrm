@@ -52,7 +52,6 @@ export default class extends RoleRecordTableView {
 
     type = 'aclPortal'
     lowestLevelByDefault = true
-    collaborators = false
 
     setupScopeList() {
         this.aclTypeMap = {};

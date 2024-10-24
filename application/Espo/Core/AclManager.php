@@ -226,14 +226,6 @@ class AclManager
     }
 
     /**
-     * Whether 'read' access is set to 'shared' for a specific scope.
-     */
-    public function checkReadOnlyShared(User $user, string $scope): bool
-    {
-        return $this->getLevel($user, $scope, Table::ACTION_READ) === Table::LEVEL_SHARED;
-    }
-
-    /**
      * Whether 'read' access is set to 'own' for a specific scope.
      */
     public function checkReadOnlyOwn(User $user, string $scope): bool
@@ -255,9 +247,9 @@ class AclManager
      *
      * @param User $user A user to check for.
      * @param string|Entity $subject An entity type or entity.
-     * @param string|null $action Action to check. Constants are available in the `Table` class.
-     *
+     * @param Table::ACTION_*|null $action $action Action to check. Constants are available in the `Table` class.
      * @throws NotImplemented
+     * @noinspection PhpDocSignatureInspection
      */
     public function check(User $user, $subject, ?string $action = null): bool
     {
@@ -282,7 +274,8 @@ class AclManager
      *
      * @param User $user A user to check for.
      * @param string|Entity $subject An entity type or entity.
-     * @param string|null $action Action to check. Constants are available in the `Table` class.
+     * @param Table::ACTION_*|null $action Action to check. Constants are available in the `Table` class.
+     * @noinspection PhpDocSignatureInspection
      */
     public function tryCheck(User $user, $subject, ?string $action = null): bool
     {
@@ -298,9 +291,9 @@ class AclManager
      *
      * @param User $user A user to check for.
      * @param Entity $entity An entity to check.
-     * @param string $action Action to check. Constants are available in the `Table` class.
-     *
+     * @param Table::ACTION_* $action Action to check. Constants are available in the `Table` class.
      * @throws NotImplemented
+     * @noinspection PhpDocSignatureInspection
      */
     public function checkEntity(User $user, Entity $entity, string $action = Table::ACTION_READ): bool
     {
@@ -417,9 +410,11 @@ class AclManager
     /**
      * Check whether an entity is shared with a user.
      *
+     * @param Table::ACTION_* $action
      * @since 8.5.0
+     * @noinspection PhpDocSignatureInspection
      */
-    public function checkOwnershipShared(User $user, Entity $entity): bool
+    public function checkOwnershipShared(User $user, Entity $entity, string $action): bool
     {
         $checker = $this->getOwnershipChecker($entity->getEntityType());
 
@@ -427,7 +422,7 @@ class AclManager
             return false;
         }
 
-        return $checker->checkShared($user, $entity);
+        return $checker->checkShared($user, $entity, $action);
     }
 
     /**

@@ -726,9 +726,9 @@ class AclTest extends \tests\integration\Core\BaseTestCase
         $user1 = $this->createUser('test-1', [
             'data' => [
                 Task::ENTITY_TYPE => [
-                    Table::ACTION_READ => Table::LEVEL_SHARED,
-                    Table::ACTION_EDIT => Table::LEVEL_SHARED,
-                    Table::ACTION_STREAM => Table::LEVEL_SHARED,
+                    Table::ACTION_READ => Table::LEVEL_OWN,
+                    Table::ACTION_EDIT => Table::LEVEL_OWN,
+                    Table::ACTION_STREAM => Table::LEVEL_OWN,
                 ]
             ]
         ]);
@@ -736,9 +736,9 @@ class AclTest extends \tests\integration\Core\BaseTestCase
         $user2 = $this->createUser('test-2', [
             'data' => [
                 Task::ENTITY_TYPE => [
-                    Table::ACTION_READ => Table::LEVEL_SHARED,
-                    Table::ACTION_EDIT => Table::LEVEL_SHARED,
-                    Table::ACTION_STREAM => Table::LEVEL_SHARED,
+                    Table::ACTION_READ => Table::LEVEL_OWN,
+                    Table::ACTION_EDIT => Table::LEVEL_OWN,
+                    Table::ACTION_STREAM => Table::LEVEL_OWN,
                 ]
             ]
         ]);
@@ -752,9 +752,6 @@ class AclTest extends \tests\integration\Core\BaseTestCase
                 ]
             ]
         ]);
-
-        //$this->auth('test-1');
-        //$this->reCreateApplication();
 
         $em = $this->getEntityManager();
         $aclManager = $this->getContainer()->getByClass(AclManager::class);
