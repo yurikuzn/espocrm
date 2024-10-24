@@ -31,6 +31,7 @@ namespace Espo\Core\Acl;
 
 use Espo\Core\ORM\Entity as CoreEntity;
 use Espo\Core\ORM\Type\FieldType;
+use Espo\Core\Utils\Metadata;
 use Espo\Repositories\User as UserRepository;
 use Espo\ORM\Defs;
 use Espo\ORM\Entity;
@@ -51,7 +52,8 @@ class DefaultAssignmentChecker implements AssignmentChecker
     public function __construct(
         private AclManager $aclManager,
         private EntityManager $entityManager,
-        private Defs $ormDefs
+        private Defs $ormDefs,
+        private Metadata $metadata,
     ) {}
 
     public function check(User $user, Entity $entity): bool
@@ -81,6 +83,10 @@ class DefaultAssignmentChecker implements AssignmentChecker
 
     private function hasCollaboratorsField(string $entityType): bool
     {
+        if (!$this->metadata->get("scopes.$entityType.collaborators")) {
+            return false;
+        }
+
         $entityDefs = $this->ormDefs->getEntity($entityType);
 
         return

@@ -87,6 +87,10 @@ class Collaborators implements BeforeSave
 
     private function processAssignedUsers(CoreEntity $entity): void
     {
+        if (!$entity->has(self::FIELD_COLLABORATORS . 'Ids')) {
+            return;
+        }
+
         $assignedUsers = $entity->getValueObject(self::FIELD_ASSIGNED_USERS);
         $collaborators = $entity->getValueObject(self::FIELD_COLLABORATORS);
 

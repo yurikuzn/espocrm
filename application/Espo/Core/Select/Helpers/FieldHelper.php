@@ -29,6 +29,7 @@
 
 namespace Espo\Core\Select\Helpers;
 
+use Espo\Core\Utils\Metadata;
 use Espo\Entities\Team;
 use Espo\Entities\User;
 use Espo\Modules\Crm\Entities\Account;
@@ -57,8 +58,11 @@ class FieldHelper
     private const LINK_CREATED_BY = 'createdBy';
     private const LINK_COLLABORATORS = 'collaborators';
 
-    public function __construct(private string $entityType, private EntityManager $entityManager)
-    {}
+    public function __construct(
+        private string $entityType,
+        private EntityManager $entityManager,
+        private Metadata $metadata,
+    ) {}
 
     private function getSeed(): Entity
     {
@@ -81,6 +85,7 @@ class FieldHelper
     public function hasCollaboratorsField(): bool
     {
         if (
+            $this->metadata->get("scopes.$this->entityType.collaborators") &&
             $this->getSeed()->hasRelation(self::LINK_COLLABORATORS) &&
             $this->getSeed()->hasAttribute(self::LINK_COLLABORATORS . 'Ids') &&
             $this->getRelationEntityType(self::LINK_COLLABORATORS) === User::ENTITY_TYPE
