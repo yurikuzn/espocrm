@@ -76,6 +76,15 @@ class CollaboratorsUpdateHook implements UpdateHook
                     'type' => FieldType::LINK_MULTIPLE,
                     'view' => 'views/fields/collaborators',
                     'maxCount' => self::DEFAULT_MAX_COUNT,
+                    'fieldManagerParamList' => [
+                        'readOnly',
+                        'readOnlyAfterCreate',
+                        'audited',
+                        'autocompleteOnEmpty',
+                        'maxCount',
+                        'inlineEditDisabled',
+                        'tooltipText'
+                    ]
                 ],
             ],
             'links' => [
