@@ -290,7 +290,7 @@ class DefaultAssignmentChecker implements AssignmentChecker
             if (!$this->hasOnlyInternalUsers($entity, $field)) {
                 return false;
             }
-            
+
             return true;
         }
 
@@ -327,10 +327,6 @@ class DefaultAssignmentChecker implements AssignmentChecker
 
         if ($assignmentPermission === Table::LEVEL_TEAM) {
             return $this->isPermittedUsersLevelTeam($user, $entity, $field);
-        }
-
-        if (!$this->hasOnlyInternalUsers($entity, $field)) {
-            return false;
         }
 
         /** @phpstan-ignore-next-line */
