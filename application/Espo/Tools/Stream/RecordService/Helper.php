@@ -108,7 +108,8 @@ class Helper
             }
 
             if (
-                $this->aclManager->checkReadOnlyOwn($user, $scope)
+                $this->aclManager->checkReadOnlyOwn($user, $scope) ||
+                $this->aclManager->checkReadOnlyShared($user, $scope)
             ) {
                 $list[] = $scope;
             }
