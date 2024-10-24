@@ -287,6 +287,10 @@ class DefaultAssignmentChecker implements AssignmentChecker
             $assignmentPermission === Table::LEVEL_YES ||
             !in_array($assignmentPermission, [Table::LEVEL_TEAM, Table::LEVEL_NO])
         ) {
+            if (!$this->hasOnlyInternalUsers($entity, $field)) {
+                return false;
+            }
+            
             return true;
         }
 
@@ -323,6 +327,10 @@ class DefaultAssignmentChecker implements AssignmentChecker
 
         if ($assignmentPermission === Table::LEVEL_TEAM) {
             return $this->isPermittedUsersLevelTeam($user, $entity, $field);
+        }
+
+        if (!$this->hasOnlyInternalUsers($entity, $field)) {
+            return false;
         }
 
         /** @phpstan-ignore-next-line */
@@ -370,5 +378,21 @@ class DefaultAssignmentChecker implements AssignmentChecker
         }
 
         return true;
+    }
+
+    private function hasOnlyInternalUsers(CoreEntity $entity, string $field): bool
+    {
+        $count = $this->entityManager
+            ->getRDBRepositoryByClass(User::class)
+            ->where([
+                'type!=' => [
+                    User::TYPE_REGULAR,
+                    User::TYPE_ADMIN,
+                ],
+                'id' => $entity->getLinkMultipleIdList($field),
+            ])
+            ->count();
+
+        return $count === 0;
     }
 }
