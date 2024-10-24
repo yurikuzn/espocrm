@@ -34,7 +34,6 @@ use Espo\Core\AclManager;
 use Espo\Core\Api\ControllerActionProcessor;
 use Espo\Core\Api\ResponseWrapper;
 use Espo\Core\DataManager;
-use Espo\Core\Exceptions\Error;
 use Espo\Core\Field\Date;
 use Espo\Core\Record\CreateParams;
 use Espo\Core\Record\ServiceContainer;
