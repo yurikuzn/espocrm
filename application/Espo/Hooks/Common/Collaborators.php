@@ -64,34 +64,12 @@ class Collaborators implements BeforeSave
         }
 
         if ($entity->hasLinkMultipleField(self::FIELD_ASSIGNED_USERS)) {
-            foreach ($entity->getLinkMultipleIdList(self::FIELD_ASSIGNED_USERS) as $userId) {
-                $entity->addLinkMultipleId(self::FIELD_COLLABORATORS, $userId);
-            }
+            $this->processAssignedUsers($entity);
 
             return;
         }
 
-        $idAttr = self::FIELD_ASSIGNED_USER . 'Id';
-
-        if (
-            $entity->hasAttribute($idAttr) &&
-            $entity->isAttributeChanged($idAttr)
-        ) {
-            /** @var Link $assignedUser */
-            $assignedUser = $entity->getValueObject(self::FIELD_ASSIGNED_USER);
-
-            if (!$assignedUser) {
-                return;
-            }
-
-            /** @var LinkMultiple $collaborators */
-            $collaborators = $entity->getValueObject(self::FIELD_COLLABORATORS);
-
-            $collaborators = $collaborators
-                ->withAdded(LinkMultipleItem::create($assignedUser->getId(), $assignedUser->getName()));
-
-            $entity->setValueObject(self::FIELD_COLLABORATORS, $collaborators);
-        }
+        $this->processAssignedUser($entity);
     }
 
     private function hasCollaborators(CoreEntity $entity): bool
@@ -105,5 +83,56 @@ class Collaborators implements BeforeSave
         }
 
         return true;
+    }
+
+    private function processAssignedUsers(CoreEntity $entity): void
+    {
+        $assignedUsers = $entity->getValueObject(self::FIELD_ASSIGNED_USERS);
+        $collaborators = $entity->getValueObject(self::FIELD_COLLABORATORS);
+
+        if (
+            !$assignedUsers instanceof LinkMultiple ||
+            !$collaborators instanceof LinkMultiple
+        ) {
+            return;
+        }
+
+        $countBefore = $collaborators->getCount();
+
+        foreach ($assignedUsers->getList() as $assignedUser) {
+            $collaborators = $collaborators->withAdded($assignedUser);
+        }
+
+        if ($countBefore === $collaborators->getCount()) {
+            return;
+        }
+
+        $entity->setValueObject(self::FIELD_COLLABORATORS, $collaborators);
+    }
+
+    private function processAssignedUser(CoreEntity $entity): void
+    {
+        $idAttr = self::FIELD_ASSIGNED_USER . 'Id';
+
+        if (!$entity->hasAttribute($idAttr) || !$entity->isAttributeChanged($idAttr)) {
+            return;
+        }
+
+        $assignedUser = $entity->getValueObject(self::FIELD_ASSIGNED_USER);
+
+        if (!$assignedUser instanceof Link) {
+            return;
+        }
+
+        $collaborators = $entity->getValueObject(self::FIELD_COLLABORATORS);
+
+        if (!$collaborators instanceof LinkMultiple) {
+            return;
+        }
+
+        $collaborators = $collaborators
+            ->withAdded(LinkMultipleItem::create($assignedUser->getId(), $assignedUser->getName()));
+
+        $entity->setValueObject(self::FIELD_COLLABORATORS, $collaborators);
     }
 }
