@@ -30,6 +30,7 @@
 namespace Espo\Core\Utils\Cache;
 
 use Closure;
+use Espo\Core\Utils\Cache\Exceptions\ReadError;
 use Espo\Core\Utils\Config\SystemConfig;
 use Espo\Core\Utils\DataCache;
 use Espo\Core\Utils\Log;
@@ -40,6 +41,7 @@ use stdClass;
  * @internal
  * @since 10.1.0
  * @template T of array<int|string, mixed> | stdClass = array<int|string, mixed> | stdClass
+ * @todo Test.
  */
 class DataCacheAccess
 {
@@ -140,24 +142,31 @@ class DataCacheAccess
     {
         $key = $this->key ?? throw new LogicException();
 
-        $data = $this->dataCache->tryGet($key);
+        try {
+            $data = $this->dataCache->get($key);
+        } catch (ReadError $e) {
+            $this->log->warning("Corrupted cache data by key '{key}'.", [
+                'exception' => $e,
+                'key' => $key,
+            ]);
 
-        if (is_array($data) || $data instanceof stdClass) {
-            /** @var T $data */
-
-            if ($this->validityChecker && !($this->validityChecker)($data)) {
-                $this->data = null;
-
-                return;
-            }
-
-            $this->data = $data;
+            $this->dataCache->clear($key);
 
             return;
         }
 
-        $this->log->warning("Corrupted cache data in '$key'.");
+        if ($data === null) {
+            return;
+        }
 
-        $this->dataCache->clear($key);
+        /** @var T $data */
+
+        if ($this->validityChecker && !($this->validityChecker)($data)) {
+            $this->data = null;
+
+            return;
+        }
+
+        $this->data = $data;
     }
 }

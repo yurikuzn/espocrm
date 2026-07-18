@@ -81,7 +81,7 @@ class PipelineDataProvider
         if ($this->systemConfig->useCache()) {
             $data = $this->getFromCache();
 
-            if (!$data) {
+            if ($data === null) {
                 $store = true;
             }
         }
@@ -299,6 +299,10 @@ class PipelineDataProvider
     private function tryGetFromCache(): ?array
     {
         $data = $this->dataCache->get(self::CACHE_KEY);
+
+        if ($data === null) {
+            return null;
+        }
 
         if (!$data instanceof stdClass) {
             $this->log->warning("Bad pipeline cache.");

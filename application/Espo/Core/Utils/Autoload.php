@@ -75,9 +75,11 @@ class Autoload
             /** @var ?array<string, mixed> $data */
             $data = $this->dataCache->get($this->cacheKey);
 
-            $this->data = $data;
+            if ($data !== null) {
+                $this->data = $data;
 
-            return;
+                return;
+            }
         }
 
         $this->data = $this->loadData();

@@ -87,12 +87,14 @@ class Module
             $this->dataCache &&
             $this->dataCache->has($this->cacheKey)
         ) {
-            /** @var array<string, array<string, mixed>> $data */
+            /** @var ?array<string, array<string, mixed>> $data */
             $data = $this->dataCache->get($this->cacheKey);
 
-            $this->data = $data;
+            if ($data !== null) {
+                $this->data = $data;
 
-            return;
+                return;
+            }
         }
 
         $this->data = $this->loadData();

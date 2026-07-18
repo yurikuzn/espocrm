@@ -82,12 +82,14 @@ class DataProvider
     private function load(): void
     {
         if ($this->systemConfig->useCache() && $this->dataCache->has($this->cacheKey)) {
-            /** @var array<string, array<string, mixed>> $cachedData */
+            /** @var ?array<string, array<string, mixed>> $cachedData */
             $cachedData = $this->dataCache->get($this->cacheKey);
 
-            $this->data = $cachedData;
+            if ($cachedData !== null) {
+                $this->data = $cachedData;
 
-            return;
+                return;
+            }
         }
 
         $data = $this->readHookData($this->pathProvider->getCustom() . 'Hooks');

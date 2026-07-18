@@ -240,11 +240,9 @@ class NamespaceLoader
                 /** @var ?array<string, mixed> $cachedData */
                 $cachedData = $this->dataCache->get($this->cacheKey);
 
-                $this->vendorNamespaces = $cachedData;
+                $this->vendorNamespaces = $cachedData ?? [];
             }
         }
-
-        assert($this->vendorNamespaces !== null);
 
         if (!array_key_exists($path, $this->vendorNamespaces)) {
             $vendorPath = $this->findVendorPath($path);

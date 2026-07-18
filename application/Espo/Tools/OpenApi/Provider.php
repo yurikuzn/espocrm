@@ -90,11 +90,13 @@ class Provider
         if ($this->dataCache->has($cacheKey)) {
             $data = $this->dataCache->get($cacheKey);
 
-            if (!$data instanceof stdClass) {
+            if ($data !== null && !$data instanceof stdClass) {
                 throw new RuntimeException("Corrupted OpenAPI spec cache file.");
             }
 
-            return $data;
+            if ($data !== null) {
+                return $data;
+            }
         }
 
         $data = $this->buildData($params);

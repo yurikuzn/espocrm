@@ -430,34 +430,35 @@ class Language
 
         $cacheKey = $this->getCacheKey($language);
 
-        if (!$this->useCache || !$this->dataCache->has($cacheKey) || $reload) {
-            $readerParams = ResourceReaderParams
-                ::create()
-                ->withNoCustom($this->noCustom);
-
-            $path = str_replace('{language}', $language, $this->resourcePath);
-
-            $data = $this->resourceReader->readAsArray($path, $readerParams);
-
-            if ($language !== $this->defaultLanguage && !$this->noFallback) {
-                /** @var array<string, array<string, mixed>> $data */
-                $data = Util::merge($this->getDefaultLanguageData($reload), $data);
-            }
-
-            $this->data[$language] = $data;
-
-            if ($this->useCache) {
-                $this->dataCache->store($cacheKey, $data);
-            }
-        }
-
-        if ($this->useCache) {
-            /** @var array<string, mixed> $cachedData */
+        if (!$reload && $this->useCache && $this->dataCache->has($cacheKey)) {
+            /** @var ?array<string, mixed> $cachedData */
             $cachedData = $this->dataCache->get($cacheKey);
 
-            $this->data[$language] = $cachedData;
+            if ($cachedData !== null) {
+                $this->data[$language] = $cachedData;
+
+                return $cachedData;
+            }
         }
 
-        return $this->data[$language] ?? [];
+        $readerParams = ResourceReaderParams::create()
+            ->withNoCustom($this->noCustom);
+
+        $path = str_replace('{language}', $language, $this->resourcePath);
+
+        $data = $this->resourceReader->readAsArray($path, $readerParams);
+
+        if ($language !== $this->defaultLanguage && !$this->noFallback) {
+            /** @var array<string, array<string, mixed>> $data */
+            $data = Util::merge($this->getDefaultLanguageData($reload), $data);
+        }
+
+        $this->data[$language] = $data;
+
+        if ($this->useCache) {
+            $this->dataCache->store($cacheKey, $data);
+        }
+
+        return $data;
     }
 }

@@ -89,7 +89,11 @@ class FormService
         $cacheKey = $this->getCacheKey($leadCapture);
 
         if ($this->systemConfig->useCache() && $this->dataCache->has($cacheKey)) {
-            return $this->getFromCache($cacheKey);
+            $cached = $this->getFromCache($cacheKey);
+
+            if ($cached !== null) {
+                return $cached;
+            }
         }
 
         $data = $this->prepareData($leadCapture);
@@ -387,11 +391,11 @@ class FormService
     }
 
     /**
-     * @return array<string, mixed>
+     * @return ?array<string, mixed>
      */
-    private function getFromCache(string $cacheKey): array
+    private function getFromCache(string $cacheKey): ?array
     {
-        /** @var array<string, mixed> */
+        /** @var ?array<string, mixed> */
         return $this->dataCache->get($cacheKey);
     }
 

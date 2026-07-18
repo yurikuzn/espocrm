@@ -29,45 +29,54 @@
 
 namespace Espo\Core\Utils;
 
-use Espo\Core\Utils\File\Exceptions\FileError;
-use Espo\Core\Utils\File\Manager as FileManager;
-
+use Espo\Core\Utils\Cache\CacheItem;
+use Espo\Core\Utils\Cache\Exceptions\InvalidArgument;
+use Espo\Core\Utils\Cache\Exceptions\PersistenceError;
+use Espo\Core\Utils\Cache\Exceptions\ReadError;
+use Espo\Core\Utils\Cache\FileCacheItemPool;
 use InvalidArgumentException;
-use RuntimeException;
 use stdClass;
 
 class DataCache
 {
-    protected string $cacheDir = 'data/cache/application/';
-
-    public function __construct(protected FileManager $fileManager)
-    {}
+    public function __construct(
+        private FileCacheItemPool $fileCacheItemPool,
+    ) {}
 
     /**
      * Whether is cached.
      */
     public function has(string $key): bool
     {
-        $cacheFile = $this->getCacheFile($key);
-
-        return $this->fileManager->isFile($cacheFile);
+        return $this->fileCacheItemPool->hasItem($key);
     }
 
     /**
-     * Get a stored value.
+     * Get a stored value. Returns null if not hit.
      *
-     * @return array<int|string, mixed>|stdClass
-     * @throws FileError
+     * @return array<int|string, mixed>|stdClass|null
+     * @throws ReadError
      */
-    public function get(string $key)
+    public function get(string $key): array|stdClass|null
     {
-        $cacheFile = $this->getCacheFile($key);
+        $item = $this->fileCacheItemPool->getItem($key);
 
-        return $this->fileManager->getPhpSafeContents($cacheFile);
+        if (!$item->isHit()) {
+            return null;
+        }
+
+        $value = $item->get();
+
+        if (!is_array($value) && !$value instanceof stdClass) {
+            throw new ReadError("Bad cache data by key '$key'.");
+        }
+
+        /** @var array<int|string, mixed>|stdClass */
+        return $value;
     }
 
     /**
-     * Try to get a stored value. Returns null if does not exist.
+     * Try to get a stored value. Returns null if the item does not exist in cache.
      *
      * @return array<int|string, mixed>|stdClass|null
      * @since 9.3.0
@@ -78,11 +87,9 @@ class DataCache
             return null;
         }
 
-        $cacheFile = $this->getCacheFile($key);
-
         try {
-            return $this->fileManager->getPhpSafeContents($cacheFile);
-        } catch (FileError) {
+            return $this->get($key);
+        } catch (ReadError) {
             return null;
         }
     }
@@ -91,6 +98,7 @@ class DataCache
      * Store in cache.
      *
      * @param array<int|string, mixed>|stdClass $data
+     * @throws PersistenceError
      */
     public function store(string $key, $data): void
     {
@@ -100,23 +108,26 @@ class DataCache
             throw new InvalidArgumentException("Bad cache data type.");
         }
 
-        $cacheFile = $this->getCacheFile($key);
+        $item = new CacheItem(
+            key: $key,
+            value: $data,
+        );
 
-        $result = $this->fileManager->putPhpContents($cacheFile, $data, true, true);
+        $result = $this->fileCacheItemPool->save($item);
 
         if ($result === false) {
-            throw new RuntimeException("Could not store '$key'.");
+            throw new PersistenceError("Could not store '$key'.");
         }
     }
 
     /**
      * Removes in cache.
+     *
+     * @throws InvalidArgument
      */
     public function clear(string $key): void
     {
-        $cacheFile = $this->getCacheFile($key);
-
-        $this->fileManager->removeFile($cacheFile);
+        $this->fileCacheItemPool->deleteItem($key);
     }
 
     /**
@@ -130,19 +141,5 @@ class DataCache
             !$data instanceof stdClass;
 
         return !$isInvalid;
-    }
-
-    private function getCacheFile(string $key): string
-    {
-        if (
-            $key === '' ||
-            preg_match('/[^a-zA-Z0-9_\/\-]/i', $key) ||
-            $key[0] === '/' ||
-            str_ends_with($key, '/')
-        ) {
-            throw new InvalidArgumentException("Bad cache key.");
-        }
-
-        return $this->cacheDir . $key . '.php';
     }
 }

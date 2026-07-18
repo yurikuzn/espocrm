@@ -78,10 +78,12 @@ class AclDependencyProvider
     private function loadData(): array
     {
         if ($this->useCache && $this->dataCache->has(self::CACHE_KEY)) {
-            /** @var array<string, mixed>[] $raw */
+            /** @var ?array<string, mixed>[] $raw */
             $raw = $this->dataCache->get(self::CACHE_KEY);
 
-            return $this->buildFromRaw($raw);
+            if ($raw !== null) {
+                return $this->buildFromRaw($raw);
+            }
         }
 
         return $this->buildData();

@@ -86,11 +86,15 @@ class EmailFilterManager
         $cacheKey = $this->composeCacheKey($userId);
 
         if ($this->useCache && $this->dataCache->has($cacheKey)) {
-            $this->data[$userId] = $this->loadFromCache($cacheKey);
+            $cached = $this->loadFromCache($cacheKey);
 
-            $this->setCacheVersionNumber($userId);
+            if ($cached !== null) {
+                $this->data[$userId] = $cached;
 
-            return $this->data[$userId];
+                $this->setCacheVersionNumber($userId);
+
+                return $this->data[$userId];
+            }
         }
 
         $this->data[$userId] = $this->fetch($userId);
@@ -136,12 +140,16 @@ class EmailFilterManager
     }
 
     /**
-     * @return EmailFilter[]
+     * @return ?EmailFilter[]
      */
-    private function loadFromCache(string $cacheKey): array
+    private function loadFromCache(string $cacheKey): ?array
     {
         /** @var stdClass[] $dataList */
         $dataList = $this->dataCache->get($cacheKey);
+
+        if ($dataList === null) {
+            return null;
+        }
 
         /** @var EmailFilter[] $list */
         $list = [];
