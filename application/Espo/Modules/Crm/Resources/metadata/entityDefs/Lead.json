@@ -404,7 +404,12 @@
     "collection": {
         "orderBy": "createdAt",
         "order": "desc",
-        "textFilterFields": ["name", "accountName", "emailAddress"]
+        "textFilterFields": [
+            "name",
+            "accountName",
+            "emailAddress",
+            "phoneNumber"
+        ]
     },
     "indexes": {
         "firstName": {

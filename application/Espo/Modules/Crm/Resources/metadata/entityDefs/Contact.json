@@ -716,7 +716,11 @@
     "collection": {
         "orderBy": "createdAt",
         "order": "desc",
-        "textFilterFields": ["name", "emailAddress"]
+        "textFilterFields": [
+            "name",
+            "emailAddress",
+            "phoneNumber"
+        ]
     },
     "indexes": {
         "createdAt": {
