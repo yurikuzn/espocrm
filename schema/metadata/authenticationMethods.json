@@ -5,6 +5,10 @@
     "description": "An authentication method.",
     "type": "object",
     "properties": {
+        "implementationClassName": {
+            "type": "string",
+            "description": "A login implementation. Should implement `Espo\\Core\\Authentication\\Login`."
+        },
         "api": {
             "type": "boolean",
             "description": "Defines that the method is to be used for pure API request, not from the front-end."
