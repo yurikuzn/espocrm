@@ -27,34 +27,32 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Hooks\OAuthClient;
+namespace tests\unit\Espo\Tools\OAuthServer\Scope;
 
-use Espo\Core\Utils\Util;
-use Espo\Tools\OAuthServer\Entities\Client;
-use Espo\Core\Hook\Hook\BeforeSave;
-use Espo\ORM\Entity;
-use Espo\ORM\Repository\Option\SaveOptions;
+use Espo\Core\Acl\Scope;
+use Espo\Modules\Crm\Entities\Account;
+use Espo\Modules\Crm\Entities\Lead;
 use Espo\Tools\OAuthServer\Scope\ScopeSorter;
+use PHPUnit\Framework\TestCase;
 
-/**
- * @implements BeforeSave<Client>
- */
-class SetFields implements BeforeSave
+class ScopeSorterTest extends TestCase
 {
-    public function __construct(
-        private ScopeSorter $scopeSorter,
-    ) {}
-
-    public function beforeSave(Entity $entity, SaveOptions $options): void
+    public function testSort(): void
     {
-        if ($entity->isNew()) {
-            $entity->setIdentifier(Util::generateUuid4());
-        }
+        $sorted = (new ScopeSorter())->sort([
+            Lead::ENTITY_TYPE,
+            Account::ENTITY_TYPE,
+            Scope::ADMIN,
+            Scope::GLOBAL,
+        ]);
 
-        if ($entity->isAttributeChanged(Client::FIELD_SCOPES)) {
-            $scopes = $this->scopeSorter->sort($entity->getScopes());
+        $expected = [
+            Scope::GLOBAL,
+            Scope::ADMIN,
+            Account::ENTITY_TYPE,
+            Lead::ENTITY_TYPE,
+        ];
 
-            $entity->setScopes($scopes);
-        }
+        $this->assertEquals($expected, $sorted);
     }
 }

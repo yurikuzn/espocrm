@@ -39,6 +39,7 @@ use Espo\Tools\OAuthServer\League\AuthorizationRequestStorage;
 use Espo\Tools\OAuthServer\League\AuthorizationServerFactory;
 use Espo\Tools\OAuthServer\League\Entities\ScopeEntity;
 use Espo\Tools\OAuthServer\League\Entities\UserEntity;
+use Espo\Tools\OAuthServer\Scope\ScopeSorter;
 use Espo\Tools\OAuthServer\Utils\UriUtil;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use League\OAuth2\Server\RequestTypes\AuthorizationRequest;
@@ -51,6 +52,7 @@ class AuthorizationService
         private AuthorizationServerFactory $authorizationServerFactory,
         private ApplicationState $applicationState,
         private AuthorizationRequestStorage $authorizationRequestStorage,
+        private ScopeSorter $scopeSorter,
     ) {}
 
     /**
@@ -87,6 +89,8 @@ class AuthorizationService
         bool $approved,
         array $scopes,
     ): ResponseInterface {
+
+        $scopes = $this->scopeSorter->sort($scopes);
 
         $authorizationRequest = $this->getAuthRequestFromSession($clientId);
 

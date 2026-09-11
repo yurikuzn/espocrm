@@ -101,11 +101,19 @@ class Client extends Entity
     }
 
     /**
-     * @return string[]
+     * @return non-empty-string[]
      */
     public function getScopes(): array
     {
-        return $this->get(self::FIELD_SCOPES) ?? [];
+        $scopes = $this->get(self::FIELD_SCOPES) ?? [];
+
+        foreach ($scopes as $scope) {
+            if (!$scope) {
+                throw new UnexpectedValueException("Empty scope.");
+            }
+        }
+
+        return $scopes;
     }
 
     /**

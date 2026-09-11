@@ -27,34 +27,33 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Hooks\OAuthClient;
+namespace Espo\Tools\OAuthServer\Scope;
 
-use Espo\Core\Utils\Util;
-use Espo\Tools\OAuthServer\Entities\Client;
-use Espo\Core\Hook\Hook\BeforeSave;
-use Espo\ORM\Entity;
-use Espo\ORM\Repository\Option\SaveOptions;
-use Espo\Tools\OAuthServer\Scope\ScopeSorter;
+use Espo\Core\Acl\Scope;
 
-/**
- * @implements BeforeSave<Client>
- */
-class SetFields implements BeforeSave
+class ScopeSorter
 {
-    public function __construct(
-        private ScopeSorter $scopeSorter,
-    ) {}
+    /**
+     * @var array<string, int>
+     */
+    private array $priority = [
+        Scope::GLOBAL => 0,
+        Scope::ADMIN => 1,
+    ];
 
-    public function beforeSave(Entity $entity, SaveOptions $options): void
+    /**
+     * @param non-empty-string[] $scopes
+     * @return non-empty-string[]
+     */
+    public function sort(array $scopes): array
     {
-        if ($entity->isNew()) {
-            $entity->setIdentifier(Util::generateUuid4());
-        }
+        usort($scopes, function ($a, $b) {
+            $aPriority = $this->priority[$a] ?? PHP_INT_MAX;
+            $bPriority = $this->priority[$b] ?? PHP_INT_MAX;
 
-        if ($entity->isAttributeChanged(Client::FIELD_SCOPES)) {
-            $scopes = $this->scopeSorter->sort($entity->getScopes());
+            return $aPriority <=> $bPriority ?: strcmp($a, $b);
+        });
 
-            $entity->setScopes($scopes);
-        }
+        return $scopes;
     }
 }
