@@ -40,6 +40,7 @@ use Espo\Core\ApplicationState;
 use Espo\Core\Authentication\Authentication;
 use Espo\Core\Authentication\Oidc\PkceUtil;
 use Espo\Core\Binding\Binder;
+use Espo\Core\Exceptions\Forbidden;
 use Espo\Core\Field\Date;
 use Espo\Core\Session\Session;
 use Espo\Core\Utils\DateTime\Clock;
@@ -47,6 +48,7 @@ use Espo\Core\Utils\Json;
 use Espo\Entities\Role;
 use Espo\Entities\User;
 use Espo\Modules\Crm\Entities\Account;
+use Espo\Modules\Crm\Entities\Contact;
 use Espo\Tools\App\SettingsService;
 use Espo\Tools\OAuthServer\ClientType;
 use Espo\Tools\OAuthServer\ConsentDataService;
@@ -76,18 +78,7 @@ class AuthorizationServerTest extends BaseTestCase
         $client = $this->createClient();
         $secret = $this->createSecret($client);
 
-        $user = $this->createUser(
-            userData: [
-                User::FIELD_USER_NAME => self::USER_USERNAME,
-            ],
-            role: [
-                Role::FIELD_DATA => [
-                    Account::ENTITY_TYPE => [
-                        Table::ACTION_READ => Table::LEVEL_ALL,
-                    ],
-                ],
-            ],
-        );
+        $user = $this->createUserForTest();
 
         //
 
@@ -181,6 +172,28 @@ class AuthorizationServerTest extends BaseTestCase
             accessToken: $accessToken,
             secret: $secret,
         );
+    }
+
+    public function testExtraScopesNotAllowed(): void
+    {
+        $redirectUri = self::REDIRECT_URI;
+
+        $client = $this->createClient();
+
+        $user = $this->createUserForTest();
+
+        //
+
+        $codeChallenge = PkceUtil::generateCodeVerifier();
+
+        $this->obtainCodeInitital(
+            client: $client,
+            redirectUri: $redirectUri,
+            codeChallenge: $codeChallenge,
+            user: $user,
+        );
+
+        $this->authorizeCompleteScopeMismatch($client);
     }
 
     /**
@@ -663,89 +676,12 @@ class AuthorizationServerTest extends BaseTestCase
         User $user,
     ): string {
 
-        $session = $this->createMock(Session::class);
-
-        $this->reCreateApplication(
-            reuse: true,
-            noUser: true,
-            binding: $this->prepareBinding(function (Binder $binder) use ($session) {
-                $binder->bindInstance(Session::class, $session);
-            }),
+        $this->obtainCodeInitital(
+            client: $client,
+            redirectUri: $redirectUri,
+            codeChallenge: $codeChallenge,
+            user: $user,
         );
-
-        //
-
-        $request = $this->createRequest(
-            method: Method::GET,
-            queryParams: [
-                'client_id' => $client->getIdentifier(),
-                'redirect_uri' => $redirectUri,
-                'response_type' => 'code',
-                'scope' => $this->getScopesString(),
-                'code_challenge' => PkceUtil::hashAndEncodeCodeVerifier($codeChallenge),
-                'code_challenge_method' => 'S256',
-            ],
-            resourcePath: '/oauth/authorize',
-        );
-
-        $response = $this->createResponseWrapper();
-
-        $authorizeEntryPoint = $this->getInjectableFactory()->create(Authorize::class);
-
-        $authorizationRequest = null;
-        $sessionKey = null;
-
-        $session
-            ->expects(self::any())
-            ->method('set')
-            ->with(
-                $this->callback(function ($key) use (&$sessionKey) {
-                    $sessionKey = $key;
-
-                    return true;
-                }),
-                $this->callback(function ($value) use (&$authorizationRequest) {
-                    $authorizationRequest = $value;
-
-                    return true;
-                })
-            );
-
-        $authorizeEntryPoint->run($request, $response);
-
-        //
-
-        $session
-            ->expects(self::any())
-            ->method('get')
-            ->with($sessionKey)
-            ->willReturn($authorizationRequest);
-
-        $session
-            ->expects(self::once())
-            ->method('clear')
-            ->with($sessionKey);
-
-        //
-
-        $this->auth($user->getUserName());
-
-        $this->reCreateApplication(
-            reuse: true,
-            binding: $this->prepareBinding(function (Binder $binder) use ($session) {
-                $binder->bindInstance(Session::class, $session);
-            }),
-        );
-
-        //
-
-        $consentDataService = $this->getInjectableFactory()->create(ConsentDataService::class);
-
-        $data = $consentDataService->getData($client->getIdentifier());
-
-        $this->assertIsArray($data->scopeDataList);
-
-        //
 
         $request = $this->createRequest(
             method: Method::POST,
@@ -1441,5 +1377,147 @@ class AuthorizationServerTest extends BaseTestCase
     private function getScopesString(): string
     {
         return implode(' ', $this->getScopes());
+    }
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
+    private function authorizeCompleteScopeMismatch(Client $client): void
+    {
+        $request = $this->createRequest(
+            method: Method::POST,
+            headers: [
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ],
+            body: http_build_query([
+                'clientId' => $client->getIdentifier(),
+                'approved' => 'true',
+                'scopes' => $this->getScopesString() . ' ' . Contact::ENTITY_TYPE,
+            ]),
+            resourcePath: '?entryPoint=oAuthAuthorizeComplete',
+        );
+
+        $response = $this->createResponseWrapper();
+
+        $completeEntryPoint = $this->getInjectableFactory()->create(AuthorizeComplete::class);
+
+        $thrown = false;
+
+        try {
+            $completeEntryPoint->run($request, $response);
+        } catch (Forbidden) {
+            $thrown = true;
+        }
+
+        $this->assertTrue($thrown, "Extra scope must not be allowed.");
+    }
+
+    /**
+     * @noinspection PhpUnhandledExceptionInspection
+     */
+    private function obtainCodeInitital(
+        Client $client,
+        string $redirectUri,
+        string $codeChallenge,
+        User $user,
+    ): void {
+
+        $session = $this->createMock(Session::class);
+
+        $this->reCreateApplication(
+            reuse: true,
+            noUser: true,
+            binding: $this->prepareBinding(function (Binder $binder) use ($session) {
+                $binder->bindInstance(Session::class, $session);
+            }),
+        );
+
+        //
+
+        $request = $this->createRequest(
+            method: Method::GET,
+            queryParams: [
+                'client_id' => $client->getIdentifier(),
+                'redirect_uri' => $redirectUri,
+                'response_type' => 'code',
+                'scope' => $this->getScopesString(),
+                'code_challenge' => PkceUtil::hashAndEncodeCodeVerifier($codeChallenge),
+                'code_challenge_method' => 'S256',
+            ],
+            resourcePath: '/oauth/authorize',
+        );
+
+        $response = $this->createResponseWrapper();
+
+        $authorizeEntryPoint = $this->getInjectableFactory()->create(Authorize::class);
+
+        $authorizationRequest = null;
+        $sessionKey = null;
+
+        $session
+            ->expects(self::any())
+            ->method('set')
+            ->with(
+                $this->callback(function ($key) use (&$sessionKey) {
+                    $sessionKey = $key;
+
+                    return true;
+                }),
+                $this->callback(function ($value) use (&$authorizationRequest) {
+                    $authorizationRequest = $value;
+
+                    return true;
+                })
+            );
+
+        $authorizeEntryPoint->run($request, $response);
+
+        //
+
+        $session
+            ->expects(self::any())
+            ->method('get')
+            ->with($sessionKey)
+            ->willReturn($authorizationRequest);
+
+        $session
+            ->expects(self::once())
+            ->method('clear')
+            ->with($sessionKey);
+
+        //
+
+        $this->auth($user->getUserName());
+
+        $this->reCreateApplication(
+            reuse: true,
+            binding: $this->prepareBinding(function (Binder $binder) use ($session) {
+                $binder->bindInstance(Session::class, $session);
+            }),
+        );
+
+        //
+
+        $consentDataService = $this->getInjectableFactory()->create(ConsentDataService::class);
+
+        $data = $consentDataService->getData($client->getIdentifier());
+
+        $this->assertIsArray($data->scopeDataList);
+    }
+
+    private function createUserForTest(): User
+    {
+        return $this->createUser(
+            userData: [
+                User::FIELD_USER_NAME => self::USER_USERNAME,
+            ],
+            role: [
+                Role::FIELD_DATA => [
+                    Account::ENTITY_TYPE => [
+                        Table::ACTION_READ => Table::LEVEL_ALL,
+                    ],
+                ],
+            ],
+        );
     }
 }
