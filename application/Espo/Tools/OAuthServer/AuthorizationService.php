@@ -30,11 +30,14 @@
 namespace Espo\Tools\OAuthServer;
 
 use Espo\Core\ApplicationState;
+use Espo\Core\Exceptions\BadRequest;
 use Espo\Core\Exceptions\Error;
+use Espo\Core\Exceptions\Forbidden;
 use Espo\Core\Exceptions\NotFound;
 use Espo\Entities\User;
 use Espo\Tools\OAuthServer\League\AuthorizationRequestStorage;
 use Espo\Tools\OAuthServer\League\AuthorizationServerFactory;
+use Espo\Tools\OAuthServer\League\Entities\ScopeEntity;
 use Espo\Tools\OAuthServer\League\Entities\UserEntity;
 use Espo\Tools\OAuthServer\Utils\UriUtil;
 use League\OAuth2\Server\Exception\OAuthServerException;
@@ -71,13 +74,25 @@ class AuthorizationService
     }
 
     /**
+     * @param non-empty-string[] $scopes
      * @throws NotFound
      * @throws Error
+     * @throws Forbidden
+     * @throws BadRequest
      * @noinspection PhpRedundantCatchClauseInspection
      */
-    public function authorizeComplete(string $clientId, ResponseInterface $response, bool $approved): ResponseInterface
-    {
+    public function authorizeComplete(
+        string $clientId,
+        ResponseInterface $response,
+        bool $approved,
+        array $scopes,
+    ): ResponseInterface {
+
         $authorizationRequest = $this->getAuthRequestFromSession($clientId);
+
+        $this->validateScopesOnCompletion($authorizationRequest, $scopes);
+
+        $authorizationRequest->setScopes(array_map(fn ($it) => new ScopeEntity($it), $scopes));
 
         $user = $this->applicationState->getUser();
 
@@ -146,5 +161,23 @@ class AuthorizationService
         }
 
         throw OAuthServerException::accessDenied("User is not allowed.", $redirectUri);
+    }
+
+    /**
+     * @param string[] $scopes
+     * @throws Forbidden
+     * @throws BadRequest
+     */
+    private function validateScopesOnCompletion(AuthorizationRequest $authorizationRequest, array $scopes): void
+    {
+        if (count(array_unique($scopes)) !== count($scopes)) {
+            throw new BadRequest("Duplicate scopes.");
+        }
+
+        $storedScopes = array_map(fn ($it) => $it->getIdentifier(), $authorizationRequest->getScopes());
+
+        if (array_diff($scopes, $storedScopes)) {
+            throw new Forbidden("Scope mismatch.");
+        }
     }
 }

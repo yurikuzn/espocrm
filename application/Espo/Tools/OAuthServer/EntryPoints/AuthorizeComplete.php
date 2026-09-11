@@ -48,15 +48,46 @@ class AuthorizeComplete implements EntryPoint
     {
         $body = $request->getParsedBody();
 
-        $clientId = $body->clientId ?? throw new BadRequest("No clientId.");
+        $clientId = $body->clientId ?? throw new BadRequest("No 'clientId'.");
         $approved = ($body->approved ?? null) === 'true';
 
         if (!is_string($clientId)) {
             throw new BadRequest();
         }
 
-        $psr7Response = $this->service->authorizeComplete($clientId, $response->toPsr7(), $approved);
+        $scopes = $this->fetchScopes($request);
+
+        $psr7Response = $this->service->authorizeComplete(
+            clientId: $clientId,
+            response: $response->toPsr7(),
+            approved: $approved,
+            scopes: $scopes,
+        );
 
         $response->applyPsr7($psr7Response);
+    }
+
+    /**
+     * @return non-empty-string[]
+     * @throws BadRequest
+     */
+    private function fetchScopes(Request $request): array
+    {
+        $scopesRaw = $request->getParsedBody()->scopes ?? throw new BadRequest("No 'scopes'.");
+
+        $scopes = explode(' ', $scopesRaw);
+
+        foreach ($scopes as $scope) {
+            if (!$scope) {
+                throw new BadRequest("Bad 'scopes' item values.");
+            }
+
+            if ($scope !== trim($scope)) {
+                throw new BadRequest("Bad scope.");
+            }
+        }
+
+        /** @var non-empty-string[] */
+        return $scopes;
     }
 }

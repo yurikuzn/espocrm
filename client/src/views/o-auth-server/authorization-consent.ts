@@ -55,6 +55,7 @@ export default class AuthorizationConsentView extends View<{
                         >
                             <input type="hidden" name="clientId" value="{{clientId}}">
                             <input type="hidden" name="approved">
+                            <input type="hidden" name="scopes" value="{{scopes}}">
                             <button
                                 type="button"
                                 class="btn btn-danger btn-x-wide pull-left"
@@ -85,10 +86,15 @@ export default class AuthorizationConsentView extends View<{
     }
 
     protected data() {
+        const scopes = this.consentData.scopeDataList
+            .map(it => it.name)
+            .join(' ');
+
         return {
             ...this.consentData,
             actionEndpoint: this.getBasePath() + '?entryPoint=oAuthAuthorizeComplete',
             clientId: this.params.clientId,
+            scopes,
         };
     }
 

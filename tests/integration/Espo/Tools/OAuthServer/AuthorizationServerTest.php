@@ -745,6 +745,7 @@ class AuthorizationServerTest extends BaseTestCase
             body: http_build_query([
                 'clientId' => $client->getIdentifier(),
                 'approved' => 'true',
+                'scopes' => Scope::GLOBAL,
             ]),
             resourcePath: '?entryPoint=oAuthAuthorizeComplete',
         );

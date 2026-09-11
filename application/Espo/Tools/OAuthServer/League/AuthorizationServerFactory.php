@@ -30,8 +30,6 @@
 namespace Espo\Tools\OAuthServer\League;
 
 use Espo\Core\Exceptions\Error;
-use Espo\Core\Session\Session;
-use DateInterval;
 use Espo\Tools\OAuthServer\League\Repositories\AccessTokenRepository;
 use Espo\Tools\OAuthServer\League\Repositories\AuthCodeRepository;
 use Espo\Tools\OAuthServer\League\Repositories\ClientRepository;
