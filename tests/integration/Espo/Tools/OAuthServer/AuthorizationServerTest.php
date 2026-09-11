@@ -31,6 +31,7 @@ namespace tests\integration\Espo\Tools\OAuthServer;
 
 use DateTimeImmutable;
 use Espo\Core\Acl\Scope;
+use Espo\Core\Acl\Table;
 use Espo\Core\Api\Auth;
 use Espo\Core\Api\AuthBuilderFactory;
 use Espo\Core\Api\Method;
@@ -43,7 +44,9 @@ use Espo\Core\Field\Date;
 use Espo\Core\Session\Session;
 use Espo\Core\Utils\DateTime\Clock;
 use Espo\Core\Utils\Json;
+use Espo\Entities\Role;
 use Espo\Entities\User;
+use Espo\Modules\Crm\Entities\Account;
 use Espo\Tools\App\SettingsService;
 use Espo\Tools\OAuthServer\ClientType;
 use Espo\Tools\OAuthServer\ConsentDataService;
@@ -74,8 +77,15 @@ class AuthorizationServerTest extends BaseTestCase
         $secret = $this->createSecret($client);
 
         $user = $this->createUser(
-            [
+            userData: [
                 User::FIELD_USER_NAME => self::USER_USERNAME,
+            ],
+            role: [
+                Role::FIELD_DATA => [
+                    Account::ENTITY_TYPE => [
+                        Table::ACTION_READ => Table::LEVEL_ALL,
+                    ],
+                ],
             ],
         );
 
@@ -504,7 +514,7 @@ class AuthorizationServerTest extends BaseTestCase
 
         $clientId = 'wrong';
         $redirectUri = self::REDIRECT_URI;
-        $scope = Scope::GLOBAL;
+        $scope = $this->getScopesString();
 
         //
 
@@ -522,7 +532,7 @@ class AuthorizationServerTest extends BaseTestCase
 
         $clientId = $client->getIdentifier();
         $redirectUri = 'wrong';
-        $scope = Scope::GLOBAL;
+        $scope = $this->getScopesString();
 
         //
 
@@ -578,7 +588,7 @@ class AuthorizationServerTest extends BaseTestCase
 
         $client = $em->getRDBRepositoryByClass(Client::class)->getNew();
         $client
-            ->setScopes([Scope::GLOBAL])
+            ->setScopes($this->getScopes())
             ->setClientType($type)
             ->setRedirectUris([self::REDIRECT_URI]);
         $em->saveEntity($client);
@@ -671,7 +681,7 @@ class AuthorizationServerTest extends BaseTestCase
                 'client_id' => $client->getIdentifier(),
                 'redirect_uri' => $redirectUri,
                 'response_type' => 'code',
-                'scope' => Scope::GLOBAL,
+                'scope' => $this->getScopesString(),
                 'code_challenge' => PkceUtil::hashAndEncodeCodeVerifier($codeChallenge),
                 'code_challenge_method' => 'S256',
             ],
@@ -745,7 +755,7 @@ class AuthorizationServerTest extends BaseTestCase
             body: http_build_query([
                 'clientId' => $client->getIdentifier(),
                 'approved' => 'true',
-                'scopes' => Scope::GLOBAL,
+                'scopes' => $this->getScopesString(),
             ]),
             resourcePath: '?entryPoint=oAuthAuthorizeComplete',
         );
@@ -1240,7 +1250,10 @@ class AuthorizationServerTest extends BaseTestCase
 
         $loggedUser = $this->getContainer()->getByClass(ApplicationState::class)->getUser();
 
-        $this->assertEquals([Scope::GLOBAL], $loggedUser->getScopes());
+        $this->assertEquals([
+            Scope::GLOBAL,
+            Account::ENTITY_TYPE,
+        ], $loggedUser->getScopes());
     }
 
     /**
@@ -1411,5 +1424,22 @@ class AuthorizationServerTest extends BaseTestCase
         $this->assertEquals('invalid_client', $body->error);
 
         $em->getTransactionManager()->rollback();
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getScopes(): array
+    {
+        return [
+            Scope::GLOBAL,
+            Scope::ADMIN,
+            Account::ENTITY_TYPE,
+        ];
+    }
+
+    private function getScopesString(): string
+    {
+        return implode(' ', $this->getScopes());
     }
 }
