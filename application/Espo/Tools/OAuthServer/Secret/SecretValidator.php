@@ -27,7 +27,7 @@
  * these Appropriate Legal Notices must retain the display of the "EspoCRM" word.
  ************************************************************************/
 
-namespace Espo\Tools\OAuthServer;
+namespace Espo\Tools\OAuthServer\Secret;
 
 use Espo\Core\Name\Field;
 use Espo\Core\Utils\DateTime;

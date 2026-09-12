@@ -30,6 +30,7 @@
 namespace Espo\Tools\OAuthServer;
 
 use Espo\Tools\OAuthServer\Entities\Client;
+use Espo\Tools\OAuthServer\Secret\SecretValidator;
 use SensitiveParameter;
 
 class ClientValidator

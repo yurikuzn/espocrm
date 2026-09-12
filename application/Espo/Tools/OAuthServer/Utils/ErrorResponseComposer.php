@@ -37,7 +37,7 @@ class ErrorResponseComposer
     /**
      * @param ?int<400, 499> $statusCode
      */
-    public static function composeErrorResponse(
+    public static function compose(
         string $error,
         string $errorDescription,
         ?int $statusCode = null,

@@ -77,7 +77,7 @@ class TokenRevoke implements EntryPoint
 
         if (!$this->isTokenTypeValid($tokenTypeHint)) {
             $response->applyPsr7(
-                ErrorResponseComposer::composeErrorResponse(
+                ErrorResponseComposer::compose(
                     error: 'unsupported_token_type',
                     errorDescription: 'Token type is not supported.',
                     statusCode: 400,
@@ -98,7 +98,7 @@ class TokenRevoke implements EntryPoint
             $this->service->revoke($data);
         } catch (Unauthorized) {
             $response->applyPsr7(
-                ErrorResponseComposer::composeErrorResponse(
+                ErrorResponseComposer::compose(
                     error: 'invalid_client',
                     errorDescription: 'Invalid client credentials.',
                     statusCode: 401,

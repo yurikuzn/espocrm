@@ -68,7 +68,7 @@ class OAuthLogin implements Login
         $accessToken = $this->repository->getActiveByIdentifier($opaqueToken);
 
         if (!$accessToken) {
-            $response = ErrorResponseComposer::composeErrorResponse(
+            $response = ErrorResponseComposer::compose(
                 error: 'access_denied',
                 errorDescription: 'Invalid access token.',
             );
@@ -79,7 +79,7 @@ class OAuthLogin implements Login
         $now = DateTime::fromDateTime($this->clock->now());
 
         if ($accessToken->getExpiresAt()->isLessThanOrEqualTo($now)) {
-            $response = ErrorResponseComposer::composeErrorResponse(
+            $response = ErrorResponseComposer::compose(
                 error: 'access_denied',
                 errorDescription: 'The access token expired.',
             );
@@ -88,7 +88,7 @@ class OAuthLogin implements Login
         }
 
         if (!$accessToken->getClient()->isActive()) {
-            $response = ErrorResponseComposer::composeErrorResponse(
+            $response = ErrorResponseComposer::compose(
                 error: 'access_denied',
                 errorDescription: 'The client is not active.',
             );
@@ -101,7 +101,7 @@ class OAuthLogin implements Login
         $user = $this->userRepository->findOneById($userLink->getId());
 
         if (!$user) {
-            $response = ErrorResponseComposer::composeErrorResponse(
+            $response = ErrorResponseComposer::compose(
                 error: 'access_denied',
                 errorDescription: 'User not found.',
             );
