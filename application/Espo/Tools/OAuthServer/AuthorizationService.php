@@ -152,8 +152,6 @@ class AuthorizationService
      */
     private function assertUser(User $user, AuthorizationRequest $authorizationRequest): void
     {
-        // @todo Throw if the user is not allowed for the client.
-
         if ($user->isRegular() || $user->getType() === User::TYPE_ADMIN) {
             return;
         }

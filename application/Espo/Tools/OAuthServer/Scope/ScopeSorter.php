@@ -30,6 +30,7 @@
 namespace Espo\Tools\OAuthServer\Scope;
 
 use Espo\Core\Acl\Scope;
+use stdClass;
 
 class ScopeSorter
 {
@@ -40,6 +41,22 @@ class ScopeSorter
         Scope::GLOBAL => 0,
         Scope::ADMIN => 1,
     ];
+
+    /**
+     * @param (stdClass & object{name: string, label: string})[] $items
+     * @return (stdClass & object{name: string, label: string})[]
+     */
+    public function sortDataItems(array $items): array
+    {
+        usort($items, function ($a, $b) {
+            $aPriority = $this->priority[$a->name] ?? PHP_INT_MAX;
+            $bPriority = $this->priority[$b->name] ?? PHP_INT_MAX;
+
+            return $aPriority <=> $bPriority ?: strcasecmp($a->label, $b->label);
+        });
+
+        return $items;
+    }
 
     /**
      * @param non-empty-string[] $scopes

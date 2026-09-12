@@ -29,6 +29,7 @@
 
 namespace Espo\Tools\OAuthServer;
 
+use Espo\Core\Acl\Scope;
 use Espo\Core\Exceptions\Error;
 use Espo\Core\Exceptions\NotFound;
 use Espo\Core\Utils\Config\ApplicationConfig;
@@ -37,6 +38,7 @@ use Espo\Entities\User;
 use Espo\Tools\OAuthServer\Entities\Client;
 use Espo\Tools\OAuthServer\League\AuthorizationRequestStorage;
 use Espo\Tools\OAuthServer\Repository\ClientRepository;
+use Espo\Tools\OAuthServer\Scope\ScopeSorter;
 use Espo\Tools\OAuthServer\Scope\UserAvailableScopesFilter;
 use InvalidArgumentException;
 use stdClass;
@@ -50,6 +52,7 @@ class ConsentDataService
         private ApplicationConfig $applicationConfig,
         private AuthorizationRequestStorage $authorizationRequestStorage,
         private UserAvailableScopesFilter $userAvailableScopesFilter,
+        private ScopeSorter $scopeSorter,
     ) {}
 
     /**
@@ -59,8 +62,6 @@ class ConsentDataService
     public function getData(string $clientId): stdClass
     {
         $client = $this->getClient($clientId);
-
-        // @todo Check user is associated.
 
         return (object) [
             'scopeDataList' => $this->getScopeDataList($client),
@@ -140,11 +141,25 @@ class ConsentDataService
             return (object) [
                 'name' => $scope,
                 'label' => $this->translateScope($scope),
+                'description' => $this->getScopeDescription($scope),
             ];
         }, $scopes);
 
-        usort($scopeDataList, fn ($a, $b) => strcasecmp($a->label, $b->label));
+        return $this->scopeSorter->sortDataItems($scopeDataList);
+    }
 
-        return $scopeDataList;
+    private function getScopeDescription(string $scope): ?string
+    {
+        if (!in_array($scope, [Scope::ADMIN, Scope::GLOBAL])) {
+            return null;
+        }
+
+        $key = $scope;
+
+        if ($scope === Scope::GLOBAL && $this->user->isAdmin()) {
+            $key = 'GlobalAdmin';
+        }
+
+        return $this->language->translateLabel($key, 'scopeDescriptions', Client::ENTITY_TYPE);
     }
 }

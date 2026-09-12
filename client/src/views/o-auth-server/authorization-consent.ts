@@ -45,7 +45,12 @@ export default class AuthorizationConsentView extends View<{
                     </div>
                     <ul class="list-group">
                         {{#each scopeDataList}}
-                            <li class="list-group-item">{{label}}</li>
+                            <li class="list-group-item">
+                                {{label}}
+                                {{#if description}}
+                                    <div class="small text-soft">{{description}}</div>
+                                {{/if}}
+                            </li>
                         {{/each}}
                     </ul>
                     <div class="margin-top-2x center-align">
@@ -81,6 +86,7 @@ export default class AuthorizationConsentView extends View<{
         scopeDataList: {
             name: string,
             label: string,
+            description: string | null,
         }[],
         labels: Record<string, string>,
     }
