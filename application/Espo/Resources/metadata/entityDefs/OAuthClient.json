@@ -55,7 +55,8 @@
             "validatorClassNameList": [
                 "Espo\\Classes\\FieldValidators\\OAuthClient\\Scopes\\Valid"
             ],
-            "view": "views/o-auth-client/fields/scopes"
+            "view": "views/o-auth-client/fields/scopes",
+            "tooltip": true
         },
         "description": {
             "type": "text"
